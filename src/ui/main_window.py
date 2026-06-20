@@ -5,7 +5,7 @@ from src.qt_compat import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QLabel, QLineEdit, QComboBox, QScrollArea, 
                             QMessageBox, QStatusBar, QSizePolicy, QPushButton, 
                             QProgressBar, QFrame, Qt, QTimer, QMenu, QDialog, 
-                            QButtonGroup, QRadioButton, QGroupBox)
+                            QButtonGroup, QRadioButton, QGroupBox, QEvent, QApplication)
 from src.ui.styles import LIGHT_STYLE, DARK_STYLE
 from src.ui.components import BookCard
 from src.core.database import Database
@@ -253,7 +253,16 @@ class MainWindow(QMainWindow):
         self.search_input.setPlaceholderText("Kitap ara...")
         self.search_input.setFixedWidth(200)
         self.search_input.textChanged.connect(self.on_search_changed)
+        self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
         header_layout.addWidget(self.search_input)
+
+        # Virtual Keyboard Toggle Button (keyboard emoji)
+        self.keyboard_btn = QPushButton("⌨")
+        self.keyboard_btn.setObjectName("KeyboardBtn")
+        self.keyboard_btn.setFixedWidth(36)
+        self.keyboard_btn.setProperty("class", "AdwSecondaryBtn")
+        self.keyboard_btn.clicked.connect(self.toggle_virtual_keyboard_manually)
+        header_layout.addWidget(self.keyboard_btn)
 
         # Publisher Filter Combo Box
         self.publisher_combo = QComboBox()
@@ -353,6 +362,51 @@ class MainWindow(QMainWindow):
             "<p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p>"
             "<p>© 2026 KitapMarkt Ekibi</p>"
         )
+
+    def eventFilter(self, obj, event):
+        """Intercepts focus event on search input to automatically open OSK."""
+        if obj == self.search_input and event.type() == QEvent.FocusIn:
+            self.trigger_virtual_keyboard()
+        return super().eventFilter(obj, event)
+
+    def toggle_virtual_keyboard_manually(self):
+        """Action slot triggered when clicking the virtual keyboard toolbar button."""
+        self.trigger_virtual_keyboard()
+
+    def trigger_virtual_keyboard(self):
+        """Attempts to display the system-level virtual keyboard using Qt, D-Bus, or Onboard launch."""
+        # 1. Standard Qt input method request
+        app = QApplication.instance()
+        if app:
+            app.inputMethod().show()
+            
+        # 2. Trigger Onboard via D-Bus (Pardus standard)
+        try:
+            subprocess.Popen([
+                "dbus-send", "--type=method_call",
+                "--dest=org.onboard.Onboard",
+                "/org/onboard/Onboard/Keyboard",
+                "org.onboard.Onboard.Keyboard.Show"
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            pass
+            
+        # 3. Trigger GNOME Caribou OSK via D-Bus (GNOME standard)
+        try:
+            subprocess.Popen([
+                "dbus-send", "--type=method_call",
+                "--dest=org.gnome.Caribou.Keyboard",
+                "/org/gnome/Caribou/Keyboard",
+                "org.gnome.Caribou.Keyboard.Show"
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            pass
+            
+        # 4. Fallback: launch onboard if not already active
+        try:
+            subprocess.Popen(["onboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            pass
 
     def on_tab_changed(self):
         """Handles switcher tab toggle between Market and Library views."""

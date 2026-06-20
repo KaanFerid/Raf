@@ -3,7 +3,7 @@ import sys
 try:
     # Try importing PySide6
     from PySide6 import QtCore, QtWidgets, QtGui
-    from PySide6.QtCore import Signal, Slot, Qt, QThread, QTimer
+    from PySide6.QtCore import Signal, Slot, Qt, QThread, QTimer, QEvent
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QComboBox, QScrollArea, QGridLayout,
@@ -16,7 +16,7 @@ except ImportError:
     # Fallback to PyQt6
     try:
         from PyQt6 import QtCore, QtWidgets, QtGui
-        from PyQt6.QtCore import pyqtSignal as Signal, pyqtSlot as Slot, Qt, QThread, QTimer
+        from PyQt6.QtCore import pyqtSignal as Signal, pyqtSlot as Slot, Qt, QThread, QTimer, QEvent
         from PyQt6.QtWidgets import (
             QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
             QLabel, QLineEdit, QComboBox, QScrollArea, QGridLayout,
@@ -43,7 +43,7 @@ except ImportError:
         # Fallback to PyQt5
         try:
             from PyQt5 import QtCore, QtWidgets, QtGui
-            from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot, Qt, QThread, QTimer
+            from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot, Qt, QThread, QTimer, QEvent
             from PyQt5.QtWidgets import (
                 QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                 QLabel, QLineEdit, QComboBox, QScrollArea, QGridLayout,

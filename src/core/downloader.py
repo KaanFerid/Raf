@@ -31,6 +31,10 @@ class DownloadWorker(QThread):
         try:
             # We must use a Session to handle cookies and download in chunks
             session = requests.Session()
+            target_url = self.url
+            params = {}
+
+            # Initial probe to check if Google Drive warning page is returned
             response = session.get(self.url, stream=True, timeout=15)
             response.raise_for_status()
 
@@ -51,50 +55,110 @@ class DownloadWorker(QThread):
                         if match:
                             file_id = match.group(1)
                             
-                    download_url = "https://drive.usercontent.google.com/download"
+                    target_url = "https://drive.usercontent.google.com/download"
                     params = {
                         "id": file_id,
                         "export": "download",
                         "confirm": confirm_val,
                         "uuid": uuid_val
                     }
-                    response = session.get(download_url, params=params, stream=True, timeout=15)
-                    response.raise_for_status()
 
-            total_size = int(response.headers.get('content-length', 0))
+            # Check if temp file already exists to resume download
             downloaded = 0
+            if os.path.exists(temp_dest_path):
+                downloaded = os.path.getsize(temp_dest_path)
+                print(f"[{self.book_id}] Resuming download from byte: {downloaded}")
+
+            max_retries = 5
+            retry_count = 0
             start_time = time.time()
             last_update_time = start_time
+            file_mode = "ab" if downloaded > 0 else "wb"
 
-            with open(temp_dest_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=65536):
-                    if self._is_cancelled:
-                        f.close()
+            while retry_count < max_retries:
+                try:
+                    headers = {}
+                    if downloaded > 0:
+                        headers["Range"] = f"bytes={downloaded}-"
+
+                    response = session.get(target_url, params=params, headers=headers, stream=True, timeout=15)
+                    response.raise_for_status()
+
+                    status_code = response.status_code
+                    # If Range request is ignored and server returns 200, we must reset
+                    if downloaded > 0 and status_code != 206:
+                        print(f"[{self.book_id}] Range request ignored (status {status_code}), starting from scratch.")
+                        downloaded = 0
+                        file_mode = "wb"
+
+                    # Calculate total size
+                    if status_code == 206:
+                        content_range = response.headers.get("Content-Range", "")
+                        if content_range:
+                            try:
+                                total_size = int(content_range.split('/')[-1])
+                            except:
+                                total_size = int(response.headers.get('content-length', 0)) + downloaded
+                        else:
+                            total_size = int(response.headers.get('content-length', 0)) + downloaded
+                    else:
+                        total_size = int(response.headers.get('content-length', 0))
+
+                    with open(temp_dest_path, file_mode) as f:
+                        file_mode = "ab"  # Use append mode for future retries if this WB succeeds initially
+
+                        for chunk in response.iter_content(chunk_size=65536):
+                            if self._is_cancelled:
+                                f.close()
+                                if os.path.exists(temp_dest_path):
+                                    try:
+                                        os.remove(temp_dest_path)
+                                    except:
+                                        pass
+                                self.error.emit(self.book_id, "İndirme iptal edildi.")
+                                return
+
+                            if chunk:
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                
+                                current_time = time.time()
+                                if current_time - last_update_time >= 0.2 or downloaded == total_size:
+                                    last_update_time = current_time
+                                    elapsed = current_time - start_time
+                                    speed = downloaded / (elapsed if elapsed > 0 else 0.001)  # bytes per sec
+                                    speed_mb = speed / (1024 * 1024)
+                                    speed_str = f"{speed_mb:.2f} MB/s"
+                                    
+                                    if total_size > 0:
+                                        percent = int((downloaded / total_size) * 100)
+                                        self.progress_changed.emit(self.book_id, percent, speed_str)
+                                    else:
+                                        downloaded_mb = downloaded / (1024 * 1024)
+                                        self.progress_changed.emit(self.book_id, -1, f"{downloaded_mb:.1f} MB ({speed_str})")
+
+                    # Successfully finished download loop
+                    if total_size > 0 and downloaded >= total_size:
+                        break
+                    elif total_size == 0:
+                        break
+
+                except (requests.exceptions.RequestException, IOError) as e:
+                    retry_count += 1
+                    print(f"[{self.book_id}] Connection error (retry {retry_count}/{max_retries}): {e}")
+                    if retry_count >= max_retries:
+                        # Clean up temp file on permanent failure to prevent corrupted files
                         if os.path.exists(temp_dest_path):
-                            os.remove(temp_dest_path)
-                        self.error.emit(self.book_id, "İndirme iptal edildi.")
+                            try:
+                                os.remove(temp_dest_path)
+                            except:
+                                pass
+                        self.error.emit(self.book_id, f"Bağlantı hatası: {str(e)}")
                         return
-
-                    if chunk:
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        
-                        current_time = time.time()
-                        # Update progress every 0.1 seconds or at 100%
-                        if current_time - last_update_time >= 0.2 or downloaded == total_size:
-                            last_update_time = current_time
-                            elapsed = current_time - start_time
-                            speed = downloaded / (elapsed if elapsed > 0 else 0.001)  # bytes per sec
-                            speed_mb = speed / (1024 * 1024)
-                            speed_str = f"{speed_mb:.2f} MB/s"
-                            
-                            if total_size > 0:
-                                percent = int((downloaded / total_size) * 100)
-                                self.progress_changed.emit(self.book_id, percent, speed_str)
-                            else:
-                                # Unknown content length, just emit downloaded bytes in MB format
-                                downloaded_mb = downloaded / (1024 * 1024)
-                                self.progress_changed.emit(self.book_id, -1, f"{downloaded_mb:.1f} MB ({speed_str})")
+                    
+                    # Sleep 3 seconds before retrying
+                    self.msleep(3000)
+                    file_mode = "ab"  # Ensure we append on retry
 
             # Rename temp file to final destination file
             if os.path.exists(self.dest_path):
