@@ -1,27 +1,27 @@
-# Etkileşimli Kitap Kütüphanesi
+# Interactive Book Library
 
-Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş, modern kullanıcı arayüzüne sahip interaktif kitap kütüphanesi istemcisidir. 
+Interactive book library client with a modern user interface, developed for Pardus-based smart boards (ETAP).
 
-Bu istemci, öğretmenlerin ve öğrencilerin akıllı tahtalarda interaktif kitap kütüphanelerini kolayca aramasını, indirmesini, kurmasını, çalıştırmasını ve kaldırmasını sağlar.
+This client allows teachers and students to easily search, download, install, run, and uninstall interactive book libraries on smart boards.
 
 ---
 
-## 🚀 Başlangıç
+## 🚀 Getting Started
 
-Proje, hem Pardus akıllı tahta ortamında (üretim/production) hem de kişisel geliştirici bilgisayarlarında (simülasyon/developer) çalışabilecek şekilde tasarlanmıştır.
+The project is designed to run both in the Pardus smart board environment (production) and on personal developer computers (simulation/developer mode).
 
-### 💻 Geliştirici / Simülatör Modu (Arch Linux vb.)
+### 💻 Developer / Simulator Mode (Arch Linux etc.)
 
-Sisteminizde hiçbir kalıcı değişiklik yapmadan, global kütüphaneler kurmadan veya sisteme paket eklemeden uygulamayı güvenli bir şekilde denemek için geliştirici çalıştırıcısını kullanabilirsiniz. Bu script, gerekli bağımlılıklar (PySide6, requests) sisteminizde yoksa proje dizininde izole bir sanal ortam (`.venv`) oluşturarak uygulamayı başlatır:
+You can use the developer runner script to safely try out the application without making any permanent changes to your system, installing global libraries, or adding packages to the OS. If the necessary dependencies (PySide6, requests) are not installed globally, this script creates an isolated virtual environment (`.venv`) inside the project directory and launches the application:
 
 ```bash
-# Simülatör modunda güvenli çalıştırmak için:
+# To run safely in simulator mode:
 ./run_arch.py
 ```
 
-### 🏫 Üretim Modu (Pardus / Debian Akıllı Tahta)
+### 🏫 Production Mode (Pardus / Debian Smart Board)
 
-Uygulamanın gerçek sistem paketlerini (`.deb`) kurup silebildiği yetkili modda çalıştırmak için:
+To run the application in authorized mode, where it can install and uninstall actual system packages (`.deb`):
 
 ```bash
 python3 -m src.main
@@ -29,50 +29,50 @@ python3 -m src.main
 
 ---
 
-## 📦 Debian Paketi Derleme & Standardizasyon
+## 📦 Debian Package Compilation & Standardization
 
-Etkileşimli Kitap Kütüphanesi, Debian ve Lintian standartlarına (Lisans/Copyright ve MD5 kontrol toplamı uyumluluğu) tam uyumlu bir paket derleme yapısına sahiptir.
+Interactive Book Library has a package compilation structure fully compliant with Debian and Lintian standards (License/Copyright and MD5 checksum compatibility).
 
-### Derleme Adımları
+### Compilation Steps
 
-Proje dizininde aşağıdaki scripti çalıştırarak debian paketini derleyebilirsiniz. Derleme tamamlandığında ana dizinde `etkilesimli-kitap-kutuphanesi_1.0.0_all.deb` paketi oluşacaktır:
+You can compile the Debian package by running the following script in the project directory. When compilation is complete, the package `etkilesimli-kitap-kutuphanesi_1.0.0_all.deb` will be created in the root directory:
 
 ```bash
 ./scripts/build_deb.sh
 ```
 
 > [!NOTE]
-> Sisteminizde standart paketleme aracı olan `dpkg-deb` yüklü değilse, derleme scripti otomatik olarak saf Python tabanlı paket derleyiciyi (`scripts/build_deb.py`) devreye sokar.
+> If the standard packaging tool `dpkg-deb` is not installed on your system, the build script automatically triggers the pure Python-based package compiler (`scripts/build_deb.py`).
 
-### Derlenen Paketi Doğrulama
+### Verifying the Compiled Package
 
-Oluşturulan `.deb` paketinin Debian politikalarına uyumluluğunu, `md5sums` ve `copyright` dosyalarının varlığını incelemek için:
+To inspect the structure of the created `.deb` package and ensure the presence of `md5sums` and `copyright` files in compliance with Debian policies:
 
 ```bash
-# Paket yapısını doğrulamak için:
+# To verify the package structure:
 python3 scripts/inspect_deb.py
 ```
 
 ---
 
-## 🛠 Proje Yapısı
+## 🛠 Project Structure
 
-Dizin yapısı modüler ve temiz bir mimari sunar:
+The directory structure offers a modular and clean architecture:
 
-- `src/`: Uygulama kaynak kodları.
-  - `src/main.py`: Uygulama ana giriş noktası.
-  - `src/qt_compat.py`: PySide6, PyQt6 ve PyQt5 arasında otomatik uyumluluk katmanı.
-  - `src/core/`: Arka plan iş mantığı (database, downloader, installer, config, updater).
-  - `src/ui/`: Arayüz tasarımları (Libadwaita / Bottles stili modern pencereler ve temalar).
-  - `src/assets/`: Uygulama görselleri, logolar ve kitap veritabanı (`books.json`).
-- `debian/`: Standart debian paket yapılandırma dosyaları (`control`, `rules`, `changelog`, `copyright`).
-- `docs/`: Mimari ve paketleme detaylarını içeren genişletilmiş dokümantasyon dizini.
-- `scripts/`: Derleme, paketleme, veritabanı ayrıştırma ve diğer otomatikleştirme scriptleri.
-- `tests/`: UI, updater ve ağ bağlantısı için otomatik birim/entegrasyon testleri.
-- `mock_system/`: Geliştirici modunda indirmeleri ve kurulumları simüle etmek için kullanılan yerel önbellek dizini.
+- `src/`: Application source code.
+  - `src/main.py`: Main application entry point.
+  - `src/qt_compat.py`: Automatic compatibility layer between PySide6, PyQt6, and PyQt5.
+  - `src/core/`: Background business logic (database, downloader, installer, config, updater).
+  - `src/ui/`: Interface designs (Libadwaita / Bottles style modern windows and themes).
+  - `src/assets/`: Application graphics, logos, and books database (`books.json`).
+- `debian/`: Standard Debian package configuration files (`control`, `rules`, `changelog`, `copyright`).
+- `docs/`: Expanded documentation directory containing architecture and packaging details.
+- `scripts/`: Scripts for building, packaging, database parsing, and other automation tasks.
+- `tests/`: Automated unit/integration tests for UI, updater, and network connectivity.
+- `mock_system/`: Local cache directory used to simulate downloads and installations in developer mode.
 
 ---
 
-## ℹ️ Lisans
+## ℹ️ License
 
-Bu proje **GPL-3.0** lisansı altında lisanslanmıştır. Detaylar için `debian/copyright` dosyasına bakabilirsiniz.
+This project is licensed under the **GPL-3.0** license. See the `debian/copyright` file for details.

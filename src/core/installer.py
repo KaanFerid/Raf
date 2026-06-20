@@ -56,7 +56,7 @@ class InstallerWorker(QThread):
     def run_mock(self):
         if self.action == "install":
             self.status_changed.emit(self.book_id, f"Simülasyon: '{self.book['title']}' kuruluyor...")
-            self.msleep(1500)  # 1.5 saniye bekle (simüle et)
+            self.msleep(1500)  # Wait 1.5 seconds (simulate)
             installed = load_mock_installed()
             installed.add(self.book_id)
             save_mock_installed(installed)
@@ -64,7 +64,7 @@ class InstallerWorker(QThread):
             self.finished.emit(self.book_id, True)
         elif self.action == "uninstall":
             self.status_changed.emit(self.book_id, f"Simülasyon: '{self.book['title']}' kaldırılıyor...")
-            self.msleep(1000)  # 1 saniye bekle
+            self.msleep(1000)  # Wait 1 second (simulate)
             installed = load_mock_installed()
             if self.book_id in installed:
                 installed.remove(self.book_id)

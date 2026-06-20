@@ -1,28 +1,28 @@
-# Paketleme ve Standardizasyon Dokümantasyonu
+# Packaging and Standardization Documentation
 
-Etkileşimli Kitap Kütüphanesi uygulamasının dağıtımı, debian tabanlı işletim sistemlerine (Pardus, Debian, Ubuntu) uygun olarak standart `.deb` paketi biçiminde yapılır.
+The Interactive Book Library application is distributed as a standard `.deb` package suitable for Debian-based operating systems (Pardus, Debian, Ubuntu).
 
-## 1. Paket Politikası ve Lintian Uyumluluğu
+## 1. Package Policy & Lintian Compliance
 
-Debian paket denetleyicisi **Lintian** ve genel debian politikaları doğrultusunda pakete aşağıdaki uyumluluk özellikleri eklenmiştir:
+In compliance with the Debian package checker **Lintian** and general Debian packaging standards, the package integrates the following compliance features:
 
-- **MD5 Kontrol Toplamı (`md5sums`)**: Paketin içerisindeki tüm dizin dışı dosyaların MD5 değerleri çıkarılarak `control.tar.gz` altındaki `md5sums` dosyasına kaydedilir. Bu, kurulum esnasında dosyaların bütünlüğünü doğrulamaya yarar.
-- **Telif ve Lisans Bilgisi (`copyright`)**: Debian standartlarına göre, her paketin telif hakkı ve lisans bilgileri `usr/share/doc/<paket-adi>/copyright` dosyasında yer almalıdır. Uygulama derlenirken bu dosya `0o644` izinleriyle pakete dahil edilir.
+- **MD5 Checksums (`md5sums`)**: MD5 hashes of all packed files are calculated and written to the `md5sums` configuration file under `control.tar.gz` to verify integrity during installation.
+- **Copyright Declaration (`copyright`)**: Per Debian standards, licensing and copyright summaries are located in `/usr/share/doc/<package-name>/copyright`. This file is bundled with strict `0o644` read-only permissions during package compilation.
 
-## 2. Derleme Kanalları
+## 2. Compilation Channels
 
-Proje derlemesi iki farklı kanal üzerinden yapılabilmektedir:
+The project can be packaged using two alternative channels:
 
-### Standart Kanal (`scripts/build_deb.sh`)
-Eğer sisteminizde `dpkg-deb` aracı kuruluysa, bu script:
-1. `build/etkilesimli-kitap-kutuphanesi-pkg` geçici dizinini oluşturur.
-2. Kaynak kodları ve dosyaları bu geçici dizine kopyalar.
-3. MD5 toplamlarını otomatik hesaplayarak `DEBIAN/md5sums` dosyasını oluşturur.
-4. Dosya ve dizin izinlerini (`755` ve `644`) ayarlar.
-5. `dpkg-deb --build` komutuyla paketi derler.
+### Standard Channel (`scripts/build_deb.sh`)
+If the packaging utility `dpkg-deb` is installed on the host system, this script:
+1. Allocates the temporary directory `build/etkilesimli-kitap-kutuphanesi-pkg`.
+2. Copies codebase source directories and configuration targets to this path.
+3. Automatically computes file MD5 sums to generate `DEBIAN/md5sums`.
+4. Enforces strict directory and file permissions (`0o755` and `0o644`).
+5. Invokes `dpkg-deb --build` to compile the final `.deb` archive.
 
-### Saf Python Kanalı (`scripts/build_deb.py`)
-Geliştirici sistemlerinde (örn. Arch Linux veya Windows geliştirme ortamlarında) `dpkg` paketleme araçları yoksa devreye giren bu script:
-1. `tarfile` modülü ile `control.tar.gz` ve `data.tar.gz` arşivlerini bellek üzerinde oluşturur.
-2. Dosyaları kopyalarken MD5 özetlerini dinamik hesaplar.
-3. `ar` arşiv formatının header yapılarını ikili formatta oluşturarak saf Python ile standart `.deb` paketi yazar.
+### Pure-Python Channel (`scripts/build_deb.py`)
+Useful in developer environments lacking standard `dpkg` utilities (e.g. Arch Linux, Windows). This script:
+1. Utilizes the standard library `tarfile` module to construct `control.tar.gz` and `data.tar.gz` dynamically in-memory.
+2. Computes file MD5 checksums on-the-fly during file reads.
+3. Generates the binary structure of `ar` archive headers to output a fully compliant `.deb` package file format directly.

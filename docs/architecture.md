@@ -1,26 +1,26 @@
-# Mimari Dokümantasyon
+# Architecture Documentation
 
-Etkileşimli Kitap Kütüphanesi uygulaması, akıllı tahta performansını ve kullanıcı deneyimini optimize etmek amacıyla asenkron çalışan modüler bir mimariye sahiptir.
+Interactive Book Library has a modular, asynchronous architecture designed to optimize smart board performance and user experience.
 
-## 1. Katmanlı Yapı
+## 1. Layered Architecture
 
-Uygulama iki temel katmandan oluşur:
+The application is structured into two main layers:
 
-### A. İş Mantığı Katmanı (Core)
-- **`database.py`**: Yerel JSON tabanlı kitap veritabanını (`books.json`) yönetir, arama ve filtreleme sorgularına yanıt verir.
-- **`downloader.py`**: `QThread` tabanlı çalışan `DownloadWorker` sınıfını barındırır. Google Drive virüs uyarısı bypass algoritması, `Range` başlığı ile indirmeyi kaldığı yerden devam ettirme (resumption) ve otomatik yeniden deneme (retry) mekanizmalarına sahiptir.
-- **`installer.py`**: İndirilen kitapları paket türüne göre (.deb, .zip, .fernus) kurar. Yetki gerektiren durumlarda `pkexec` kullanır, masaüstü kısayollarını (`.desktop`) kullanıcı dizinine otomatik oluşturur.
-- **`updater.py`**: Uygulamanın kendi kendini güncelleyebilmesini sağlar. Geliştirici modunda `update_mock.json` üzerinden, üretim modunda ise uzak sunucudan güncelleme kontrolü yapar.
-- **`config.py`**: Kullanıcı tercihlerini (tema seçimi vb.) kalıcı olarak saklar.
+### A. Business Logic Layer (Core)
+- **`database.py`**: Manages the local JSON-based book database (`books.json`), serving search and filter queries.
+- **`downloader.py`**: Contains the `QThread`-based `DownloadWorker`. Implements a Google Drive virus warning bypass, HTTP `Range` resumption, and auto-retry network recovery.
+- **`installer.py`**: Installs downloaded books according to their package type (`.deb`, `.zip`, `.fernus`). Uses `pkexec` for elevated package operations and auto-generates `.desktop` desktop entry files for non-deb packages.
+- **`updater.py`**: Handles self-updater processes. Performs checks against `update_mock.json` in simulation mode and a remote server metadata config in production mode.
+- **`config.py`**: Persists user preferences (such as theme configurations) locally.
 
-### B. Kullanıcı Arayüzü Katmanı (UI)
-- **`main_window.py`**: Ana pencereyi, görünüm değiştiricileri (`Market` ve `Kütüphanem`), arama/filtreleme çubuklarını ve hamburger menüyü yönetir.
-- **`components.py`**: Adwaita/Bottles stilini taşıyan `PublisherBadge` ve tek sütunlu liste satırı tasarımlarını (`BookRow`) içerir.
-- **`styles.py`**: QSS (Qt Style Sheets) kullanarak Açık ve Koyu modern GTK/Adwaita temalarını sunar.
+### B. User Interface Layer (UI)
+- **`main_window.py`**: Manages the main window container, view switchers (`Market` and `Kütüphanem` tabs), search/category filters, and options menu.
+- **`components.py`**: Houses custom widgets including `PublisherBadge` and single-column list card widgets (`BookCard`).
+- **`styles.py`**: Houses the QSS (Qt Style Sheets) light and dark theme configurations mimicking the GTK/Adwaita layout aesthetics.
 
-## 2. Asenkron İletişim & Sinyal Mekanizması
+## 2. Asynchronous Communication & Signal Design
 
-Arayüzün donmasını engellemek için tüm ağ ve IO işlemleri Qt'nin `QThread` yapısı ve sinyaller (`Signal`) aracılığıyla gerçekleştirilir:
+To keep the UI responsive, network and file system IO tasks run in separate threads using Qt's `QThread` and notify the main application thread via Qt's event bus (`Signal`):
 
 ```
 [Main Window (UI Thread)]  <-- Signals --  [DownloadWorker (QThread)]
@@ -28,6 +28,6 @@ Arayüzün donmasını engellemek için tüm ağ ve IO işlemleri Qt'nin `QThrea
          |-- Start / Cancel ------------------------>|
          |                                           |--> requests.Session (chunked download)
 ```
-- **`progress_changed`**: İndirme yüzdesini ve güncel hızı raporlar.
-- **`finished`**: İndirme tamamlandığında hedef dosya yolunu döner.
-- **`error`**: Hata durumunda arayüze açıklama iletir.
+- **`progress_changed`**: Reports downloaded chunks percent and speed.
+- **`finished`**: Returns target file path on successful download.
+- **`error`**: Dispatches details of any exceptions to the main thread.
