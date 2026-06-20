@@ -1,5 +1,6 @@
 import os
 import time
+import re
 import requests
 from src.qt_compat import QThread, Signal
 
@@ -28,9 +29,37 @@ class DownloadWorker(QThread):
             os.makedirs(dest_dir, exist_ok=True)
 
         try:
-            # We must use stream=True to download in chunks and report progress
-            response = requests.get(self.url, stream=True, timeout=15)
+            # We must use a Session to handle cookies and download in chunks
+            session = requests.Session()
+            response = session.get(self.url, stream=True, timeout=15)
             response.raise_for_status()
+
+            # Google Drive virus warning page detection and bypass
+            if "text/html" in response.headers.get("Content-Type", ""):
+                html_text = response.text
+                confirm_match = re.search(r'name="confirm"\s+value="([^"]+)"', html_text)
+                uuid_match = re.search(r'name="uuid"\s+value="([^"]+)"', html_text)
+                id_match = re.search(r'name="id"\s+value="([^"]+)"', html_text)
+                
+                if confirm_match and uuid_match:
+                    confirm_val = confirm_match.group(1)
+                    uuid_val = uuid_match.group(1)
+                    file_id = id_match.group(1) if id_match else ""
+                    if not file_id:
+                        # Extract id from self.url query parameter
+                        match = re.search(r"[?&]id=([^&]+)", self.url)
+                        if match:
+                            file_id = match.group(1)
+                            
+                    download_url = "https://drive.usercontent.google.com/download"
+                    params = {
+                        "id": file_id,
+                        "export": "download",
+                        "confirm": confirm_val,
+                        "uuid": uuid_val
+                    }
+                    response = session.get(download_url, params=params, stream=True, timeout=15)
+                    response.raise_for_status()
 
             total_size = int(response.headers.get('content-length', 0))
             downloaded = 0
