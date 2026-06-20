@@ -1,0 +1,502 @@
+[
+  {
+    "id": "akademikbasariyayinlarikutuphane",
+    "title": "Akademik Başarı Yayınları Kütüphanesi",
+    "publisher": "Akademik Başarı Yayınları",
+    "version": "1.0.0",
+    "description": "Akademik Başarı Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "AkademikBasariYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1EtuLCkRDRF1n9WBXVSfKLyP2o04OOtIH",
+    "file_type": "deb"
+  },
+  {
+    "id": "ankarakutuphane",
+    "title": "Ankara Yayıncılık Kütüphanesi",
+    "publisher": "Ankara Yayıncılık",
+    "version": "1.0.0",
+    "description": "Ankara Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "AnkaraKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=14UBvxlOnWPbvG0mLRVKlryswRxFyhzlJ",
+    "file_type": "deb"
+  },
+  {
+    "id": "arikutuphane",
+    "title": "Arı Yayıncılık Kütüphanesi",
+    "publisher": "Arı Yayıncılık",
+    "version": "1.0.0",
+    "description": "Arı Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "AriKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1ikJAGZVUlvbVcSlemBI35_iCMBGPGfOx",
+    "file_type": "deb"
+  },
+  {
+    "id": "atakutuphane",
+    "title": "Ata Yayıncılık Kütüphanesi",
+    "publisher": "Ata Yayıncılık",
+    "version": "1.0.0",
+    "description": "Ata Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "AtaKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1JxHDCF2nec6bHzriF6rSCtBkh4NNE2vp",
+    "file_type": "deb"
+  },
+  {
+    "id": "avantajperakendekutuphane",
+    "title": "Avantaj Perakende Kütüphanesi",
+    "publisher": "Avantaj Perakende",
+    "version": "1.0.0",
+    "description": "Avantaj Perakende interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "AvantajPerakendeKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1FrEp300d-NU3Gri4LR0zumSn9yXzCzFn",
+    "file_type": "deb"
+  },
+  {
+    "id": "berkayyayinlarikutuphane",
+    "title": "Berkay Yayınları Kütüphanesi",
+    "publisher": "Berkay Yayınları",
+    "version": "1.0.0",
+    "description": "Berkay Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "BerkayYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1HB29Q8_xjo0mTgi_Yb1PLO57ltPG6__K",
+    "file_type": "deb"
+  },
+  {
+    "id": "bilfenkutuphane-v2-23",
+    "title": "Bilfen Yayıncılık Kütüphanesi",
+    "publisher": "Bilfen Yayıncılık",
+    "version": "1.0.0",
+    "description": "Bilfen Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "BilfenKutuphane-v2-23.fernus",
+    "download_url": "https://drive.google.com/uc?export=download&id=1luoOYf_5ukxEcZB60a_JH8CjTWPli79O",
+    "file_type": "fernus"
+  },
+  {
+    "id": "birikimyayinlarikutuphane",
+    "title": "Birikim Yayınları Kütüphanesi",
+    "publisher": "Birikim Yayınları",
+    "version": "1.0.0",
+    "description": "Birikim Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "BirikimYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1LnTjRvpwYx5-tiQbhuWWQ1OuzICGmV4S",
+    "file_type": "deb"
+  },
+  {
+    "id": "caliskanariyayinlarikutuphane",
+    "title": "Çalışkan Arı Yayınları Kütüphanesi",
+    "publisher": "Çalışkan Arı Yayınları",
+    "version": "1.0.0",
+    "description": "Çalışkan Arı Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "CaliskanAriYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1Rq6AusF03Eb_-KA8_lVZeGIsXmnHf-lz",
+    "file_type": "deb"
+  },
+  {
+    "id": "cantakutuphane",
+    "title": "Çanta Yayıncılık Kütüphanesi",
+    "publisher": "Çanta Yayıncılık",
+    "version": "1.0.0",
+    "description": "Çanta Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "CantaKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1SCMgBOjzdTLs4bf83910EY7GX8PUFA7T",
+    "file_type": "deb"
+  },
+  {
+    "id": "datayayinlarikutuphane",
+    "title": "Data Yayınları Kütüphanesi",
+    "publisher": "Data Yayınları",
+    "version": "1.0.0",
+    "description": "Data Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "DataYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1Y0dQbyQQOXv5dojuPXl9Bwlj9u_k3J39",
+    "file_type": "deb"
+  },
+  {
+    "id": "duyuyayinlarikutuphane",
+    "title": "Duyu Yayınları Kütüphanesi",
+    "publisher": "Duyu Yayınları",
+    "version": "1.0.0",
+    "description": "Duyu Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "DuyuYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1cFy8GZPkTcoGGWj0q1SSSxRnOdcFtHxO",
+    "file_type": "deb"
+  },
+  {
+    "id": "ekspertyayinlarikutuphane",
+    "title": "Ekspert Yayınları Kütüphanesi",
+    "publisher": "Ekspert Yayınları",
+    "version": "1.0.0",
+    "description": "Ekspert Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "EkspertYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1-cEDJtC-t_HoDHcbg2BQg4Y061cS20_C",
+    "file_type": "deb"
+  },
+  {
+    "id": "endemikkutuphane",
+    "title": "Endemik Yayınları Kütüphanesi",
+    "publisher": "Endemik Yayınları",
+    "version": "1.0.0",
+    "description": "Endemik Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "EndemikKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=14g6-ZFen3u2RAnGjJLwwr8YaYoNZshD-",
+    "file_type": "deb"
+  },
+  {
+    "id": "esenyayinlarikutuphane",
+    "title": "Esen Yayınları Kütüphanesi",
+    "publisher": "Esen Yayınları",
+    "version": "1.0.0",
+    "description": "Esen Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "EsenYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1vc9IQBaav19QYg8ADGt9vPc5Po367nsU",
+    "file_type": "deb"
+  },
+  {
+    "id": "fatihayyayinlarikutuphane",
+    "title": "Fatih Ay Yayınları Kütüphanesi",
+    "publisher": "Fatih Ay Yayınları",
+    "version": "1.0.0",
+    "description": "Fatih Ay Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "FatihAyYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1Tn-LfnC_vm1JehnzRsXuLuE1ivK0mjfb",
+    "file_type": "deb"
+  },
+  {
+    "id": "fenomenkutuphane",
+    "title": "Fenomen Yayıncılık Kütüphanesi",
+    "publisher": "Fenomen Yayıncılık",
+    "version": "1.0.0",
+    "description": "Fenomen Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "FenomenKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1glfPMijhudhtHcpgkMYIXnzi0Z6Dg_Up",
+    "file_type": "deb"
+  },
+  {
+    "id": "fiyayinlarikutuphane",
+    "title": "Fi Yayınları Kütüphanesi",
+    "publisher": "Fi Yayınları",
+    "version": "1.0.0",
+    "description": "Fi Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "FiYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=13WwS0GIx1_y4niDV8HZf6vaAmtcuDJqT",
+    "file_type": "deb"
+  },
+  {
+    "id": "gizlikutuphane",
+    "title": "Gizli Yayıncılık Kütüphanesi",
+    "publisher": "Gizli Yayıncılık",
+    "version": "1.0.0",
+    "description": "Gizli Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "GizliKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1OOQrFBruVYJ0yGGauZ9Z4yzlgO2im3iU",
+    "file_type": "deb"
+  },
+  {
+    "id": "gunaykutuphane",
+    "title": "Günay Yayınları Kütüphanesi",
+    "publisher": "Günay Yayınları",
+    "version": "1.0.0",
+    "description": "Günay Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "GunayKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=16VVk7akZdSgbJg4TaGyRj_VZClwVJDM4",
+    "file_type": "deb"
+  },
+  {
+    "id": "hiperzekakutuphane",
+    "title": "Hiper Zeka Yayınları Kütüphanesi",
+    "publisher": "Hiper Zeka Yayınları",
+    "version": "1.0.0",
+    "description": "Hiper Zeka Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "HiperZekaKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=13mbP5AeXav4szrYTMO61Dh-X6VaePJ2x",
+    "file_type": "deb"
+  },
+  {
+    "id": "hizkutuphane",
+    "title": "Hız Yayınları Kütüphanesi",
+    "publisher": "Hız Yayınları",
+    "version": "1.0.0",
+    "description": "Hız Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "HizKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=13rtar_vmxVSZRJwOwbc3Z_82QyqUujTj",
+    "file_type": "deb"
+  },
+  {
+    "id": "i̇sleryayingurubukutuphane",
+    "title": "İşler Yayın Grubu Kütüphanesi",
+    "publisher": "İşler Yayın Grubu",
+    "version": "1.0.0",
+    "description": "İşler Yayın Grubu interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "İslerYayinGurubuKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=14FRhvqZP2MR9t2mHhKWFSLLG7L03_ync",
+    "file_type": "deb"
+  },
+  {
+    "id": "keykutuphane",
+    "title": "Key Yayınları Kütüphanesi",
+    "publisher": "Key Yayınları",
+    "version": "1.0.0",
+    "description": "Key Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "KeyKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1K2r19fhgKS56GXQxWsPgBZWxOlnQl4N6",
+    "file_type": "deb"
+  },
+  {
+    "id": "kondisyonyayinlarikutuphane",
+    "title": "Kondisyon Yayınları Kütüphanesi",
+    "publisher": "Kondisyon Yayınları",
+    "version": "1.0.0",
+    "description": "Kondisyon Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "KondisyonYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1RgQtKHIfsNKWlwbsp6yAYbONsnI57X-_",
+    "file_type": "deb"
+  },
+  {
+    "id": "kurmaykutuphane",
+    "title": "Kurmay Yayınları Kütüphanesi",
+    "publisher": "Kurmay Yayınları",
+    "version": "1.0.0",
+    "description": "Kurmay Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "KurmayKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=13hCmr37gSBHxj20BlcdjkwDsi3UsciOH",
+    "file_type": "deb"
+  },
+  {
+    "id": "limitperakendekutuphane",
+    "title": "Limit Perakende Kütüphanesi",
+    "publisher": "Limit Perakende",
+    "version": "1.0.0",
+    "description": "Limit Perakende interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "LimitPerakendeKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1e4_5M7-FzrgpDaLGcYMNUBTSMZt223dW",
+    "file_type": "deb"
+  },
+  {
+    "id": "matsevyayinlarikutuphane",
+    "title": "Matsev Yayınları Kütüphanesi",
+    "publisher": "Matsev Yayınları",
+    "version": "1.0.0",
+    "description": "Matsev Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "MatsevYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1tst1f54CeP_Am6qUf6EdGmJpj7KpEAiX",
+    "file_type": "deb"
+  },
+  {
+    "id": "mavidenizkutuphane",
+    "title": "Mavi Deniz Yayınları Kütüphanesi",
+    "publisher": "Mavi Deniz Yayınları",
+    "version": "1.0.0",
+    "description": "Mavi Deniz Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "MaviDenizKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1OPCluZjSDc0OnDJ60ddC5ZwYaO6fQUw5",
+    "file_type": "deb"
+  },
+  {
+    "id": "modelkutuphane",
+    "title": "Model Yayınları Kütüphanesi",
+    "publisher": "Model Yayınları",
+    "version": "1.0.0",
+    "description": "Model Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "ModelKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=17fkKd4xNAIIKEVLd-UkPcDz6FQRgChVo",
+    "file_type": "deb"
+  },
+  {
+    "id": "mozaikkutuphane",
+    "title": "Mozaik Yayınları Kütüphanesi",
+    "publisher": "Mozaik Yayınları",
+    "version": "1.0.0",
+    "description": "Mozaik Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "MozaikKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=18VulUGL6Utz7Nt4jCEYtMYtqwcNfhUbh",
+    "file_type": "deb"
+  },
+  {
+    "id": "mubakutuphane",
+    "title": "Muba Yayınları Kütüphanesi",
+    "publisher": "Muba Yayınları",
+    "version": "1.0.0",
+    "description": "Muba Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "MubaKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1VlT5S1iHUqjOfFn3xI9o1KBXielevqCQ",
+    "file_type": "deb"
+  },
+  {
+    "id": "netizyayinlarikutuphane",
+    "title": "Netiz Yayınları Kütüphanesi",
+    "publisher": "Netiz Yayınları",
+    "version": "1.0.0",
+    "description": "Netiz Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "NetizYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1R5_YA6U1bLjAsYZHAACN2JrMPkldJWLV",
+    "file_type": "deb"
+  },
+  {
+    "id": "nftyayinlarikutuphane",
+    "title": "NFT Yayınları Kütüphanesi",
+    "publisher": "NFT Yayınları",
+    "version": "1.0.0",
+    "description": "NFT Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "NFTYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1dtrgzU6pkzEnEaixwly1xZhWAUKGch7z",
+    "file_type": "deb"
+  },
+  {
+    "id": "oksijenyayinlarikutuphane",
+    "title": "Oksijen Yayınları Kütüphanesi",
+    "publisher": "Oksijen Yayınları",
+    "version": "1.0.0",
+    "description": "Oksijen Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "OksijenYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1PfN7YSxgtR0hn3VItryScXLTBfdtxqqe",
+    "file_type": "deb"
+  },
+  {
+    "id": "okyanuskutuphane",
+    "title": "Okyanus Yayıncılık Kütüphanesi",
+    "publisher": "Okyanus Yayıncılık",
+    "version": "1.0.0",
+    "description": "Okyanus Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "OkyanusKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1A_kdBnKhZV-XWAdHYgMdjL_EKKqs2fbo",
+    "file_type": "deb"
+  },
+  {
+    "id": "optikyayinlarikutuphane",
+    "title": "Optik Yayınları Kütüphanesi",
+    "publisher": "Optik Yayınları",
+    "version": "1.0.0",
+    "description": "Optik Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "OptikYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1__-u7wgdNqPxIyll1dVsTSUBrCoQ-9cS",
+    "file_type": "deb"
+  },
+  {
+    "id": "ordinatkutuphane",
+    "title": "Ordinat Yayınları Kütüphanesi",
+    "publisher": "Ordinat Yayınları",
+    "version": "1.0.0",
+    "description": "Ordinat Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "OrdinatKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1hh_MswstF8cj96r5Z5zucBPn60YaaOXM",
+    "file_type": "deb"
+  },
+  {
+    "id": "ornekyayinlarikutuphane",
+    "title": "Örnek Yayınları Kütüphanesi",
+    "publisher": "Örnek Yayınları",
+    "version": "1.0.0",
+    "description": "Örnek Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "OrnekYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=16U-cY9HXNstkm6ppiKOW0OFW6evUazc1",
+    "file_type": "deb"
+  },
+  {
+    "id": "patyayinlarikutuphane",
+    "title": "Pat Yayınları Kütüphanesi",
+    "publisher": "Pat Yayınları",
+    "version": "1.0.0",
+    "description": "Pat Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "PatYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1xfIk-Y9WDdHBcBYR8Idvf3hPatnMyAuw",
+    "file_type": "deb"
+  },
+  {
+    "id": "paylasimyayinlarikutuphane",
+    "title": "Paylaşım Yayınları Kütüphanesi",
+    "publisher": "Paylaşım Yayınları",
+    "version": "1.0.0",
+    "description": "Paylaşım Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "PaylasimYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1Ux05QiN8z89bHzGt26OIESR7HxM7waE1",
+    "file_type": "deb"
+  },
+  {
+    "id": "peksenyayinlarikutuphane",
+    "title": "Pekşen Yayınları Kütüphanesi",
+    "publisher": "Pekşen Yayınları",
+    "version": "1.0.0",
+    "description": "Pekşen Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "PeksenYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=15t0FQScxjK0MkvXDOwvzkXBBtZyvyijr",
+    "file_type": "deb"
+  },
+  {
+    "id": "pruvayayinlarikutuphane",
+    "title": "Pruva Yayınları Kütüphanesi",
+    "publisher": "Pruva Yayınları",
+    "version": "1.0.0",
+    "description": "Pruva Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "PruvaYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1rNZ34A7P97RAta2LT-V1uk2MVTm1JeLL",
+    "file_type": "deb"
+  },
+  {
+    "id": "puzayayinlarikutuphane",
+    "title": "Puza Yayınları Kütüphanesi",
+    "publisher": "Puza Yayınları",
+    "version": "1.0.0",
+    "description": "Puza Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "PuzaYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1LsbZjO9KGQAdCU-cEcfreT_k_8JjoY6W",
+    "file_type": "deb"
+  },
+  {
+    "id": "rasyonelkutuphane-v2-23",
+    "title": "Rasyonel Yayınları Kütüphanesi",
+    "publisher": "Rasyonel Yayınları",
+    "version": "1.0.0",
+    "description": "Rasyonel Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "RasyonelKutuphane-v2-23.fernus",
+    "download_url": "https://drive.google.com/uc?export=download&id=1M8Y-Nt2MVlBwevKcHAOC9BN1qjnuGUrm",
+    "file_type": "fernus"
+  },
+  {
+    "id": "tammatyayinlarikutuphane",
+    "title": "Tammat Yayınları Kütüphanesi",
+    "publisher": "Tammat Yayınları",
+    "version": "1.0.0",
+    "description": "Tammat Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "TammatYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1RGKyk16E2yFnjG_7I8K5BHM0HJuurAdF",
+    "file_type": "deb"
+  },
+  {
+    "id": "testyayinlarikutuphane",
+    "title": "Test Yayınları Kütüphanesi",
+    "publisher": "Test Yayınları",
+    "version": "1.0.0",
+    "description": "Test Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "TestYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1sRLsCFkLMVyIXQHDKtKKGKwpqCOpN9vH",
+    "file_type": "deb"
+  },
+  {
+    "id": "toprakyayinlarikutuphane",
+    "title": "Toprak Yayınları Kütüphanesi",
+    "publisher": "Toprak Yayınları",
+    "version": "1.0.0",
+    "description": "Toprak Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "ToprakYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1EZpTnqeuEyUrtRkWHoIMxjfLXT_zcuum",
+    "file_type": "deb"
+  },
+  {
+    "id": "ucgenkutuphane",
+    "title": "Üçgen Yayıncılık Kütüphanesi",
+    "publisher": "Üçgen Yayıncılık",
+    "version": "1.0.0",
+    "description": "Üçgen Yayıncılık interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "UcgenKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1k68H0ohtccm25lD08Mcg6qzdvgv_wxge",
+    "file_type": "deb"
+  },
+  {
+    "id": "ucrenkyayinlarikutuphane",
+    "title": "Üç Renk Yayınları Kütüphanesi",
+    "publisher": "Üç Renk Yayınları",
+    "version": "1.0.0",
+    "description": "Üç Renk Yayınları interaktif akıllı tahta kitap kütüphanesi uygulaması.",
+    "file_name": "UcRenkYayinlariKutuphane.deb",
+    "download_url": "https://drive.google.com/uc?export=download&id=1ORhP14IaiI0KA2Std2W27EJgK44hY8Fz",
+    "file_type": "deb"
+  }
+]

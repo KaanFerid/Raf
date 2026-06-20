@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python3
+
+override_dh_auto_install:
+	python3 setup.py install --root=$(CURDIR)/debian/kitapmarkt --install-layout=deb
+	
+	# Install desktop entry
+	mkdir -p $(CURDIR)/debian/kitapmarkt/usr/share/applications
+	cp kitapmarkt.desktop $(CURDIR)/debian/kitapmarkt/usr/share/applications/
+	
+	# Install application icon
+	mkdir -p $(CURDIR)/debian/kitapmarkt/usr/share/pixmaps
+	cp src/assets/kitapmarkt.png $(CURDIR)/debian/kitapmarkt/usr/share/pixmaps/
