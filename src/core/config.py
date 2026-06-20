@@ -26,3 +26,16 @@ def save_config(config):
             json.dump(config, f, indent=2)
     except Exception as e:
         print(f"Error saving config: {e}")
+
+def get_cached_package_name(book_id):
+    """Retrieves the exact package name mapped to a book ID from configuration."""
+    config = load_config()
+    return config.get("package_names", {}).get(book_id)
+
+def set_cached_package_name(book_id, package_name):
+    """Saves the resolved package name for a book ID to avoid guessing in the future."""
+    config = load_config()
+    if "package_names" not in config:
+        config["package_names"] = {}
+    config["package_names"][book_id] = package_name
+    save_config(config)

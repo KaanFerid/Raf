@@ -3,7 +3,9 @@ import subprocess
 import shutil
 import zipfile
 import json
+import re
 from src.qt_compat import QThread, Signal
+from src.core.config import get_cached_package_name, set_cached_package_name
 
 MOCK_DB_PATH = os.path.abspath(os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
@@ -93,6 +95,25 @@ class InstallerWorker(QThread):
             self.finished.emit(self.book_id, False)
 
     def install_deb(self):
+        self.status_changed.emit(self.book_id, "Paket bilgileri sorgulanıyor...")
+        
+        # Extract the exact package name from the downloaded .deb file
+        try:
+            res = subprocess.run(
+                ["dpkg-deb", "-f", self.file_path, "Package"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=5
+            )
+            if res.returncode == 0:
+                package_name = res.stdout.strip()
+                if package_name:
+                    set_cached_package_name(self.book_id, package_name)
+                    print(f"[{self.book_id}] Resolved package name from deb file: {package_name}")
+        except Exception as e:
+            print(f"[{self.book_id}] Error reading package name from deb file: {e}")
+
         self.status_changed.emit(self.book_id, "Sistem paketi kuruluyor (Yetki istenebilir)...")
         
         # We will use pkexec apt-get install -y ./file.deb
@@ -243,25 +264,81 @@ def get_all_installed_packages():
         print(f"Error querying installed packages: {e}")
     return installed
 
-def get_deb_package_name(book):
-    """Guesses or queries the debian package name of the book."""
+def turkish_to_ascii(text):
+    """Normalizes Turkish characters to their standard ASCII lowercase equivalents."""
+    text = text.lower()
+    mapping = {
+        'ı': 'i', 'i̇': 'i', 'İ': 'i', 'İ': 'i',
+        'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c'
+    }
+    for k, v in mapping.items():
+        text = text.replace(k, v)
+    return text
+
+def generate_package_guesses(book):
+    """Generates a list of likely package names based on the book file name."""
     file_name = book['file_name']
-    base_name = file_name[:-4]  # remove .deb
+    base_name = file_name
+    if base_name.endswith('.deb'):
+        base_name = base_name[:-4]
+    elif base_name.endswith('.fernus'):
+        base_name = base_name[:-7]
+    elif base_name.endswith('.zip'):
+        base_name = base_name[:-4]
+        
+    # Remove version suffixes if present (e.g. -v2-23)
+    base_name = re.sub(r'-v\d+.*$', '', base_name)
+    base_name = re.sub(r'_\d+.*$', '', base_name)
     
-    # Let's list a few guesses
-    guesses = [
-        base_name.lower(),
-        base_name.lower().replace('kutuphane', '-kutuphane'),
-        base_name.lower().replace('yayinlari', '-yayinlari'),
-        base_name.lower().replace('yayinlari', '-yayinlari-kutuphane'),
-        base_name.lower().replace('yayiningurubu', '-yayin-grubu'),
-    ]
+    # Convert Turkish characters to ASCII
+    base_clean = turkish_to_ascii(base_name)
     
-    # Clean the guess list (lowercase, alpha-numeric and dashes only)
+    # List of keywords to strip out for shorter names
+    keywords_to_remove = ['yayinlari', 'yayincilik', 'yayiningurubu', 'yayingurubu', 'yayin', 'dagitim', 'perakende', 'gurubu', 'grubu']
+    
+    # Generate variations
+    bases = [base_clean]
+    
+    # Also generate base with keywords removed
+    short_base = base_clean
+    for kw in keywords_to_remove:
+        short_base = short_base.replace(kw, '')
+    if short_base != base_clean and short_base != 'kutuphane' and len(short_base) > 3:
+        bases.append(short_base)
+        
+    # For each base, generate suffix variations
+    guesses = []
+    for b in bases:
+        guesses.append(b)
+        guesses.append(b.replace('kutuphane', '-kutuphane'))
+        guesses.append(b.replace('kutuphanesi', '-kutuphanesi'))
+        
+        # If b doesn't end with kutuphane, add it
+        if not b.endswith('kutuphane') and not b.endswith('kutuphanesi'):
+            guesses.append(b + 'kutuphane')
+            guesses.append(b + '-kutuphane')
+            guesses.append(b + 'kutuphanesi')
+            guesses.append(b + '-kutuphanesi')
+            
+    # Clean all guesses to alphanumeric and dashes/plus/dots only
     cleaned_guesses = []
     for g in guesses:
         clean = "".join([c if c.isalnum() or c in ['-', '+', '.'] else '' for c in g])
-        cleaned_guesses.append(clean)
+        clean = clean.strip('-')
+        if clean and clean not in cleaned_guesses:
+            cleaned_guesses.append(clean)
+            
+    return cleaned_guesses
+
+def get_deb_package_name(book):
+    """Retrieves or queries the debian package name of the book."""
+    # 1. Try config cache first
+    cached_name = get_cached_package_name(book['id'])
+    if cached_name:
+        return cached_name
+        
+    # 2. Fall back to smart guesses
+    cleaned_guesses = generate_package_guesses(book)
         
     # Check if any is installed via dpkg-query
     for pkg in cleaned_guesses:
@@ -273,6 +350,8 @@ def get_deb_package_name(book):
                 text=True
             )
             if "install ok installed" in res.stdout:
+                # Cache it now for subsequent calls
+                set_cached_package_name(book['id'], pkg)
                 return pkg
         except:
             pass
@@ -289,39 +368,50 @@ def is_book_installed(book, installed_set=None):
     file_type = book.get('file_type', 'deb')
     
     if file_type == 'deb':
-        # High-performance set-lookup path
+        # 1. Check cached package name first
+        cached_name = get_cached_package_name(book['id'])
+        if cached_name:
+            if installed_set is not None:
+                return cached_name in installed_set
+            try:
+                res = subprocess.run(
+                    ["dpkg-query", "-W", "-f=${Status}", cached_name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                return "install ok installed" in res.stdout
+            except:
+                return False
+                
+        # 2. Set-lookup path with smart guesses
+        cleaned_guesses = generate_package_guesses(book)
         if installed_set is not None:
-            file_name = book['file_name']
-            base_name = file_name[:-4]  # remove .deb
-            guesses = [
-                base_name.lower(),
-                base_name.lower().replace('kutuphane', '-kutuphane'),
-                base_name.lower().replace('yayinlari', '-yayinlari'),
-                base_name.lower().replace('yayinlari', '-yayinlari-kutuphane'),
-                base_name.lower().replace('yayiningurubu', '-yayin-grubu'),
-            ]
-            for g in guesses:
-                clean = "".join([c if c.isalnum() or c in ['-', '+', '.'] else '' for c in g])
-                if clean in installed_set:
+            for g in cleaned_guesses:
+                if g in installed_set:
+                    set_cached_package_name(book['id'], g)
                     return True
             return False
             
-        package_name = get_deb_package_name(book)
-        try:
-            res = subprocess.run(
-                ["dpkg-query", "-W", "-f=${Status}", package_name],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            return "install ok installed" in res.stdout
-        except:
-            return False
+        # 3. Standard query path with smart guesses
+        for pkg in cleaned_guesses:
+            try:
+                res = subprocess.run(
+                    ["dpkg-query", "-W", "-f=${Status}", pkg],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                if "install ok installed" in res.stdout:
+                    set_cached_package_name(book['id'], pkg)
+                    return True
+            except:
+                pass
+        return False
             
     elif file_type in ['zip', 'fernus']:
         apps_dir = os.path.expanduser(f"~/.local/share/kitapmarkt/apps/{book['id']}")
         desktop_file = os.path.expanduser(f"~/.local/share/applications/kitapmarkt-{book['id']}.desktop")
-        # Installed if directory exists and desktop file is present
         return os.path.exists(apps_dir) and os.path.exists(desktop_file)
         
     return False
