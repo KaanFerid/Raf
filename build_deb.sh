@@ -37,6 +37,22 @@ EOF
     echo "Uygulama logosu kopyalanıyor..."
     cp src/assets/kitapmarkt.png "$PKG_DIR/usr/share/pixmaps/"
 
+    # 4b. Copy copyright
+    echo "Telif hakkı (copyright) dosyası kopyalanıyor..."
+    mkdir -p "$PKG_DIR/usr/share/doc/kitapmarkt"
+    if [ -f debian/copyright ]; then
+        cp debian/copyright "$PKG_DIR/usr/share/doc/kitapmarkt/"
+    else
+        cat << EOF > "$PKG_DIR/usr/share/doc/kitapmarkt/copyright"
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: kitapmarkt
+
+Files: *
+Copyright: 2026 KitapMarkt Team <info@kitapmarkt.org>
+License: GPL-3.0+
+EOF
+    fi
+
     # 5. Create control file
     echo "Paket control dosyası hazırlanıyor..."
     if [ -f debian/control ]; then
@@ -64,6 +80,10 @@ Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
  hizlica aranmasi, indirilmesi, kurulmasi ve silinmesini saglar.
 EOF
     fi
+
+    # 5b. Generate md5sums
+    echo "MD5 kontrol toplamları oluşturuluyor..."
+    (cd "$PKG_DIR" && find usr -type f -exec md5sum {} \;) > "$PKG_DIR/DEBIAN/md5sums"
 
     # Ensure files have correct permissions
     echo "İzinler ayarlanıyor..."

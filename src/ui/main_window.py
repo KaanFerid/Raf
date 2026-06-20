@@ -12,6 +12,7 @@ from src.core.database import Database
 from src.core.downloader import DownloadWorker
 from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name, get_all_installed_packages
 from src.core.config import load_config, save_config
+from src.core.updater import UpdateChecker, UpdateInstaller
 
 class PreferencesDialog(QDialog):
     """Preferences window styled in Adwaita format for theme configuration."""
@@ -110,6 +111,11 @@ class MainWindow(QMainWindow):
         
         self.init_ui()
         self.update_theme()
+        
+        # Check for updates in the background on startup
+        self.update_checker = UpdateChecker()
+        self.update_checker.update_available.connect(self.on_update_available)
+        self.update_checker.start()
         
         # Periodically refresh installation status of displayed items
         self.refresh_timer = QTimer(self)
@@ -407,6 +413,76 @@ class MainWindow(QMainWindow):
             subprocess.Popen(["onboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except:
             pass
+
+    def on_update_available(self, version, download_url, changelog):
+        """Callback triggered when the UpdateChecker thread detects a newer version."""
+        reply = QMessageBox.question(
+            self,
+            "Yeni Güncelleme Mevcut",
+            f"<h3>KitapMarkt v{version} sürümü hazır!</h3>"
+            f"<p><b>Yenilikler:</b><br/>{changelog}</p>"
+            f"<p>Uygulamayı şimdi güncellemek ister misiniz?</p>",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes
+        )
+        
+        if reply == QMessageBox.Yes:
+            self.start_app_update(version, download_url)
+
+    def start_app_update(self, version, download_url):
+        """Starts downloading the update deb file."""
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            cache_dir = os.path.abspath(os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "mock_system",
+                "cache"
+            ))
+        else:
+            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            
+        file_path = os.path.join(cache_dir, f"kitapmarkt_{version}_update.deb")
+        self.statusBar.showMessage("Güncelleme indiriliyor...")
+        
+        # Reuse DownloadWorker for downloading update deb
+        self.update_download_worker = DownloadWorker("app_update", download_url, file_path)
+        self.update_download_worker.progress_changed.connect(self.on_update_download_progress)
+        self.update_download_worker.finished.connect(self.on_update_download_finished)
+        self.update_download_worker.error.connect(self.on_update_download_error)
+        self.update_download_worker.start()
+        
+    def on_update_download_progress(self, bid, percent, speed_str):
+        pct = percent if percent >= 0 else 50
+        self.statusBar.showMessage(f"Güncelleme indiriliyor: %{pct} ({speed_str})")
+        
+    def on_update_download_finished(self, bid, file_path):
+        self.statusBar.showMessage("Güncelleme dosyası indirildi, kuruluyor...")
+        
+        # Start installation process
+        self.update_installer_worker = UpdateInstaller(file_path)
+        self.update_installer_worker.status_changed.connect(lambda msg: self.statusBar.showMessage(msg))
+        self.update_installer_worker.finished.connect(self.on_update_install_finished)
+        self.update_installer_worker.start()
+        
+    def on_update_download_error(self, bid, err_msg):
+        self.statusBar.showMessage("Güncelleme indirme hatası!", 5000)
+        QMessageBox.warning(self, "Güncelleme Başarısız", f"Güncelleme dosyası indirilemedi:\n{err_msg}")
+        
+    def on_update_install_finished(self, success):
+        if success:
+            self.statusBar.showMessage("Güncelleme tamamlandı!", 5000)
+            QMessageBox.information(
+                self,
+                "Güncelleme Başarılı",
+                "KitapMarkt başarıyla güncellendi!\nYeni sürümün geçerli olması için lütfen uygulamayı kapatıp yeniden başlatın."
+            )
+            self.close()
+        else:
+            self.statusBar.showMessage("Güncelleme hatası!", 5000)
+            QMessageBox.critical(
+                self,
+                "Güncelleme Hatası",
+                "Güncelleme yüklenemedi. Lütfen yönetici şifresini doğru girdiğinizden emin olun."
+            )
 
     def on_tab_changed(self):
         """Handles switcher tab toggle between Market and Library views."""

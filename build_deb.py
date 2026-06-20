@@ -2,6 +2,7 @@ import os
 import tarfile
 import io
 import time
+import hashlib
 
 def create_ar_header(name, size, mode=0o100644):
     # ar header is 60 bytes:
@@ -32,7 +33,126 @@ def build_deb():
     # 1. Prepare debian-binary content
     debian_binary = b"2.0\n"
     
-    # 2. Prepare control.tar.gz
+    md5_list = []
+    
+    def get_md5(content_bytes):
+        return hashlib.md5(content_bytes).hexdigest()
+    
+    # 2. Prepare data.tar.gz
+    print("data.tar.gz hazırlanıyor...")
+    data_data = io.BytesIO()
+    with tarfile.open(fileobj=data_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
+        # Add parent directories first so dpkg can extract files into them
+        dirs_to_create = [
+            "usr",
+            "usr/bin",
+            "usr/share",
+            "usr/share/applications",
+            "usr/share/pixmaps",
+            "usr/share/doc",
+            "usr/share/doc/kitapmarkt",
+            "usr/share/kitapmarkt",
+            "usr/share/kitapmarkt/src",
+            "usr/share/kitapmarkt/src/core",
+            "usr/share/kitapmarkt/src/ui",
+            "usr/share/kitapmarkt/src/assets"
+        ]
+        for d in dirs_to_create:
+            add_dir(tar, d)
+            
+        # Add launcher script
+        launcher_content = """#!/bin/bash
+export PYTHONPATH="/usr/share/kitapmarkt:$PYTHONPATH"
+exec python3 -u -m src.main "$@"
+""".encode('utf-8')
+        
+        tarinfo = tarfile.TarInfo(name="usr/bin/kitapmarkt")
+        tarinfo.size = len(launcher_content)
+        tarinfo.mtime = int(time.time())
+        tarinfo.mode = 0o755
+        tarinfo.uname = "root"
+        tarinfo.gname = "root"
+        tar.addfile(tarinfo, io.BytesIO(launcher_content))
+        md5_list.append(f"{get_md5(launcher_content)}  usr/bin/kitapmarkt\n")
+
+        # Add desktop file
+        with open("kitapmarkt.desktop", "rb") as f:
+            desktop_content = f.read()
+        tarinfo = tarfile.TarInfo(name="usr/share/applications/kitapmarkt.desktop")
+        tarinfo.size = len(desktop_content)
+        tarinfo.mtime = int(time.time())
+        tarinfo.mode = 0o644
+        tarinfo.uname = "root"
+        tarinfo.gname = "root"
+        tar.addfile(tarinfo, io.BytesIO(desktop_content))
+        md5_list.append(f"{get_md5(desktop_content)}  usr/share/applications/kitapmarkt.desktop\n")
+
+        # Add icon file
+        with open("src/assets/kitapmarkt.png", "rb") as f:
+            icon_content = f.read()
+        tarinfo = tarfile.TarInfo(name="usr/share/pixmaps/kitapmarkt.png")
+        tarinfo.size = len(icon_content)
+        tarinfo.mtime = int(time.time())
+        tarinfo.mode = 0o644
+        tarinfo.uname = "root"
+        tarinfo.gname = "root"
+        tar.addfile(tarinfo, io.BytesIO(icon_content))
+        md5_list.append(f"{get_md5(icon_content)}  usr/share/pixmaps/kitapmarkt.png\n")
+
+        # Add copyright file
+        copyright_content = b""
+        if os.path.exists("debian/copyright"):
+            with open("debian/copyright", "rb") as f:
+                copyright_content = f.read()
+        else:
+            copyright_content = """Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: kitapmarkt
+
+Files: *
+Copyright: 2026 KitapMarkt Team <info@kitapmarkt.org>
+License: GPL-3.0+
+""".encode('utf-8')
+        
+        tarinfo = tarfile.TarInfo(name="usr/share/doc/kitapmarkt/copyright")
+        tarinfo.size = len(copyright_content)
+        tarinfo.mtime = int(time.time())
+        tarinfo.mode = 0o644
+        tarinfo.uname = "root"
+        tarinfo.gname = "root"
+        tar.addfile(tarinfo, io.BytesIO(copyright_content))
+        md5_list.append(f"{get_md5(copyright_content)}  usr/share/doc/kitapmarkt/copyright\n")
+
+        # Recursively add src directory contents
+        for root, dirs, files in os.walk("src"):
+            if "__pycache__" in root:
+                continue
+            for file in files:
+                if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
+                    continue
+                filepath = os.path.join(root, file)
+                tarpath = os.path.join("usr/share/kitapmarkt", filepath)
+                
+                tarinfo = tar.gettarinfo(filepath, arcname=tarpath)
+                tarinfo.uname = "root"
+                tarinfo.gname = "root"
+                tarinfo.uid = 0
+                tarinfo.gid = 0
+                
+                # Make sure directories and python files have proper execution/reading modes
+                if file.endswith('.py') or file.endswith('.sh') or '.' not in file:
+                    tarinfo.mode = 0o755 if file.endswith('.sh') else 0o644
+                else:
+                    tarinfo.mode = 0o644
+                
+                with open(filepath, "rb") as f:
+                    content = f.read()
+                md5_hash = hashlib.md5(content).hexdigest()
+                md5_list.append(f"{md5_hash}  {tarpath}\n")
+                tar.addfile(tarinfo, io.BytesIO(content))
+
+    data_tar_gz = data_data.getvalue()
+
+    # 3. Prepare control.tar.gz
     print("control.tar.gz hazırlanıyor...")
     control_data = io.BytesIO()
     with tarfile.open(fileobj=control_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
@@ -58,90 +178,20 @@ Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
         tarinfo.uid = 0
         tarinfo.gid = 0
         tar.addfile(tarinfo, io.BytesIO(control_content))
+
+        # Add md5sums file
+        md5sums_content = "".join(md5_list).encode('utf-8')
+        tarinfo = tarfile.TarInfo(name="md5sums")
+        tarinfo.size = len(md5sums_content)
+        tarinfo.mtime = int(time.time())
+        tarinfo.mode = 0o644
+        tarinfo.uname = "root"
+        tarinfo.gname = "root"
+        tarinfo.uid = 0
+        tarinfo.gid = 0
+        tar.addfile(tarinfo, io.BytesIO(md5sums_content))
     
     control_tar_gz = control_data.getvalue()
-    
-    # 3. Prepare data.tar.gz
-    print("data.tar.gz hazırlanıyor...")
-    data_data = io.BytesIO()
-    with tarfile.open(fileobj=data_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
-        # Add parent directories first so dpkg can extract files into them
-        dirs_to_create = [
-            "usr",
-            "usr/bin",
-            "usr/share",
-            "usr/share/applications",
-            "usr/share/pixmaps",
-            "usr/share/kitapmarkt",
-            "usr/share/kitapmarkt/src",
-            "usr/share/kitapmarkt/src/core",
-            "usr/share/kitapmarkt/src/ui",
-            "usr/share/kitapmarkt/src/assets"
-        ]
-        for d in dirs_to_create:
-            add_dir(tar, d)
-        # Add launcher script
-        launcher_content = """#!/bin/bash
-export PYTHONPATH="/usr/share/kitapmarkt:$PYTHONPATH"
-exec python3 -u -m src.main "$@"
-""".encode('utf-8')
-        
-        tarinfo = tarfile.TarInfo(name="usr/bin/kitapmarkt")
-        tarinfo.size = len(launcher_content)
-        tarinfo.mtime = int(time.time())
-        tarinfo.mode = 0o755
-        tarinfo.uname = "root"
-        tarinfo.gname = "root"
-        tar.addfile(tarinfo, io.BytesIO(launcher_content))
-
-        # Add desktop file
-        with open("kitapmarkt.desktop", "rb") as f:
-            desktop_content = f.read()
-        tarinfo = tarfile.TarInfo(name="usr/share/applications/kitapmarkt.desktop")
-        tarinfo.size = len(desktop_content)
-        tarinfo.mtime = int(time.time())
-        tarinfo.mode = 0o644
-        tarinfo.uname = "root"
-        tarinfo.gname = "root"
-        tar.addfile(tarinfo, io.BytesIO(desktop_content))
-
-        # Add icon file
-        with open("src/assets/kitapmarkt.png", "rb") as f:
-            icon_content = f.read()
-        tarinfo = tarfile.TarInfo(name="usr/share/pixmaps/kitapmarkt.png")
-        tarinfo.size = len(icon_content)
-        tarinfo.mtime = int(time.time())
-        tarinfo.mode = 0o644
-        tarinfo.uname = "root"
-        tarinfo.gname = "root"
-        tar.addfile(tarinfo, io.BytesIO(icon_content))
-
-        # Recursively add src directory contents
-        for root, dirs, files in os.walk("src"):
-            if "__pycache__" in root:
-                continue
-            for file in files:
-                if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
-                    continue
-                filepath = os.path.join(root, file)
-                tarpath = os.path.join("usr/share/kitapmarkt", filepath)
-                
-                tarinfo = tar.gettarinfo(filepath, arcname=tarpath)
-                tarinfo.uname = "root"
-                tarinfo.gname = "root"
-                tarinfo.uid = 0
-                tarinfo.gid = 0
-                
-                # Make sure directories and python files have proper execution/reading modes
-                if file.endswith('.py') or file.endswith('.sh') or '.' not in file:
-                    tarinfo.mode = 0o755 if file.endswith('.sh') else 0o644
-                else:
-                    tarinfo.mode = 0o644
-                
-                with open(filepath, "rb") as f:
-                    tar.addfile(tarinfo, f)
-
-    data_tar_gz = data_data.getvalue()
 
     # 4. Write to ar archive (.deb file)
     output_filename = "kitapmarkt_1.0.0_all.deb"
