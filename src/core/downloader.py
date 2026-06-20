@@ -1,7 +1,7 @@
 import os
 import time
 import requests
-from PySide6.QtCore import QThread, Signal
+from src.qt_compat import QThread, Signal
 
 class DownloadWorker(QThread):
     # Signals to communicate with the GUI thread

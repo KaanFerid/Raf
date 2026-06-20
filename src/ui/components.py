@@ -1,7 +1,6 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QProgressBar, QFrame, QSizePolicy)
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient
+from src.qt_compat import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+                            QPushButton, QProgressBar, QFrame, QSizePolicy,
+                            Signal, Qt, QPainter, QColor, QFont, QLinearGradient)
 
 class PublisherBadge(QWidget):
     """Draws a premium circular badge with initials of the publisher."""

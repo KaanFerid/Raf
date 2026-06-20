@@ -2,7 +2,7 @@ import os
 import subprocess
 import shutil
 import zipfile
-from PySide6.QtCore import QThread, Signal
+from src.qt_compat import QThread, Signal
 
 class InstallerWorker(QThread):
     # Signals

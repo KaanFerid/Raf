@@ -31,7 +31,7 @@ Version: 1.0.0
 Section: utils
 Priority: optional
 Architecture: all
-Depends: python3, python3-pyside6, python3-requests, policykit-1
+Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
 Maintainer: KitapMarkt Team <info@kitapmarkt.org>
 Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
  Pardus tabanli akilli tahtalarda interaktif kitap kütüphanelerinin

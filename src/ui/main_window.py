@@ -1,9 +1,9 @@
 import os
 import subprocess
-from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QLabel, QLineEdit, QComboBox, QScrollArea, 
-                             QGridLayout, QMessageBox, QStatusBar, QSizePolicy)
-from PySide6.QtCore import Qt, QTimer
+from src.qt_compat import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+                            QLabel, QLineEdit, QComboBox, QScrollArea, 
+                            QGridLayout, QMessageBox, QStatusBar, QSizePolicy,
+                            Qt, QTimer, QFrame)
 from src.ui.styles import MODERN_STYLE
 from src.ui.components import BookCard
 from src.core.database import Database

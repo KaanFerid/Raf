@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication
+from src.qt_compat import QApplication
 from src.ui.main_window import MainWindow
 
 def main():
@@ -14,8 +14,11 @@ def main():
     window = MainWindow()
     window.show()
     
-    # Execute the application loop
-    sys.exit(app.exec())
+    # Execute the application loop (exec() in PySide6, exec_() in PyQt5)
+    if hasattr(app, 'exec'):
+        sys.exit(app.exec())
+    else:
+        sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()
