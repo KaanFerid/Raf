@@ -1,4 +1,4 @@
-# Libadwaita Style Sheets for KitapMarkt
+# Libadwaita Style Sheets for Etkileşimli Kitap Kütüphanesi
 
 COMMON_STYLE = """
 QWidget {

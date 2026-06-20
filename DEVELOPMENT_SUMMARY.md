@@ -1,6 +1,6 @@
 # Etkileşimli Kitap Kütüphanesi - Geliştirme Özeti
 
-Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş modern kullanıcı arayüzüne sahip **Etkileşimli Kitap Kütüphanesi** (eski adıyla KitapMarkt) projesinde tamamlanan tüm aşamalar, eklenen özellikler, mimari yapı ve doğrulama yöntemleri özetlenmiştir.
+Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş modern kullanıcı arayüzüne sahip **Etkileşimli Kitap Kütüphanesi** projesinde tamamlanan tüm aşamalar, eklenen özellikler, mimari yapı ve doğrulama yöntemleri özetlenmiştir.
 
 ---
 

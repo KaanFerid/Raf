@@ -1,7 +1,7 @@
 Source: etkilesimli-kitap-kutuphanesi
 Section: utils
 Priority: optional
-Maintainer: Kaan Ferid Altundaş <info@kitapmarkt.org>
+Maintainer: Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 Build-Depends: debhelper (>= 10), python3, python3-setuptools
 Standards-Version: 4.1.3
 

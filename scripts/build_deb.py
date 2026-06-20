@@ -107,7 +107,7 @@ exec python3 -u -m src.main "$@"
         else:
             copyright_content = """Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: etkilesimli-kitap-kutuphanesi
-Copyright: 2026 Kaan Ferid Altundaş <info@kitapmarkt.org>
+Copyright: 2026 Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 License: GPL-3.0+
 """.encode('utf-8')
         
@@ -161,7 +161,7 @@ Section: utils
 Priority: optional
 Architecture: all
 Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
-Maintainer: Kaan Ferid Altundaş <info@kitapmarkt.org>
+Maintainer: Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 Description: Pardus Akilli Tahta Etkilesimli Kitap Kutuphanesi
  Pardus tabanli akilli tahtalarda interaktif kitap kütüphanelerinin
  hizlica aranmasi, indirilmesi, kurulmasi ve silinmesini saglar.

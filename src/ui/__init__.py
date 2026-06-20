@@ -1,1 +1,1 @@
-# UI package for KitapMarkt
+# UI package for Etkileşimli Kitap Kütüphanesi

@@ -1,1 +1,1 @@
-# Core logic package for KitapMarkt
+# Core logic package for Etkileşimli Kitap Kütüphanesi

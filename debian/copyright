@@ -2,5 +2,5 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: etkilesimli-kitap-kutuphanesi
 
 Files: *
-Copyright: 2026 Kaan Ferid Altundaş <info@kitapmarkt.org>
+Copyright: 2026 Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 License: GPL-3.0+

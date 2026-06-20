@@ -6,7 +6,7 @@ from src.qt_compat import QThread, Signal
 
 APP_VERSION = "1.0.0"
 # Remote update metadata file
-UPDATE_URL = "https://raw.githubusercontent.com/kaan-gok/kitapmarkt/main/update.json"
+UPDATE_URL = "https://raw.githubusercontent.com/kaan-gok/etkilesimli-kitap-kutuphanesi/main/update.json"
 
 class UpdateChecker(QThread):
     # Signals to notify the UI
