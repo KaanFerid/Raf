@@ -15,7 +15,7 @@ class UpdateChecker(QThread):
 
     def run(self):
         # 1. Developer simulation path
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             mock_path = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
@@ -71,7 +71,7 @@ class UpdateInstaller(QThread):
 
     def run(self):
         # 1. Developer simulation path
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             self.status_changed.emit("Güncelleme paketi simüle edilerek yükleniyor...")
             self.msleep(2000)
             self.finished.emit(True)

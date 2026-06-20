@@ -1,6 +1,6 @@
 # Paketleme ve Standardizasyon Dokümantasyonu
 
-Etkileşimli Kitap Dükkanı uygulamasının dağıtımı, debian tabanlı işletim sistemlerine (Pardus, Debian, Ubuntu) uygun olarak standart `.deb` paketi biçiminde yapılır.
+Etkileşimli Kitap Kütüphanesi uygulamasının dağıtımı, debian tabanlı işletim sistemlerine (Pardus, Debian, Ubuntu) uygun olarak standart `.deb` paketi biçiminde yapılır.
 
 ## 1. Paket Politikası ve Lintian Uyumluluğu
 
@@ -15,7 +15,7 @@ Paket derlemesi iki farklı kanal üzerinden yapılabilmektedir:
 
 ### Standart Kanal (`build_deb.sh`)
 Eğer sisteminizde `dpkg-deb` aracı kuruluysa, bu script:
-1. `build/kitapmarkt-pkg` geçici dizinini oluşturur.
+1. `build/etkilesimli-kitap-kutuphanesi-pkg` geçici dizinini oluşturur.
 2. Kaynak kodları ve dosyaları bu geçici dizine kopyalar.
 3. MD5 toplamlarını otomatik hesaplayarak `DEBIAN/md5sums` dosyasını oluşturur.
 4. Dosya ve dizin izinlerini (`755` ve `644`) ayarlar.

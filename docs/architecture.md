@@ -1,6 +1,6 @@
 # Mimari Dokümantasyon
 
-Etkileşimli Kitap Dükkanı uygulaması, akıllı tahta performansını ve kullanıcı deneyimini optimize etmek amacıyla asenkron çalışan modüler bir mimariye sahiptir.
+Etkileşimli Kitap Kütüphanesi uygulaması, akıllı tahta performansını ve kullanıcı deneyimini optimize etmek amacıyla asenkron çalışan modüler bir mimariye sahiptir.
 
 ## 1. Katmanlı Yapı
 

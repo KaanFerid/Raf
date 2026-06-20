@@ -44,7 +44,7 @@ class InstallerWorker(QThread):
         self.action = action  # "install" or "uninstall"
 
     def run(self):
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             self.run_mock()
             return
             
@@ -184,7 +184,7 @@ class InstallerWorker(QThread):
     def install_zip(self):
         self.status_changed.emit(self.book_id, "Dosyalar çıkarılıyor...")
         
-        apps_dir = os.path.expanduser(f"~/.local/share/kitapmarkt/apps/{self.book_id}")
+        apps_dir = os.path.expanduser(f"~/.local/share/etkilesimli-kitap-kutuphanesi/apps/{self.book_id}")
         if os.path.exists(apps_dir):
             shutil.rmtree(apps_dir)
         os.makedirs(apps_dir, exist_ok=True)
@@ -225,8 +225,8 @@ class InstallerWorker(QThread):
     def uninstall_zip(self):
         self.status_changed.emit(self.book_id, "Dosyalar siliniyor...")
         
-        apps_dir = os.path.expanduser(f"~/.local/share/kitapmarkt/apps/{self.book_id}")
-        desktop_file = os.path.expanduser(f"~/.local/share/applications/kitapmarkt-{self.book_id}.desktop")
+        apps_dir = os.path.expanduser(f"~/.local/share/etkilesimli-kitap-kutuphanesi/apps/{self.book_id}")
+        desktop_file = os.path.expanduser(f"~/.local/share/applications/etkilesimli-kitap-kutuphanesi-{self.book_id}.desktop")
         
         try:
             if os.path.exists(apps_dir):
@@ -244,7 +244,7 @@ class InstallerWorker(QThread):
 
 def get_all_installed_packages():
     """Queries all installed debian packages on the system in a single subprocess run."""
-    if os.environ.get("KITAPMARKT_DEV") == "1":
+    if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
         return load_mock_installed()
     installed = set()
     try:
@@ -361,7 +361,7 @@ def get_deb_package_name(book):
 
 def is_book_installed(book, installed_set=None):
     """Checks if a book/app is currently installed on the system."""
-    if os.environ.get("KITAPMARKT_DEV") == "1":
+    if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
         m_set = installed_set if installed_set is not None else load_mock_installed()
         return book['id'] in m_set
         
@@ -410,8 +410,8 @@ def is_book_installed(book, installed_set=None):
         return False
             
     elif file_type in ['zip', 'fernus']:
-        apps_dir = os.path.expanduser(f"~/.local/share/kitapmarkt/apps/{book['id']}")
-        desktop_file = os.path.expanduser(f"~/.local/share/applications/kitapmarkt-{book['id']}.desktop")
+        apps_dir = os.path.expanduser(f"~/.local/share/etkilesimli-kitap-kutuphanesi/apps/{book['id']}")
+        desktop_file = os.path.expanduser(f"~/.local/share/applications/etkilesimli-kitap-kutuphanesi-{book['id']}.desktop")
         return os.path.exists(apps_dir) and os.path.exists(desktop_file)
         
     return False
@@ -419,7 +419,7 @@ def is_book_installed(book, installed_set=None):
 def create_desktop_launcher(book, apps_dir):
     """Detects the executable and creates a desktop entry launcher in applications menu."""
     os.makedirs(os.path.expanduser("~/.local/share/applications"), exist_ok=True)
-    desktop_path = os.path.expanduser(f"~/.local/share/applications/kitapmarkt-{book['id']}.desktop")
+    desktop_path = os.path.expanduser(f"~/.local/share/applications/etkilesimli-kitap-kutuphanesi-{book['id']}.desktop")
     
     # 1. Detect executable path
     exec_cmd = None
@@ -491,7 +491,7 @@ def create_desktop_launcher(book, apps_dir):
 Version=1.0
 Type=Application
 Name={book['title']}
-Comment={book['publisher']} Kütüphane Kitabı (Etkileşimli Kitap Dükkanı)
+Comment={book['publisher']} Kütüphane Kitabı (Etkileşimli Kitap Kütüphanesi)
 Exec={exec_cmd}
 Icon={icon_path}
 Terminal=false

@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="kitapmarkt",
+    name="etkilesimli-kitap-kutuphanesi",
     version="1.0.0",
-    description="Pardus Akıllı Tahta Etkileşimli Kitap Dükkanı",
+    description="Pardus Akıllı Tahta Etkileşimli Kitap Kütüphanesi",
     author="Kaan Ferid Altundaş",
     packages=find_packages(),
     install_requires=[
@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "kitapmarkt=src.main:main",
+            "etkilesimli-kitap-kutuphanesi=src.main:main",
         ],
     },
     include_package_data=True,

@@ -3,10 +3,10 @@ import os
 import sys
 
 # Enable developer/simulator mode
-os.environ["KITAPMARKT_DEV"] = "1"
+os.environ["ETKILESIMLI_KITAP_KUTUPHANESI_DEV"] = "1"
 
 print("==================================================")
-print("     KİTAPMARKT - GELİŞTİRİCİ / SİMÜLATÖR MODU     ")
+print("  ETKİLEŞİMLİ KİTAP KÜTÜPHANESİ - SİMÜLATÖR MODU   ")
 print("==================================================")
 print("Bu modda:")
 print(" - Paket indirmeleri local 'mock_system/cache/' klasörüne yapılır.")

@@ -1,6 +1,6 @@
-# Etkileşimli Kitap Dükkanı
+# Etkileşimli Kitap Kütüphanesi
 
-Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş, modern kullanıcı arayüzüne sahip interaktif kitap ve uygulama marketi istemcisidir. 
+Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş, modern kullanıcı arayüzüne sahip interaktif kitap kütüphanesi istemcisidir. 
 
 Bu istemci, öğretmenlerin ve öğrencilerin akıllı tahtalarda interaktif kitap kütüphanelerini kolayca aramasını, indirmesini, kurmasını, çalıştırmasını ve kaldırmasını sağlar.
 
@@ -31,11 +31,11 @@ python3 -m src.main
 
 ## 📦 Debian Paketi Derleme & Standardizasyon
 
-Etkileşimli Kitap Dükkanı, Debian ve Lintian standartlarına (Lisans/Copyright ve MD5 kontrol toplamı uyumluluğu) tam uyumlu bir paket derleme yapısına sahiptir.
+Etkileşimli Kitap Kütüphanesi, Debian ve Lintian standartlarına (Lisans/Copyright ve MD5 kontrol toplamı uyumluluğu) tam uyumlu bir paket derleme yapısına sahiptir.
 
 ### Derleme Adımları
 
-Proje dizininde aşağıdaki scripti çalıştırarak debian paketini derleyebilirsiniz. Derleme tamamlandığında ana dizinde `kitapmarkt_1.0.0_all.deb` paketi oluşacaktır:
+Proje dizininde aşağıdaki scripti çalıştırarak debian paketini derleyebilirsiniz. Derleme tamamlandığında ana dizinde `etkilesimli-kitap-kutuphanesi_1.0.0_all.deb` paketi oluşacaktır:
 
 ```bash
 ./build_deb.sh

@@ -27,8 +27,8 @@ def handle_cli():
     
     args = sys.argv[1:]
     if not args or args[0] in ["-h", "--help", "help"]:
-        print("Etkileşimli Kitap Dükkanı CLI Yönetim Paneli")
-        print("Kullanım: kitapmarkt <komut> [parametreler]")
+        print("Etkileşimli Kitap Kütüphanesi CLI Yönetim Paneli")
+        print("Kullanım: etkilesimli-kitap-kutuphanesi <komut> [parametreler]")
         print("\nKomutlar:")
         print("  list               Mevcut tüm kitapları listeler.")
         print("  list-installed     Sistemde yüklü olan kitapları listeler.")
@@ -60,7 +60,7 @@ def handle_cli():
             
     elif cmd == "search":
         if len(args) < 2:
-            print("Hata: Arama terimi belirtilmedi. Örnek: kitapmarkt search Ankara")
+            print("Hata: Arama terimi belirtilmedi. Örnek: etkilesimli-kitap-kutuphanesi search Ankara")
             sys.exit(1)
         query = " ".join(args[1:])
         books = db.search_books(query)
@@ -71,10 +71,10 @@ def handle_cli():
             print(f"{b['id']:<35} | {b['title'][:45]:<45} | {b['publisher'][:25]:<25}")
             
     elif cmd == "clean":
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "mock_system", "cache"))
         else:
-            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
         if os.path.exists(cache_dir):
             files_deleted = 0
             for f in os.listdir(cache_dir):
@@ -91,13 +91,13 @@ def handle_cli():
             
     elif cmd == "install":
         if len(args) < 2:
-            print("Hata: Kurulacak kitap ID'si belirtilmedi. Örnek: kitapmarkt install akademikbasariyayinlarikutuphane")
+            print("Hata: Kurulacak kitap ID'si belirtilmedi. Örnek: etkilesimli-kitap-kutuphanesi install akademikbasariyayinlarikutuphane")
             sys.exit(1)
         book_id = args[1]
         books = db.get_all_books()
         book = next((b for b in books if b['id'] == book_id), None)
         if not book:
-            print(f"Hata: '{book_id}' ID'li kitap bulunamadı. Tüm kitapları listelemek için 'kitapmarkt list' komutunu çalıştırın.")
+            print(f"Hata: '{book_id}' ID'li kitap bulunamadı. Tüm kitapları listelemek için 'etkilesimli-kitap-kutuphanesi list' komutunu çalıştırın.")
             sys.exit(1)
             
         installed_set = get_all_installed_packages()
@@ -106,10 +106,10 @@ def handle_cli():
             sys.exit(0)
             
         # Download step
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "mock_system", "cache"))
         else:
-            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
         file_path = os.path.join(cache_dir, book['file_name'])
         print(f"Kuruluyor: {book['title']}")
@@ -167,7 +167,7 @@ def handle_cli():
             
     elif cmd == "uninstall":
         if len(args) < 2:
-            print("Hata: Kaldırılacak kitap ID'si belirtilmedi. Örnek: kitapmarkt uninstall akademikbasariyayinlarikutuphane")
+            print("Hata: Kaldırılacak kitap ID'si belirtilmedi. Örnek: etkilesimli-kitap-kutuphanesi uninstall akademikbasariyayinlarikutuphane")
             sys.exit(1)
         book_id = args[1]
         books = db.get_all_books()
@@ -204,5 +204,5 @@ def handle_cli():
             sys.exit(1)
             
     else:
-        print(f"Hata: Bilinmeyen komut '{cmd}'. Yardım için 'kitapmarkt --help' yazın.")
+        print(f"Hata: Bilinmeyen komut '{cmd}'. Yardım için 'etkilesimli-kitap-kutuphanesi --help' yazın.")
         sys.exit(1)

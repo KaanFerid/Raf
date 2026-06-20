@@ -98,7 +98,7 @@ class PreferencesDialog(QDialog):
             self.setStyleSheet(self.parent().styleSheet())
             
     def get_disk_info(self):
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             path = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system"
@@ -116,14 +116,14 @@ class PreferencesDialog(QDialog):
             return "Disk Alanı: Bilinmiyor"
 
     def get_cache_size(self):
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
         if not os.path.exists(cache_dir):
             return "Önbellek Boyutu: 0.0 MB"
@@ -140,14 +140,14 @@ class PreferencesDialog(QDialog):
             return "Önbellek Boyutu: Bilinmiyor"
 
     def clear_cache(self):
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
         if os.path.exists(cache_dir):
             try:
@@ -177,7 +177,7 @@ class PreferencesDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Etkileşimli Kitap Dükkanı")
+        self.setWindowTitle("Etkileşimli Kitap Kütüphanesi")
         self.resize(850, 650)
         self.setMinimumSize(700, 500)
         
@@ -310,7 +310,7 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(16)
 
         # App branding Title
-        app_title = QLabel("Etkileşimli Kitap Dükkanı")
+        app_title = QLabel("Etkileşimli Kitap Kütüphanesi")
         app_title.setObjectName("AppTitleLabel")
         header_layout.addWidget(app_title)
 
@@ -356,13 +356,7 @@ class MainWindow(QMainWindow):
         self.search_input.addAction(self.create_search_icon(), QLineEdit.LeadingPosition)
         header_layout.addWidget(self.search_input)
 
-        # Virtual Keyboard Toggle Button (text button to prevent broken Unicode icon rendering)
-        self.keyboard_btn = QPushButton("Klavye")
-        self.keyboard_btn.setObjectName("KeyboardBtn")
-        self.keyboard_btn.setFixedWidth(75)
-        self.keyboard_btn.setProperty("class", "AdwSecondaryBtn")
-        self.keyboard_btn.clicked.connect(self.toggle_virtual_keyboard_manually)
-        header_layout.addWidget(self.keyboard_btn)
+        # (Virtual Keyboard manual button removed to clean up the layout as requested)
 
         # Publisher Filter Combo Box
         self.publisher_combo = QComboBox()
@@ -533,8 +527,8 @@ class MainWindow(QMainWindow):
         """Displays the About application dialog."""
         QMessageBox.about(
             self,
-            "Etkileşimli Kitap Dükkanı Hakkında",
-            "<h3>Etkileşimli Kitap Dükkanı v1.0.0</h3>"
+            "Etkileşimli Kitap Kütüphanesi Hakkında",
+            "<h3>Etkileşimli Kitap Kütüphanesi v1.0.0</h3>"
             "<p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p>"
             "<p>© 2026 Kaan Ferid Altundaş</p>"
         )
@@ -544,10 +538,6 @@ class MainWindow(QMainWindow):
         if obj == self.search_input and event.type() in [QEvent.FocusIn, QEvent.MouseButtonPress]:
             self.trigger_virtual_keyboard()
         return super().eventFilter(obj, event)
-
-    def toggle_virtual_keyboard_manually(self):
-        """Action slot triggered when clicking the virtual keyboard toolbar button."""
-        self.trigger_virtual_keyboard()
 
     def trigger_virtual_keyboard(self):
         """Attempts to display the system-level virtual keyboard using Qt, D-Bus, or Onboard launch."""
@@ -589,7 +579,7 @@ class MainWindow(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Yeni Güncelleme Mevcut",
-            f"<h3>Etkileşimli Kitap Dükkanı v{version} sürümü hazır!</h3>"
+            f"<h3>Etkileşimli Kitap Kütüphanesi v{version} sürümü hazır!</h3>"
             f"<p><b>Yenilikler:</b><br/>{changelog}</p>"
             f"<p>Uygulamayı şimdi güncellemek ister misiniz?</p>",
             QMessageBox.Yes | QMessageBox.No,
@@ -601,16 +591,16 @@ class MainWindow(QMainWindow):
 
     def start_app_update(self, version, download_url):
         """Starts downloading the update deb file."""
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
-        file_path = os.path.join(cache_dir, f"kitapmarkt_{version}_update.deb")
+        file_path = os.path.join(cache_dir, f"etkilesimli-kitap-kutuphanesi_{version}_update.deb")
         self.statusBar.showMessage("Güncelleme indiriliyor...")
         
         # Reuse DownloadWorker for downloading update deb
@@ -643,7 +633,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(
                 self,
                 "Güncelleme Başarılı",
-                "Etkileşimli Kitap Dükkanı başarıyla güncellendi!\nYeni sürümün geçerli olması için lütfen uygulamayı kapatıp yeniden başlatın."
+                "Etkileşimli Kitap Kütüphanesi başarıyla güncellendi!\nYeni sürümün geçerli olması için lütfen uygulamayı kapatıp yeniden başlatın."
             )
             self.close()
         else:
@@ -764,14 +754,14 @@ class MainWindow(QMainWindow):
             return
 
         file_name = book['file_name']
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                 "mock_system", 
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
         local_file_path = os.path.join(cache_dir, file_name)
 
         card = self.card_widgets[book_id]
@@ -862,14 +852,14 @@ class MainWindow(QMainWindow):
             self.statusBar.showMessage(f"{book['title']} başarıyla kuruldu!", 5000)
             if book.get('file_type') == 'deb':
                 try:
-                    if os.environ.get("KITAPMARKT_DEV") == "1":
+                    if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
                         cache_dir = os.path.abspath(os.path.join(
                             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                             "mock_system", 
                             "cache"
                         ))
                     else:
-                        cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+                        cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
                     local_file_path = os.path.join(cache_dir, book['file_name'])
                     if os.path.exists(local_file_path):
                         os.remove(local_file_path)
@@ -932,7 +922,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Kaldırma Hatası", f"'{book['title']}' kaldırılırken hata oluştu.")
 
     def launch_book(self, book):
-        if os.environ.get("KITAPMARKT_DEV") == "1":
+        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             print(f"[GELİŞTİRİCİ MODU] Kitap başlatıldı: {book['title']} (Dosya: {book['file_name']})")
             QMessageBox.information(
                 self,
@@ -940,7 +930,7 @@ class MainWindow(QMainWindow):
                 f"Geliştirici Modu:\n'{book['title']}' kütüphane uygulaması simüle edilerek başlatıldı.\n\nYayınevi: {book['publisher']}\nDosya: {book['file_name']}"
             )
             return
-
+        
         file_type = book.get('file_type', 'deb')
         
         if file_type == 'deb':
@@ -959,11 +949,11 @@ class MainWindow(QMainWindow):
                     QMessageBox.warning(
                         self, 
                         "Uygulama Başlatılamadı", 
-                        f"Kütüphane başlatılamadı.\nSistem menüsünden (Pardus) aramayı deneyebilirsiniz.\nDetay: {str(e2)}"
+                        f"Kütüphane başlatılamadı.\\nSistem menüsünden (Pardus) aramayı deneyebilirsiniz.\\nDetay: {str(e2)}"
                     )
                     
         elif file_type in ['zip', 'fernus']:
-            desktop_name = f"kitapmarkt-{book['id']}"
+            desktop_name = f"etkilesimli-kitap-kutuphanesi-{book['id']}"
             cmd = ["gtk-launch", desktop_name]
             
             try:

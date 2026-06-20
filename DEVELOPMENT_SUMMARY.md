@@ -1,6 +1,6 @@
-# Etkileşimli Kitap Dükkanı - Geliştirme Özeti
+# Etkileşimli Kitap Kütüphanesi - Geliştirme Özeti
 
-Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş modern kullanıcı arayüzüne sahip **Etkileşimli Kitap Dükkanı** (eski adıyla KitapMarkt) projesinde tamamlanan tüm aşamalar, eklenen özellikler, mimari yapı ve doğrulama yöntemleri özetlenmiştir.
+Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş modern kullanıcı arayüzüne sahip **Etkileşimli Kitap Kütüphanesi** (eski adıyla KitapMarkt) projesinde tamamlanan tüm aşamalar, eklenen özellikler, mimari yapı ve doğrulama yöntemleri özetlenmiştir.
 
 ---
 
@@ -29,7 +29,7 @@ Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş moder
 
 ### 3. Arama Butonu ve Sembol İyileştirmesi
 * **Dinamik Çizilen Arama İkonu:** Unicode arama sembollerinin (`🔍` veya `🔎`) Pardus gibi sistemlerde emoji fontlarının eksik olmasından dolayı kare/bozuk görünmesini engellemek için, `QPainter` ile piksel kalitesinde dynamically çizilen modern bir büyüteç ikonu arama kutusuna eklenmiştir.
-* **Klavye Butonu:** Sanal klavye açma butonunun sembolü (`⌨`) yerine arayüzle uyumlu `"Klavye"` metin butonu kullanılarak görsel bütünlük sağlanmıştır.
+* **Sanal Klavye Entegrasyonu:** Arama kutusunun yanındaki işlevsiz manuel klavye düğmesi tamamen kaldırılmış; donanım düzeyinde klavye tetikleme mantığı (arama kutusuna tıklayınca sanal klavyenin otomatik açılması) korunmuştur.
 
 ### 4. Akıllı Tahta Entegrasyonu (Aşama 1)
 * **Dokunmatik Ekran Sanal Klavye Tetikleyicisi:** Öğretmenlerin dokunmatik ekranda arama alanına tıkladığında (FocusIn veya MouseButtonPress olayları) sistem sanal klavyesinin (Onboard veya GNOME Caribou) otomatik olarak ekranda belirmesini sağlayan olay filtreleyici (`eventFilter`).
@@ -39,7 +39,7 @@ Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş moder
 * **Saf Python Debian Derleyici (`build_deb.py`):** `dpkg-deb` paketleme aracı kurulu olmayan sistemlerde bile `ar` ve `tar` formatlarını kullanarak standartlara uygun `.deb` dosyası oluşturan derleyici.
 * **Lintian Uyumlaştırması:**
   * Paketteki dosyaların MD5 özetlerinin çıkarılması ve `md5sums` dosyasına kaydedilmesi.
-  * Lisans ve Telif haklarının `usr/share/doc/kitapmarkt/copyright` dosyasına `644` izinleriyle yazılması.
+  * Lisans ve Telif haklarının `usr/share/doc/etkilesimli-kitap-kutuphanesi/copyright` dosyasına `644` izinleriyle yazılması.
 * **Uygulama İçi Güncelleme Yöneticisi (Self-Updater):** Yeni sürümleri asenkron kontrol eden, indiren ve `pkexec apt-get install` aracılığıyla yetki yükselterek arka planda kuran mekanizma.
 * **Google Drive Virüs Uyarısı Bypassı:** İndirme linklerinde çıkan virüs taraması uyarı sayfalarını otomatik olarak algılayıp bypass eden algoritma.
 

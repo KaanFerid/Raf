@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Etkileşimli Kitap Kütüphanesi
+Comment=Pardus Akıllı Tahta Etkileşimli Kitap Kütüphanesi
+Exec=etkilesimli-kitap-kutuphanesi
+Icon=etkilesimli-kitap-kutuphanesi
+Terminal=false
+Categories=Education;Network;
+StartupNotify=true
