@@ -2,7 +2,31 @@ import os
 import subprocess
 import shutil
 import zipfile
+import json
 from src.qt_compat import QThread, Signal
+
+MOCK_DB_PATH = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+    "mock_system", 
+    "installed.json"
+))
+
+def load_mock_installed():
+    if not os.path.exists(MOCK_DB_PATH):
+        os.makedirs(os.path.dirname(MOCK_DB_PATH), exist_ok=True)
+        with open(MOCK_DB_PATH, 'w', encoding='utf-8') as f:
+            json.dump([], f)
+        return set()
+    try:
+        with open(MOCK_DB_PATH, 'r', encoding='utf-8') as f:
+            return set(json.load(f))
+    except:
+        return set()
+
+def save_mock_installed(installed_set):
+    os.makedirs(os.path.dirname(MOCK_DB_PATH), exist_ok=True)
+    with open(MOCK_DB_PATH, 'w', encoding='utf-8') as f:
+        json.dump(list(installed_set), f, indent=2)
 
 class InstallerWorker(QThread):
     # Signals
@@ -18,10 +42,33 @@ class InstallerWorker(QThread):
         self.action = action  # "install" or "uninstall"
 
     def run(self):
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            self.run_mock()
+            return
+            
         if self.action == "install":
             self.install()
         elif self.action == "uninstall":
             self.uninstall()
+
+    def run_mock(self):
+        if self.action == "install":
+            self.status_changed.emit(self.book_id, f"Simülasyon: '{self.book['title']}' kuruluyor...")
+            self.msleep(1500)  # 1.5 saniye bekle (simüle et)
+            installed = load_mock_installed()
+            installed.add(self.book_id)
+            save_mock_installed(installed)
+            self.status_changed.emit(self.book_id, "Simüle kurulum tamamlandı!")
+            self.finished.emit(self.book_id, True)
+        elif self.action == "uninstall":
+            self.status_changed.emit(self.book_id, f"Simülasyon: '{self.book['title']}' kaldırılıyor...")
+            self.msleep(1000)  # 1 saniye bekle
+            installed = load_mock_installed()
+            if self.book_id in installed:
+                installed.remove(self.book_id)
+            save_mock_installed(installed)
+            self.status_changed.emit(self.book_id, "Simüle kaldırma tamamlandı!")
+            self.finished.emit(self.book_id, True)
 
     def install(self):
         file_type = self.book.get('file_type', 'deb')
@@ -176,6 +223,8 @@ class InstallerWorker(QThread):
 
 def get_all_installed_packages():
     """Queries all installed debian packages on the system in a single subprocess run."""
+    if os.environ.get("KITAPMARKT_DEV") == "1":
+        return load_mock_installed()
     installed = set()
     try:
         res = subprocess.run(
@@ -233,6 +282,10 @@ def get_deb_package_name(book):
 
 def is_book_installed(book, installed_set=None):
     """Checks if a book/app is currently installed on the system."""
+    if os.environ.get("KITAPMARKT_DEV") == "1":
+        m_set = installed_set if installed_set is not None else load_mock_installed()
+        return book['id'] in m_set
+        
     file_type = book.get('file_type', 'deb')
     
     if file_type == 'deb':

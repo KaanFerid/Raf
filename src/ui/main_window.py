@@ -206,7 +206,14 @@ class MainWindow(QMainWindow):
             return
 
         file_name = book['file_name']
-        cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            cache_dir = os.path.abspath(os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+                "mock_system", 
+                "cache"
+            ))
+        else:
+            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
         local_file_path = os.path.join(cache_dir, file_name)
 
         card = self.card_widgets[book_id]
@@ -361,6 +368,15 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Kaldırma Hatası", f"'{book['title']}' kaldırılırken hata oluştu.")
 
     def launch_book(self, book):
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            print(f"[GELİŞTİRİCİ MODU] Kitap başlatıldı: {book['title']} (Dosya: {book['file_name']})")
+            QMessageBox.information(
+                self,
+                "Kitap Başlatıldı (Simülasyon)",
+                f"Geliştirici Modu:\n'{book['title']}' kütüphane uygulaması simüle edilerek başlatıldı.\n\nYayınevi: {book['publisher']}\nDosya: {book['file_name']}"
+            )
+            return
+
         file_type = book.get('file_type', 'deb')
         
         if file_type == 'deb':
