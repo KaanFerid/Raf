@@ -308,7 +308,14 @@ class MainWindow(QMainWindow):
             # Remove cached deb package to free up smart board space
             if book.get('file_type') == 'deb':
                 try:
-                    cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+                    if os.environ.get("KITAPMARKT_DEV") == "1":
+                        cache_dir = os.path.abspath(os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+                            "mock_system", 
+                            "cache"
+                        ))
+                    else:
+                        cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
                     local_file_path = os.path.join(cache_dir, book['file_name'])
                     if os.path.exists(local_file_path):
                         os.remove(local_file_path)
