@@ -83,7 +83,7 @@ Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
         # Add launcher script
         launcher_content = """#!/bin/bash
 export PYTHONPATH="/usr/share/kitapmarkt:$PYTHONPATH"
-exec python3 -m src.main "$@"
+exec python3 -u -m src.main "$@"
 """.encode('utf-8')
         
         tarinfo = tarfile.TarInfo(name="usr/bin/kitapmarkt")

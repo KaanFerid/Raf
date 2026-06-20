@@ -8,7 +8,7 @@ from src.ui.styles import MODERN_STYLE
 from src.ui.components import BookCard
 from src.core.database import Database
 from src.core.downloader import DownloadWorker
-from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name
+from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name, get_all_installed_packages
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -21,7 +21,9 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(MODERN_STYLE)
 
         # Core components
+        print("Kitap veritabanı yükleniyor...")
         self.db = Database()
+        print(f"Veritabanı yüklendi. Toplam {len(self.db.get_all_books())} kitap mevcut.")
         
         # State tracking
         self.active_downloads = {}      # book_id -> DownloadWorker
@@ -151,6 +153,9 @@ class MainWindow(QMainWindow):
         books = self.get_filtered_books()
         self.count_label.setText(f"{len(books)} kitap listelendi.")
 
+        # Query all installed packages once to avoid freezing the GUI with multiple subprocess calls
+        installed_set = get_all_installed_packages()
+
         cols = self.get_columns_count()
         for idx, book in enumerate(books):
             book_id = book['id']
@@ -159,7 +164,7 @@ class MainWindow(QMainWindow):
             if book_id in self.card_widgets:
                 card = self.card_widgets[book_id]
             else:
-                installed = is_book_installed(book)
+                installed = is_book_installed(book, installed_set)
                 card = BookCard(book, is_installed=installed)
                 card.install_requested.connect(self.start_download)
                 card.uninstall_requested.connect(self.start_uninstallation)
@@ -175,12 +180,15 @@ class MainWindow(QMainWindow):
 
     def refresh_all_statuses(self):
         """Check all books' actual installation state in the background."""
+        # Query installed packages once
+        installed_set = get_all_installed_packages()
+        
         for book_id, card in self.card_widgets.items():
             # Skip if currently downloading or installing
             if book_id in self.active_downloads or book_id in self.active_installations:
                 continue
             
-            installed = is_book_installed(card.book)
+            installed = is_book_installed(card.book, installed_set)
             if card.is_installed != installed:
                 card.update_status(installed)
 

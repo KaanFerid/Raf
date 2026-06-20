@@ -174,7 +174,25 @@ class InstallerWorker(QThread):
             self.finished.emit(self.book_id, False)
 
 
-# --- Helper functions ---
+def get_all_installed_packages():
+    """Queries all installed debian packages on the system in a single subprocess run."""
+    installed = set()
+    try:
+        res = subprocess.run(
+            ["dpkg-query", "-W", "-f=${Package} ${Status}\n"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if res.returncode == 0:
+            for line in res.stdout.splitlines():
+                parts = line.strip().split()
+                if len(parts) >= 4 and "installed" in parts[3]:
+                    pkg_name = parts[0].split(':')[0]
+                    installed.add(pkg_name)
+    except Exception as e:
+        print(f"Error querying installed packages: {e}")
+    return installed
 
 def get_deb_package_name(book):
     """Guesses or queries the debian package name of the book."""
@@ -213,11 +231,28 @@ def get_deb_package_name(book):
     # Default fallback
     return cleaned_guesses[0]
 
-def is_book_installed(book):
+def is_book_installed(book, installed_set=None):
     """Checks if a book/app is currently installed on the system."""
     file_type = book.get('file_type', 'deb')
     
     if file_type == 'deb':
+        # High-performance set-lookup path
+        if installed_set is not None:
+            file_name = book['file_name']
+            base_name = file_name[:-4]  # remove .deb
+            guesses = [
+                base_name.lower(),
+                base_name.lower().replace('kutuphane', '-kutuphane'),
+                base_name.lower().replace('yayinlari', '-yayinlari'),
+                base_name.lower().replace('yayinlari', '-yayinlari-kutuphane'),
+                base_name.lower().replace('yayiningurubu', '-yayin-grubu'),
+            ]
+            for g in guesses:
+                clean = "".join([c if c.isalnum() or c in ['-', '+', '.'] else '' for c in g])
+                if clean in installed_set:
+                    return True
+            return False
+            
         package_name = get_deb_package_name(book)
         try:
             res = subprocess.run(

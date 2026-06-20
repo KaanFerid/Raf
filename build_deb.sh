@@ -25,7 +25,7 @@ if command -v dpkg-deb >/dev/null 2>&1; then
     cat << 'EOF' > "$PKG_DIR/usr/bin/kitapmarkt"
 #!/bin/bash
 export PYTHONPATH="/usr/share/kitapmarkt:$PYTHONPATH"
-exec python3 -m src.main "$@"
+exec python3 -u -m src.main "$@"
 EOF
     chmod +x "$PKG_DIR/usr/bin/kitapmarkt"
 
