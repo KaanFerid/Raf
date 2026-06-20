@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
 
         header_layout.addStretch(1)
 
-        # Center segmented control (View Switcher - Bottles style)
+        # Center segmented control (View Switcher - Adwaita style)
         switcher_container = QWidget()
         switcher_container.setObjectName("ViewSwitcherContainer")
         switcher_layout = QHBoxLayout(switcher_container)
@@ -351,7 +351,6 @@ class MainWindow(QMainWindow):
             "KitapMarkt Hakkında",
             "<h3>KitapMarkt v1.0.0</h3>"
             "<p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p>"
-            "<p>Bu uygulama Bottles arayüz tasarımı referans alınarak geliştirilmiştir.</p>"
             "<p>© 2026 KitapMarkt Ekibi</p>"
         )
 

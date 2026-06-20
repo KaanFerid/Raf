@@ -1,4 +1,4 @@
-# Libadwaita / Bottles Style Sheets for KitapMarkt
+# Libadwaita Style Sheets for KitapMarkt
 
 COMMON_STYLE = """
 QWidget {
@@ -47,7 +47,7 @@ QMainWindow {
     color: #ffffff;
 }
 
-/* Segmented View Switcher (Bottles style) */
+/* Segmented View Switcher (Adwaita style) */
 #ViewSwitcherContainer {
     background-color: #303030;
     border-radius: 8px;
@@ -257,7 +257,7 @@ QMainWindow {
     color: #242424;
 }
 
-/* Segmented View Switcher (Bottles style) */
+/* Segmented View Switcher (Adwaita style) */
 #ViewSwitcherContainer {
     background-color: #dedede;
     border-radius: 8px;
