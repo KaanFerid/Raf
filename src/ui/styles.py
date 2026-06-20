@@ -1,193 +1,447 @@
-# Modern QSS (Qt Style Sheets) for KitapMarkt
+# Libadwaita / Bottles Style Sheets for KitapMarkt
 
-MODERN_STYLE = """
-/* Global Window Styles */
-QMainWindow {
-    background-color: #12131a;
-}
-
+COMMON_STYLE = """
 QWidget {
-    font-family: 'Inter', 'Outfit', 'Google Sans Text', sans-serif;
-    color: #e3e3e3;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
     font-size: 14px;
 }
 
-/* ScrollBar Styles */
 QScrollBar:vertical {
     border: none;
-    background: #1e1f29;
-    width: 10px;
-    margin: 0px 0px 0px 0px;
-    border-radius: 5px;
+    background: transparent;
+    width: 8px;
+    margin: 0px;
 }
 QScrollBar::handle:vertical {
-    background: #4a4b5d;
-    min-height: 20px;
-    border-radius: 5px;
+    background: %SCROLLBAR_HANDLE%;
+    min-height: 30px;
+    border-radius: 4px;
 }
 QScrollBar::handle:vertical:hover {
-    background: #0b57d0;
+    background: %SCROLLBAR_HANDLE_HOVER%;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     border: none;
     background: none;
 }
+"""
 
-/* Header & Search Bar */
+DARK_STYLE = COMMON_STYLE.replace(
+    "%SCROLLBAR_HANDLE%", "#4c4c4c"
+).replace(
+    "%SCROLLBAR_HANDLE_HOVER%", "#6f6f6f"
+) + """
+QMainWindow {
+    background-color: #1e1e1e;
+}
+
+/* HeaderBar */
 #HeaderWidget {
-    background-color: #1a1b26;
-    border-bottom: 1px solid #2a2b3d;
-    padding: 10px;
+    background-color: #242424;
+    border-bottom: 1px solid #303030;
 }
 
 #AppTitleLabel {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: bold;
     color: #ffffff;
-    padding-left: 10px;
 }
 
-QLineEdit {
-    background-color: #1e1f29;
-    border: 2px solid #2a2b3d;
-    border-radius: 20px;
-    padding: 10px 20px;
+/* Segmented View Switcher (Bottles style) */
+#ViewSwitcherContainer {
+    background-color: #303030;
+    border-radius: 8px;
+    padding: 3px;
+}
+
+QPushButton.ViewSwitcherBtn {
+    background-color: transparent;
+    color: #c0c0c0;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+QPushButton.ViewSwitcherBtn:hover {
     color: #ffffff;
-    font-size: 15px;
+    background-color: #383838;
+}
+
+QPushButton.ViewSwitcherBtn:checked {
+    color: #ffffff;
+    background-color: #4a4a4a;
+}
+
+/* Inputs & Combo Boxes */
+QLineEdit {
+    background-color: #2d2d2d;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #ffffff;
 }
 QLineEdit:focus {
-    border: 2px solid #0b57d0;
-    background-color: #242636;
+    border: 1px solid #3584e4;
+    background-color: #2d2d2d;
 }
 
-/* Filter Combo Box */
 QComboBox {
-    background-color: #1e1f29;
-    border: 2px solid #2a2b3d;
-    border-radius: 20px;
-    padding: 8px 15px;
+    background-color: #2d2d2d;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 6px 24px 6px 12px;
     color: #ffffff;
-    font-size: 14px;
-    min-width: 150px;
 }
 QComboBox:hover {
-    border: 2px solid #0b57d0;
+    background-color: #353535;
 }
 QComboBox::drop-down {
     border: none;
-    subcontrol-origin: padding;
-    subcontrol-position: top right;
-    width: 30px;
+    width: 20px;
 }
 QComboBox QAbstractItemView {
-    background-color: #1e1f29;
-    border: 2px solid #2a2b3d;
-    selection-background-color: #0b57d0;
-    selection-color: white;
+    background-color: #242424;
+    border: 1px solid #3a3a3a;
+    color: #ffffff;
+    selection-background-color: #3584e4;
+    selection-color: #ffffff;
 }
 
-/* Book Card Styles */
+/* ListView Items (Book Rows) */
 #BookCardFrame {
-    background-color: #1e1f29;
-    border: 1px solid #2a2b3d;
-    border-radius: 16px;
+    background-color: #2d2d2d;
+    border: 1px solid #353535;
+    border-radius: 10px;
 }
 #BookCardFrame:hover {
-    border: 2px solid #0b57d0;
-    background-color: #242636;
+    background-color: #323232;
+    border: 1px solid #404040;
 }
 
 #BookTitleLabel {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 600;
     color: #ffffff;
 }
 
 #PublisherLabel {
     font-size: 13px;
-    color: #9aa0a6;
-    font-weight: 500;
+    color: #9a9a9a;
 }
 
-#DescriptionLabel {
+/* Info Subtitle */
+#BookDetailsLabel {
+    color: #8a8a8a;
     font-size: 12px;
-    color: #bdc1c6;
 }
 
-/* Progress Bar */
-QProgressBar {
-    background-color: #12131a;
+/* Buttons */
+QPushButton.AdwPrimaryBtn {
+    background-color: #3584e4;
+    color: #ffffff;
     border: none;
     border-radius: 6px;
-    text-align: center;
-    color: white;
-    font-weight: bold;
-    font-size: 11px;
-    height: 12px;
+    padding: 6px 14px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton.AdwPrimaryBtn:hover {
+    background-color: #4a90e2;
+}
+QPushButton.AdwPrimaryBtn:pressed {
+    background-color: #1b6ac6;
+}
+
+QPushButton.AdwSecondaryBtn {
+    background-color: #3a3a3a;
+    color: #ffffff;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 500;
+    font-size: 13px;
+}
+QPushButton.AdwSecondaryBtn:hover {
+    background-color: #444444;
+}
+
+QPushButton.AdwDangerBtn {
+    background-color: #c01c28;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton.AdwDangerBtn:hover {
+    background-color: #d62c39;
+}
+
+QPushButton.AdwSuccessBtn {
+    background-color: #26a269;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton.AdwSuccessBtn:hover {
+    background-color: #2ec27e;
+}
+
+QPushButton:disabled {
+    background-color: #282828;
+    color: #606060;
+}
+
+/* Progress bar */
+QProgressBar {
+    background-color: #1a1a1a;
+    border: none;
+    border-radius: 3px;
+    text-align: right;
+    color: transparent;
+    height: 6px;
 }
 QProgressBar::chunk {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0b57d0, stop:1 #00b894);
-    border-radius: 6px;
-}
-
-/* Custom Buttons */
-QPushButton {
-    background-color: #0b57d0;
-    border: none;
-    border-radius: 18px;
-    padding: 8px 16px;
-    color: white;
-    font-weight: bold;
-    font-size: 13px;
-    min-height: 20px;
-}
-QPushButton:hover {
-    background-color: #1a73e8;
-}
-QPushButton:pressed {
-    background-color: #0d559f;
-}
-QPushButton:disabled {
-    background-color: #2a2b3d;
-    color: #5f6368;
-}
-
-/* Secondary Button (Uninstall / Open) */
-QPushButton#SecondaryActionBtn {
-    background-color: #2a2b3d;
-    color: #e3e3e3;
-    border: 1px solid #3a3b50;
-}
-QPushButton#SecondaryActionBtn:hover {
-    background-color: #3a3b50;
-    color: #ffffff;
-}
-
-QPushButton#UninstallBtn {
-    background-color: #3a1a1a;
-    color: #ff7675;
-    border: 1px solid #5a2a2a;
-}
-QPushButton#UninstallBtn:hover {
-    background-color: #d63031;
-    color: white;
+    background-color: #3584e4;
+    border-radius: 3px;
 }
 
 /* Status Labels */
 #StatusInstalledLabel {
-    color: #00b894;
+    color: #26a269;
     font-weight: bold;
     font-size: 12px;
 }
-
 #StatusNotInstalledLabel {
-    color: #9aa0a6;
+    color: #8a8a8a;
     font-size: 12px;
 }
-
 #StatusDownloadingLabel {
     color: #fdcb6e;
     font-weight: bold;
     font-size: 12px;
+}
+
+/* Count Label */
+#CountLabel {
+    color: #8a8a8a;
+    font-size: 13px;
+    background-color: #1e1e1e;
+}
+"""
+
+LIGHT_STYLE = COMMON_STYLE.replace(
+    "%SCROLLBAR_HANDLE%", "#c0c0c0"
+).replace(
+    "%SCROLLBAR_HANDLE_HOVER%", "#a0a0a0"
+) + """
+QMainWindow {
+    background-color: #f6f6f6;
+}
+
+/* HeaderBar */
+#HeaderWidget {
+    background-color: #ebebeb;
+    border-bottom: 1px solid #d5d5d5;
+}
+
+#AppTitleLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: #242424;
+}
+
+/* Segmented View Switcher (Bottles style) */
+#ViewSwitcherContainer {
+    background-color: #dedede;
+    border-radius: 8px;
+    padding: 3px;
+}
+
+QPushButton.ViewSwitcherBtn {
+    background-color: transparent;
+    color: #505050;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+QPushButton.ViewSwitcherBtn:hover {
+    color: #242424;
+    background-color: #e5e5e5;
+}
+
+QPushButton.ViewSwitcherBtn:checked {
+    color: #242424;
+    background-color: #ffffff;
+}
+
+/* Inputs & Combo Boxes */
+QLineEdit {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #242424;
+}
+QLineEdit:focus {
+    border: 1px solid #3584e4;
+    background-color: #ffffff;
+}
+
+QComboBox {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px 24px 6px 12px;
+    color: #242424;
+}
+QComboBox:hover {
+    background-color: #f0f0f0;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    color: #242424;
+    selection-background-color: #3584e4;
+    selection-color: #ffffff;
+}
+
+/* ListView Items (Book Rows) */
+#BookCardFrame {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+}
+#BookCardFrame:hover {
+    background-color: #fcfcfc;
+    border: 1px solid #d5d5d5;
+}
+
+#BookTitleLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: #242424;
+}
+
+#PublisherLabel {
+    font-size: 13px;
+    color: #6a6a6a;
+}
+
+/* Info Subtitle */
+#BookDetailsLabel {
+    color: #7e7e7e;
+    font-size: 12px;
+}
+
+/* Buttons */
+QPushButton.AdwPrimaryBtn {
+    background-color: #3584e4;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton.AdwPrimaryBtn:hover {
+    background-color: #4a90e2;
+}
+QPushButton.AdwPrimaryBtn:pressed {
+    background-color: #1b6ac6;
+}
+
+QPushButton.AdwSecondaryBtn {
+    background-color: #e5e5e5;
+    color: #242424;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 500;
+    font-size: 13px;
+}
+QPushButton.AdwSecondaryBtn:hover {
+    background-color: #dcdcdc;
+}
+
+QPushButton.AdwDangerBtn {
+    background-color: #e01b24;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton.AdwDangerBtn:hover {
+    background-color: #ec5b62;
+}
+
+QPushButton.AdwSuccessBtn {
+    background-color: #26a269;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton.AdwSuccessBtn:hover {
+    background-color: #2ec27e;
+}
+
+QPushButton:disabled {
+    background-color: #eeeeee;
+    color: #b0b0b0;
+}
+
+/* Progress bar */
+QProgressBar {
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 3px;
+    text-align: right;
+    color: transparent;
+    height: 6px;
+}
+QProgressBar::chunk {
+    background-color: #3584e4;
+    border-radius: 3px;
+}
+
+/* Status Labels */
+#StatusInstalledLabel {
+    color: #26a269;
+    font-weight: bold;
+    font-size: 12px;
+}
+#StatusNotInstalledLabel {
+    color: #6a6a6a;
+    font-size: 12px;
+}
+#StatusDownloadingLabel {
+    color: #d29b22;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Count Label */
+#CountLabel {
+    color: #6a6a6a;
+    font-size: 13px;
+    background-color: #f6f6f6;
 }
 """

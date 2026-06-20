@@ -118,7 +118,11 @@ exec python3 -u -m src.main "$@"
 
         # Recursively add src directory contents
         for root, dirs, files in os.walk("src"):
+            if "__pycache__" in root:
+                continue
             for file in files:
+                if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
+                    continue
                 filepath = os.path.join(root, file)
                 tarpath = os.path.join("usr/share/kitapmarkt", filepath)
                 

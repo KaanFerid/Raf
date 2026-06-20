@@ -7,9 +7,10 @@ try:
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QComboBox, QScrollArea, QGridLayout,
-        QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame
+        QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
+        QMenu, QDialog, QButtonGroup, QRadioButton, QGroupBox
     )
-    from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient
+    from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient, QAction
     QT_API = "PySide6"
 except ImportError:
     # Fallback to PyQt6
@@ -19,9 +20,10 @@ except ImportError:
         from PyQt6.QtWidgets import (
             QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
             QLabel, QLineEdit, QComboBox, QScrollArea, QGridLayout,
-            QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame
+            QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
+            QMenu, QDialog, QButtonGroup, QRadioButton, QGroupBox
         )
-        from PyQt6.QtGui import QPainter, QColor, QFont, QLinearGradient
+        from PyQt6.QtGui import QPainter, QColor, QFont, QLinearGradient, QAction
         QT_API = "PyQt6"
         
         # Map enum values for compatibility with PyQt5/PySide6
@@ -45,7 +47,8 @@ except ImportError:
             from PyQt5.QtWidgets import (
                 QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                 QLabel, QLineEdit, QComboBox, QScrollArea, QGridLayout,
-                QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame
+                QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
+                QMenu, QDialog, QButtonGroup, QRadioButton, QGroupBox, QAction
             )
             from PyQt5.QtGui import QPainter, QColor, QFont, QLinearGradient
             QT_API = "PyQt5"
