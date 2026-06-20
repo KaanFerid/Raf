@@ -38,11 +38,11 @@ Etkileşimli Kitap Kütüphanesi, Debian ve Lintian standartlarına (Lisans/Copy
 Proje dizininde aşağıdaki scripti çalıştırarak debian paketini derleyebilirsiniz. Derleme tamamlandığında ana dizinde `etkilesimli-kitap-kutuphanesi_1.0.0_all.deb` paketi oluşacaktır:
 
 ```bash
-./build_deb.sh
+./scripts/build_deb.sh
 ```
 
 > [!NOTE]
-> Sisteminizde standart paketleme aracı olan `dpkg-deb` yüklü değilse, derleme scripti otomatik olarak saf Python tabanlı paket derleyiciyi (`build_deb.py`) devreye sokar.
+> Sisteminizde standart paketleme aracı olan `dpkg-deb` yüklü değilse, derleme scripti otomatik olarak saf Python tabanlı paket derleyiciyi (`scripts/build_deb.py`) devreye sokar.
 
 ### Derlenen Paketi Doğrulama
 
@@ -50,7 +50,7 @@ Oluşturulan `.deb` paketinin Debian politikalarına uyumluluğunu, `md5sums` ve
 
 ```bash
 # Paket yapısını doğrulamak için:
-python3 scratch/inspect_deb.py
+python3 scripts/inspect_deb.py
 ```
 
 ---
@@ -67,6 +67,8 @@ Dizin yapısı modüler ve temiz bir mimari sunar:
   - `src/assets/`: Uygulama görselleri, logolar ve kitap veritabanı (`books.json`).
 - `debian/`: Standart debian paket yapılandırma dosyaları (`control`, `rules`, `changelog`, `copyright`).
 - `docs/`: Mimari ve paketleme detaylarını içeren genişletilmiş dokümantasyon dizini.
+- `scripts/`: Derleme, paketleme, veritabanı ayrıştırma ve diğer otomatikleştirme scriptleri.
+- `tests/`: UI, updater ve ağ bağlantısı için otomatik birim/entegrasyon testleri.
 - `mock_system/`: Geliştirici modunda indirmeleri ve kurulumları simüle etmek için kullanılan yerel önbellek dizini.
 
 ---

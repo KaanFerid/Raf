@@ -11,9 +11,9 @@ Debian paket denetleyicisi **Lintian** ve genel debian politikaları doğrultusu
 
 ## 2. Derleme Kanalları
 
-Paket derlemesi iki farklı kanal üzerinden yapılabilmektedir:
+Proje derlemesi iki farklı kanal üzerinden yapılabilmektedir:
 
-### Standart Kanal (`build_deb.sh`)
+### Standart Kanal (`scripts/build_deb.sh`)
 Eğer sisteminizde `dpkg-deb` aracı kuruluysa, bu script:
 1. `build/etkilesimli-kitap-kutuphanesi-pkg` geçici dizinini oluşturur.
 2. Kaynak kodları ve dosyaları bu geçici dizine kopyalar.
@@ -21,7 +21,7 @@ Eğer sisteminizde `dpkg-deb` aracı kuruluysa, bu script:
 4. Dosya ve dizin izinlerini (`755` ve `644`) ayarlar.
 5. `dpkg-deb --build` komutuyla paketi derler.
 
-### Saf Python Kanalı (`build_deb.py`)
+### Saf Python Kanalı (`scripts/build_deb.py`)
 Geliştirici sistemlerinde (örn. Arch Linux veya Windows geliştirme ortamlarında) `dpkg` paketleme araçları yoksa devreye giren bu script:
 1. `tarfile` modülü ile `control.tar.gz` ve `data.tar.gz` arşivlerini bellek üzerinde oluşturur.
 2. Dosyaları kopyalarken MD5 özetlerini dinamik hesaplar.

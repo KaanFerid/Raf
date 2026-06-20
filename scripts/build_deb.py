@@ -107,8 +107,6 @@ exec python3 -u -m src.main "$@"
         else:
             copyright_content = """Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: etkilesimli-kitap-kutuphanesi
-
-Files: *
 Copyright: 2026 Kaan Ferid Altundaş <info@kitapmarkt.org>
 License: GPL-3.0+
 """.encode('utf-8')
@@ -222,4 +220,6 @@ Description: Pardus Akilli Tahta Etkilesimli Kitap Kutuphanesi
     print(f"=== Başarılı! {output_filename} paketi pure-python kullanılarak oluşturuldu. ===")
 
 if __name__ == "__main__":
+    # Change working directory to project root (parent of scripts/)
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     build_deb()

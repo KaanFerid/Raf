@@ -13,12 +13,14 @@ Bu belgede, Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş moder
 ## 🛠️ Tamamlanan Geliştirme Aşamaları ve Özellikler
 
 ### 1. Dosya ve Git Deposu Yapısı
-* Proje dizin yapısı tamamen modüler ve temiz bir hale getirilmiştir:
+* Proje dizin yapısı tamamen modüler, temiz ve standart bir açık kaynak projesi düzenine getirilmiştir:
   * `src/core/`: İş mantığı, ağ, güncelleme, indirme ve kurulum işlemleri.
   * `src/ui/`: Kullanıcı arayüzü, Adwaita temaları ve özel arayüz bileşenleri.
   * `src/assets/`: Kitap veritabanı (`books.json`) ve logo/ikon dosyaları.
   * `debian/`: Debian standardizasyon dosyaları (control, copyright, changelog, rules).
   * `docs/`: Mimari ve paketleme detaylarını içeren genişletilmiş kılavuzlar.
+  * `scripts/`: Paketleme, derleme ve diğer otomatikleştirme yardımcı programları.
+  * `tests/`: UI, updater ve ağ bağlantısı için otomatik test scriptleri.
 
 ### 2. Arayüz Tasarımı & Libadwaita Uyumluluğu
 * **Adwaita & Bottles Stili Tasarım:** Modern, göz yormayan, yuvarlatılmış köşeler ve flat tasarım prensiplerine uygun arayüz.
@@ -76,25 +78,25 @@ python3 -m src.main
 
 ### 3. Paket Derleme (.deb)
 ```bash
-./build_deb.sh
+./scripts/build_deb.sh
 ```
 
 ### 4. Otomatik Testleri Çalıştırma
 * **UI ve Kategori Testi:**
   ```bash
-  python3 scratch/test_ui_features.py
+  python3 tests/test_ui_features.py
   ```
 * **Otomatik Güncelleyici Testi:**
   ```bash
-  python3 scratch/test_updater.py
+  python3 tests/test_updater.py
   ```
 * **Google Drive Ağ ve Range Testi:**
   ```bash
-  python3 scratch/test_drive.py
+  python3 tests/test_drive.py
   ```
 * **Oluşturulan Debian Paketinin Yapısal Doğrulanması:**
   ```bash
-  python3 scratch/inspect_deb.py
+  python3 scripts/inspect_deb.py
   ```
 
 ---

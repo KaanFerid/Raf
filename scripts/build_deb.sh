@@ -2,6 +2,9 @@
 # Etkileşimli Kitap Kütüphanesi debian package builder script
 set -e
 
+# Change directory to the project root (parent of the scripts directory)
+cd "$(dirname "$0")/.."
+
 echo "=== Etkileşimli Kitap Kütüphanesi Debian Paketi Hazırlanıyor ==="
 
 if command -v dpkg-deb >/dev/null 2>&1; then
@@ -99,5 +102,5 @@ EOF
 
 else
     echo "Sistemde dpkg-deb bulunamadı, Python tabanlı paketleyici (build_deb.py) çalıştırılıyor..."
-    python3 build_deb.py
+    python3 scripts/build_deb.py
 fi
