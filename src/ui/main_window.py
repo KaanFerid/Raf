@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Etkileşimli Kitap Kütüphanesi")
         self.resize(850, 650)
-        self.setMinimumSize(700, 500)
+        self.setMinimumSize(850, 550)
         
         # Theme configuration variables
         self.current_theme = None
@@ -312,6 +312,7 @@ class MainWindow(QMainWindow):
         # App branding Title
         app_title = QLabel("Etkileşimli Kitap Kütüphanesi")
         app_title.setObjectName("AppTitleLabel")
+        app_title.setMinimumWidth(220)
         header_layout.addWidget(app_title)
 
         header_layout.addStretch(1)
@@ -327,10 +328,12 @@ class MainWindow(QMainWindow):
         self.tab_market_btn.setCheckable(True)
         self.tab_market_btn.setChecked(True)
         self.tab_market_btn.setProperty("class", "ViewSwitcherBtn")
+        self.tab_market_btn.setMinimumWidth(90)
 
         self.tab_library_btn = QPushButton("Kütüphanem")
         self.tab_library_btn.setCheckable(True)
         self.tab_library_btn.setProperty("class", "ViewSwitcherBtn")
+        self.tab_library_btn.setMinimumWidth(110)
 
         self.tab_group = QButtonGroup(self)
         self.tab_group.addButton(self.tab_market_btn)

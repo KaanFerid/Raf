@@ -6,6 +6,11 @@ QWidget {
     font-size: 14px;
 }
 
+QScrollArea, QScrollArea > QWidget {
+    background-color: transparent;
+    border: none;
+}
+
 QScrollBar:vertical {
     border: none;
     background: transparent;
