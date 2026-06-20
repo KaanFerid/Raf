@@ -174,33 +174,12 @@ class PreferencesDialog(QDialog):
         self.accept()
 
 
-class ElidedLabel(QLabel):
-    """A QLabel that automatically elides text when it doesn't fit its width."""
-    def __init__(self, text="", parent=None):
-        super().__init__(parent)
-        self.full_text = text
-        self.setText(text)
-
-    def setText(self, text):
-        self.full_text = text
-        self.update_elided_text()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.update_elided_text()
-
-    def update_elided_text(self):
-        metrics = self.fontMetrics()
-        elided = metrics.elidedText(self.full_text, Qt.ElideRight, max(0, self.width() - 4))
-        super().setText(elided)
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Etkileşimli Kitap Kütüphanesi")
-        self.resize(850, 650)
-        self.setMinimumSize(850, 550)
+        self.resize(960, 650)
+        self.setMinimumSize(950, 550)
         
         # Theme configuration variables
         self.current_theme = None
@@ -331,10 +310,10 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(16)
 
         # App branding Title
-        app_title = ElidedLabel("Etkileşimli Kitap Kütüphanesi")
+        app_title = QLabel("Etkileşimli Kitap Kütüphanesi")
         app_title.setObjectName("AppTitleLabel")
-        app_title.setMinimumWidth(180)
-        app_title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        app_title.setMinimumWidth(260)
+        app_title.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         header_layout.addWidget(app_title)
 
         header_layout.addStretch(1)
@@ -342,7 +321,7 @@ class MainWindow(QMainWindow):
         # Center segmented control (View Switcher - Adwaita style)
         switcher_container = QWidget()
         switcher_container.setObjectName("ViewSwitcherContainer")
-        switcher_container.setMinimumWidth(210)
+        switcher_container.setMinimumWidth(240)
         switcher_layout = QHBoxLayout(switcher_container)
         switcher_layout.setContentsMargins(0, 0, 0, 0)
         switcher_layout.setSpacing(0)
@@ -351,12 +330,12 @@ class MainWindow(QMainWindow):
         self.tab_market_btn.setCheckable(True)
         self.tab_market_btn.setChecked(True)
         self.tab_market_btn.setProperty("class", "ViewSwitcherBtn")
-        self.tab_market_btn.setMinimumWidth(90)
+        self.tab_market_btn.setMinimumWidth(100)
 
         self.tab_library_btn = QPushButton("Kütüphanem")
         self.tab_library_btn.setCheckable(True)
         self.tab_library_btn.setProperty("class", "ViewSwitcherBtn")
-        self.tab_library_btn.setMinimumWidth(110)
+        self.tab_library_btn.setMinimumWidth(130)
 
         self.tab_group = QButtonGroup(self)
         self.tab_group.addButton(self.tab_market_btn)
