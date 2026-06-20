@@ -34,7 +34,7 @@ EOF
 
     # 3. Copy desktop entry
     echo "Masaüstü kısayolu kopyalanıyor..."
-    cp etkilesimli-kitap-kutuphanesi.desktop "$PKG_DIR/usr/share/applications/"
+    cp data/etkilesimli-kitap-kutuphanesi.desktop "$PKG_DIR/usr/share/applications/"
 
     # 4. Copy logo/icon
     echo "Uygulama logosu kopyalanıyor..."

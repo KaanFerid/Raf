@@ -76,7 +76,7 @@ exec python3 -u -m src.main "$@"
         md5_list.append(f"{get_md5(launcher_content)}  usr/bin/etkilesimli-kitap-kutuphanesi\n")
 
         # Add desktop file
-        with open("etkilesimli-kitap-kutuphanesi.desktop", "rb") as f:
+        with open("data/etkilesimli-kitap-kutuphanesi.desktop", "rb") as f:
             desktop_content = f.read()
         tarinfo = tarfile.TarInfo(name="usr/share/applications/etkilesimli-kitap-kutuphanesi.desktop")
         tarinfo.size = len(desktop_content)

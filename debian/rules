@@ -8,7 +8,7 @@ override_dh_auto_install:
 	
 	# Install desktop entry
 	mkdir -p $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/applications
-	cp etkilesimli-kitap-kutuphanesi.desktop $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/applications/
+	cp data/etkilesimli-kitap-kutuphanesi.desktop $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/applications/
 	
 	# Install application icon
 	mkdir -p $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/pixmaps
