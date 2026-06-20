@@ -234,6 +234,35 @@ QProgressBar::chunk {
     font-size: 13px;
     background-color: #1e1e1e;
 }
+
+/* Category Filter Bar */
+#CategoryFilterWidget {
+    background-color: #1e1e1e;
+    border-bottom: 1px solid #2d2d2d;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+QPushButton.CategoryFilterBtn {
+    background-color: #2d2d2d;
+    color: #c0c0c0;
+    border: 1px solid #353535;
+    border-radius: 14px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+QPushButton.CategoryFilterBtn:hover {
+    color: #ffffff;
+    background-color: #353535;
+}
+
+QPushButton.CategoryFilterBtn:checked {
+    color: #ffffff;
+    background-color: #3584e4;
+    border: 1px solid #3584e4;
+}
 """
 
 LIGHT_STYLE = COMMON_STYLE.replace(
@@ -443,5 +472,34 @@ QProgressBar::chunk {
     color: #6a6a6a;
     font-size: 13px;
     background-color: #f6f6f6;
+}
+
+/* Category Filter Bar */
+#CategoryFilterWidget {
+    background-color: #f6f6f6;
+    border-bottom: 1px solid #e5e5e5;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+QPushButton.CategoryFilterBtn {
+    background-color: #ffffff;
+    color: #505050;
+    border: 1px solid #dcdcdc;
+    border-radius: 14px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+QPushButton.CategoryFilterBtn:hover {
+    color: #242424;
+    background-color: #f5f5f5;
+}
+
+QPushButton.CategoryFilterBtn:checked {
+    color: #ffffff;
+    background-color: #3584e4;
+    border: 1px solid #3584e4;
 }
 """

@@ -138,7 +138,7 @@ class BookCard(QFrame):
         
         self.update_status(self.is_installed)
 
-    def update_status(self, is_installed, downloading=False, percent=0, speed_str=""):
+    def update_status(self, is_installed, downloading=False, percent=0, speed_str="", is_offline=False):
         self.is_installed = is_installed
         self.downloading = downloading
 
@@ -154,6 +154,8 @@ class BookCard(QFrame):
             
             self.primary_btn.setText("İptal Et")
             self.primary_btn.setProperty("class", "AdwSecondaryBtn")
+            self.primary_btn.setEnabled(True)
+            self.primary_btn.setToolTip("")
             self.secondary_btn.setVisible(False)
             
         elif is_installed:
@@ -165,6 +167,8 @@ class BookCard(QFrame):
             
             self.primary_btn.setText("Çalıştır")
             self.primary_btn.setProperty("class", "AdwSuccessBtn")
+            self.primary_btn.setEnabled(True)
+            self.primary_btn.setToolTip("")
             
             # Show secondary uninstall button
             self.secondary_btn.setVisible(True)
@@ -179,6 +183,12 @@ class BookCard(QFrame):
             
             self.primary_btn.setText("Yükle")
             self.primary_btn.setProperty("class", "AdwPrimaryBtn")
+            if is_offline:
+                self.primary_btn.setEnabled(False)
+                self.primary_btn.setToolTip("Çevrimdışı modda indirme yapılamaz.")
+            else:
+                self.primary_btn.setEnabled(True)
+                self.primary_btn.setToolTip("")
             
             self.secondary_btn.setVisible(False)
 

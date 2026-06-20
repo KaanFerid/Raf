@@ -19,7 +19,7 @@ class PreferencesDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Tercihler")
-        self.setFixedSize(360, 200)
+        self.setFixedSize(380, 360)
         self.init_ui()
         
     def init_ui(self):
@@ -53,6 +53,28 @@ class PreferencesDialog(QDialog):
         
         layout.addWidget(group_box)
         
+        # Disk Info Box
+        disk_box = QGroupBox("Sistem ve Önbellek")
+        disk_layout = QVBoxLayout(disk_box)
+        disk_layout.setContentsMargins(15, 12, 15, 12)
+        disk_layout.setSpacing(8)
+        
+        self.disk_label = QLabel(self.get_disk_info())
+        self.disk_label.setStyleSheet("color: #8a8a8a; font-size: 12px;")
+        
+        self.cache_label = QLabel(self.get_cache_size())
+        self.cache_label.setStyleSheet("color: #8a8a8a; font-size: 12px;")
+        
+        self.clear_btn = QPushButton("Önbelleği Temizle")
+        self.clear_btn.setProperty("class", "AdwSecondaryBtn")
+        self.clear_btn.clicked.connect(self.clear_cache)
+        
+        disk_layout.addWidget(self.disk_label)
+        disk_layout.addWidget(self.cache_label)
+        disk_layout.addWidget(self.clear_btn)
+        
+        layout.addWidget(disk_box)
+        
         # Actions
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
@@ -74,6 +96,70 @@ class PreferencesDialog(QDialog):
         if self.parent():
             self.setStyleSheet(self.parent().styleSheet())
             
+    def get_disk_info(self):
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            path = os.path.abspath(os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "mock_system"
+            ))
+        else:
+            path = os.path.expanduser("~")
+            
+        try:
+            import shutil
+            total, used, free = shutil.disk_usage(path)
+            free_gb = free / (1024**3)
+            total_gb = total / (1024**3)
+            return f"Sistem Boş Alanı: {free_gb:.1f} GB / {total_gb:.1f} GB"
+        except Exception:
+            return "Disk Alanı: Bilinmiyor"
+
+    def get_cache_size(self):
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            cache_dir = os.path.abspath(os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "mock_system",
+                "cache"
+            ))
+        else:
+            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            
+        if not os.path.exists(cache_dir):
+            return "Önbellek Boyutu: 0.0 MB"
+            
+        total_size = 0
+        try:
+            for dirpath, dirnames, filenames in os.walk(cache_dir):
+                for f in filenames:
+                    fp = os.path.join(dirpath, f)
+                    total_size += os.path.getsize(fp)
+            size_mb = total_size / (1024 * 1024)
+            return f"İndirme Önbelleği: {size_mb:.1f} MB"
+        except Exception:
+            return "Önbellek Boyutu: Bilinmiyor"
+
+    def clear_cache(self):
+        if os.environ.get("KITAPMARKT_DEV") == "1":
+            cache_dir = os.path.abspath(os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "mock_system",
+                "cache"
+            ))
+        else:
+            cache_dir = os.path.expanduser("~/.cache/kitapmarkt/downloads")
+            
+        if os.path.exists(cache_dir):
+            try:
+                for f in os.listdir(cache_dir):
+                    file_path = os.path.join(cache_dir, f)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                QMessageBox.information(self, "Başarılı", "İndirme önbelleği başarıyla temizlendi.")
+                self.cache_label.setText(self.get_cache_size())
+                self.disk_label.setText(self.get_disk_info())
+            except Exception as e:
+                QMessageBox.warning(self, "Hata", f"Önbellek temizlenirken hata oluştu:\n{e}")
+
     def save_preferences(self):
         if self.radio_system.isChecked():
             mode = "system"
@@ -108,6 +194,11 @@ class MainWindow(QMainWindow):
         self.active_downloads = {}      # book_id -> DownloadWorker
         self.active_installations = {}  # book_id -> InstallerWorker
         self.card_widgets = {}          # book_id -> BookCard
+        
+        # Network & Category state
+        self.is_offline = False
+        self.active_category = "Tümü"
+        self.check_network_status()
         
         self.init_ui()
         self.update_theme()
@@ -289,6 +380,36 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(header_widget)
 
+        # 1b. Category Filter Bar (Adwaita/Bottles style horizontal pills)
+        category_widget = QWidget()
+        category_widget.setObjectName("CategoryFilterWidget")
+        category_layout = QHBoxLayout(category_widget)
+        category_layout.setContentsMargins(20, 8, 20, 8)
+        category_layout.setSpacing(8)
+        
+        category_label = QLabel("Kategori:")
+        category_label.setStyleSheet("font-weight: bold; color: #8a8a8a; font-size: 12px;")
+        category_layout.addWidget(category_label)
+        
+        self.cat_buttons = {}
+        categories = ["Tümü", "İlkokul", "Ortaokul", "Lise", "Genel"]
+        self.cat_group = QButtonGroup(self)
+        self.cat_group.setExclusive(True)
+        
+        for cat in categories:
+            btn = QPushButton(cat)
+            btn.setCheckable(True)
+            btn.setProperty("class", "CategoryFilterBtn")
+            if cat == self.active_category:
+                btn.setChecked(True)
+            btn.clicked.connect(self.on_category_changed)
+            self.cat_group.addButton(btn)
+            category_layout.addWidget(btn)
+            self.cat_buttons[cat] = btn
+            
+        category_layout.addStretch(1)
+        main_layout.addWidget(category_widget)
+
         # 2. Count Label
         self.count_label = QLabel("")
         self.count_label.setObjectName("CountLabel")
@@ -329,10 +450,34 @@ class MainWindow(QMainWindow):
         self.statusBar = QStatusBar()
         self.statusBar.setStyleSheet("background-color: transparent; color: #8a8a8a; border-top: 1px solid transparent;")
         self.setStatusBar(self.statusBar)
+        
+        self.offline_badge = QLabel("  ÇEVRİMDIŞI MOD  ")
+        self.offline_badge.setStyleSheet("background-color: #c01c28; color: #ffffff; font-weight: bold; border-radius: 4px; font-size: 11px;")
+        self.offline_badge.setVisible(self.is_offline)
+        self.statusBar.addPermanentWidget(self.offline_badge)
+        
         self.statusBar.showMessage("Hazır")
 
         # Load initial view list
         self.refresh_grid()
+
+    def check_network_status(self):
+        """Checks if the system has an active internet connection."""
+        import socket
+        try:
+            socket.setdefaulttimeout(1.5)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(("8.8.8.8", 53))
+            s.close()
+            self.is_offline = False
+        except Exception:
+            self.is_offline = True
+
+    def on_category_changed(self):
+        btn = self.sender()
+        if btn and btn.isChecked():
+            self.active_category = btn.text()
+            self.refresh_grid()
 
     def show_hamburger_menu(self):
         """Displays hamburger menu dropdown."""
@@ -370,8 +515,8 @@ class MainWindow(QMainWindow):
         )
 
     def eventFilter(self, obj, event):
-        """Intercepts focus event on search input to automatically open OSK."""
-        if obj == self.search_input and event.type() == QEvent.FocusIn:
+        """Intercepts focus and click events on search input to automatically open OSK."""
+        if obj == self.search_input and event.type() in [QEvent.FocusIn, QEvent.MouseButtonPress]:
             self.trigger_virtual_keyboard()
         return super().eventFilter(obj, event)
 
@@ -501,6 +646,10 @@ class MainWindow(QMainWindow):
         if pub_filter != "Tüm Yayıncılar":
             books = [b for b in books if b['publisher'] == pub_filter]
             
+        # Filter by active category
+        if hasattr(self, "active_category") and self.active_category != "Tümü":
+            books = [b for b in books if b.get('category') == self.active_category]
+            
         # Filter by switcher tab state
         if self.tab_library_btn.isChecked():
             installed_set = get_all_installed_packages()
@@ -525,17 +674,20 @@ class MainWindow(QMainWindow):
         for idx, book in enumerate(books):
             book_id = book['id']
             
+            installed = is_book_installed(book, installed_set)
             # Retrieve or create widget
             if book_id in self.card_widgets:
                 card = self.card_widgets[book_id]
+                if book_id not in self.active_downloads and book_id not in self.active_installations:
+                    card.update_status(installed, is_offline=self.is_offline)
             else:
-                installed = is_book_installed(book, installed_set)
                 card = BookCard(book, is_installed=installed)
                 card.install_requested.connect(self.start_download)
                 card.uninstall_requested.connect(self.start_uninstallation)
                 card.launch_requested.connect(self.launch_book)
                 card.cancel_requested.connect(self.cancel_download)
                 self.card_widgets[book_id] = card
+                card.update_status(installed, is_offline=self.is_offline)
             
             # Style synchronization
             card.style().unpolish(card)
@@ -561,6 +713,9 @@ class MainWindow(QMainWindow):
 
     def refresh_all_statuses(self):
         """Check all books' actual installation state in the background."""
+        self.check_network_status()
+        self.offline_badge.setVisible(self.is_offline)
+        
         installed_set = get_all_installed_packages()
         
         for book_id, card in self.card_widgets.items():
@@ -568,8 +723,7 @@ class MainWindow(QMainWindow):
                 continue
             
             installed = is_book_installed(card.book, installed_set)
-            if card.is_installed != installed:
-                card.update_status(installed)
+            card.update_status(installed, is_offline=self.is_offline)
 
     def on_search_changed(self, text):
         self.refresh_grid()
@@ -677,7 +831,7 @@ class MainWindow(QMainWindow):
         card.primary_btn.setEnabled(True)
         
         installed = is_book_installed(book)
-        card.update_status(installed)
+        card.update_status(installed, is_offline=self.is_offline)
         
         if success and installed:
             self.statusBar.showMessage(f"{book['title']} başarıyla kuruldu!", 5000)
@@ -743,7 +897,7 @@ class MainWindow(QMainWindow):
         card.secondary_btn.setEnabled(True)
         
         installed = is_book_installed(book)
-        card.update_status(installed)
+        card.update_status(installed, is_offline=self.is_offline)
         
         if success and not installed:
             self.statusBar.showMessage(f"{book['title']} başarıyla kaldırıldı!", 5000)

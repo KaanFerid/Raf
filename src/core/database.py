@@ -39,6 +39,31 @@ class Database:
             print("Local books.json not found.")
             self.books = []
 
+        # Dynamically assign category to each book
+        for book in self.books:
+            title = book.get('title', '').lower()
+            publisher = book.get('publisher', '').lower()
+            desc = book.get('description', '').lower()
+            
+            # Keywords matching
+            if any(k in title or k in publisher or k in desc for k in [
+                "ilkokul", "4. sınıf", "3. sınıf", "2. sınıf", "1. sınıf", "okul öncesi",
+                "mavi deniz", "çalışkan arı", "berkay", "key yayın", "üçgen"
+            ]):
+                book['category'] = "İlkokul"
+            elif any(k in title or k in publisher or k in desc for k in [
+                "ortaokul", "lgs", "8. sınıf", "7. sınıf", "6. sınıf", "5. sınıf",
+                "hız", "çanta", "fenomen", "arı yayın", "günay", "mozaik", "ata"
+            ]):
+                book['category'] = "Ortaokul"
+            elif any(k in title or k in publisher or k in desc for k in [
+                "lise", "yks", "ayt", "tyt", "12. sınıf", "11. sınıf", "10. sınıf", "9. sınıf",
+                "endemik", "esen", "limit", "kondisyon", "ordinat", "tammat", "puza", "toprak", "rasyonel", "fi yayın"
+            ]):
+                book['category'] = "Lise"
+            else:
+                book['category'] = "Genel"
+
     def get_all_books(self):
         return self.books
 
