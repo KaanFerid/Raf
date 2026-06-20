@@ -6,11 +6,6 @@ QWidget {
     font-size: 14px;
 }
 
-QScrollArea, QScrollArea > QWidget {
-    background-color: transparent;
-    border: none;
-}
-
 QScrollBar:vertical {
     border: none;
     background: transparent;
@@ -37,6 +32,14 @@ DARK_STYLE = COMMON_STYLE.replace(
     "%SCROLLBAR_HANDLE_HOVER%", "#6f6f6f"
 ) + """
 QMainWindow {
+    background-color: #1e1e1e;
+}
+
+QScrollArea, QScrollArea > QWidget {
+    background-color: #1e1e1e;
+    border: none;
+}
+#ScrollContent {
     background-color: #1e1e1e;
 }
 
@@ -506,5 +509,13 @@ QPushButton.CategoryFilterBtn:checked {
     color: #ffffff;
     background-color: #3584e4;
     border: 1px solid #3584e4;
+}
+
+QScrollArea, QScrollArea > QWidget {
+    background-color: #f6f6f6;
+    border: none;
+}
+#ScrollContent {
+    background-color: #f6f6f6;
 }
 """
