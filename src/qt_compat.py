@@ -10,7 +10,7 @@ try:
         QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
         QMenu, QDialog, QButtonGroup, QRadioButton, QGroupBox
     )
-    from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient, QAction
+    from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient, QAction, QIcon, QPixmap, QPen
     QT_API = "PySide6"
 except ImportError:
     # Fallback to PyQt6
@@ -23,12 +23,14 @@ except ImportError:
             QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
             QMenu, QDialog, QButtonGroup, QRadioButton, QGroupBox
         )
-        from PyQt6.QtGui import QPainter, QColor, QFont, QLinearGradient, QAction
+        from PyQt6.QtGui import QPainter, QColor, QFont, QLinearGradient, QAction, QIcon, QPixmap, QPen
         QT_API = "PyQt6"
         
         # Map enum values for compatibility with PyQt5/PySide6
         if not hasattr(Qt, "NoPen"):
             Qt.NoPen = Qt.PenStyle.NoPen
+        if not hasattr(Qt, "RoundCap"):
+            Qt.RoundCap = Qt.PenCapStyle.RoundCap
         if not hasattr(Qt, "AlignCenter"):
             Qt.AlignCenter = Qt.AlignmentFlag.AlignCenter
         if not hasattr(Qt, "AlignVCenter"):
@@ -39,6 +41,8 @@ except ImportError:
             Qt.AlignTop = Qt.AlignmentFlag.AlignTop
         if not hasattr(Qt, "AlignLeft"):
             Qt.AlignLeft = Qt.AlignmentFlag.AlignLeft
+        if not hasattr(QLineEdit, "LeadingPosition"):
+            QLineEdit.LeadingPosition = QLineEdit.ActionPosition.LeadingPosition
     except ImportError:
         # Fallback to PyQt5
         try:
@@ -50,7 +54,7 @@ except ImportError:
                 QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
                 QMenu, QDialog, QButtonGroup, QRadioButton, QGroupBox, QAction
             )
-            from PyQt5.QtGui import QPainter, QColor, QFont, QLinearGradient
+            from PyQt5.QtGui import QPainter, QColor, QFont, QLinearGradient, QIcon, QPixmap, QPen
             QT_API = "PyQt5"
         except ImportError:
             print("Hata: PySide6, PyQt6 veya PyQt5 kütüphanesi bulunamadı!")

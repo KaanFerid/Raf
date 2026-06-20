@@ -1,8 +1,8 @@
 #!/bin/bash
-# KitapMarkt debian package builder script
+# Etkileşimli Kitap Dükkanı debian package builder script
 set -e
 
-echo "=== KitapMarkt Debian Paketi Hazırlanıyor ==="
+echo "=== Etkileşimli Kitap Dükkanı Debian Paketi Hazırlanıyor ==="
 
 if command -v dpkg-deb >/dev/null 2>&1; then
     echo "Sistemde dpkg-deb bulundu, standart yöntemle paketleniyor..."
@@ -48,7 +48,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: kitapmarkt
 
 Files: *
-Copyright: 2026 KitapMarkt Team <info@kitapmarkt.org>
+Copyright: 2026 Kaan Ferid Altundaş <info@kitapmarkt.org>
 License: GPL-3.0+
 EOF
     fi
@@ -74,8 +74,8 @@ Section: utils
 Priority: optional
 Architecture: all
 Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
-Maintainer: KitapMarkt Team <info@kitapmarkt.org>
-Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
+Maintainer: Kaan Ferid Altundaş <info@kitapmarkt.org>
+Description: Pardus Akilli Tahta Etkilesimli Kitap Dukkani
  Pardus tabanli akilli tahtalarda interaktif kitap kütüphanelerinin
  hizlica aranmasi, indirilmesi, kurulmasi ve silinmesini saglar.
 EOF

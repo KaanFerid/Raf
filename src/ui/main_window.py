@@ -5,7 +5,8 @@ from src.qt_compat import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QLabel, QLineEdit, QComboBox, QScrollArea, 
                             QMessageBox, QStatusBar, QSizePolicy, QPushButton, 
                             QProgressBar, QFrame, Qt, QTimer, QMenu, QDialog, 
-                            QButtonGroup, QRadioButton, QGroupBox, QEvent, QApplication)
+                            QButtonGroup, QRadioButton, QGroupBox, QEvent, QApplication,
+                            QIcon, QPixmap, QPen, QColor, QPainter)
 from src.ui.styles import LIGHT_STYLE, DARK_STYLE
 from src.ui.components import BookCard
 from src.core.database import Database
@@ -176,7 +177,7 @@ class PreferencesDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("KitapMarkt")
+        self.setWindowTitle("Etkileşimli Kitap Dükkanı")
         self.resize(850, 650)
         self.setMinimumSize(700, 500)
         
@@ -309,7 +310,7 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(16)
 
         # App branding Title
-        app_title = QLabel("KitapMarkt")
+        app_title = QLabel("Etkileşimli Kitap Dükkanı")
         app_title.setObjectName("AppTitleLabel")
         header_layout.addWidget(app_title)
 
@@ -347,16 +348,18 @@ class MainWindow(QMainWindow):
 
         # Search Bar input field
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Kitap ara...")
-        self.search_input.setFixedWidth(200)
+        self.search_input.setPlaceholderText("Ara...")
+        self.search_input.setFixedWidth(180)
         self.search_input.textChanged.connect(self.on_search_changed)
         self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
+        # Add custom drawn clean search icon to avoid Unicode rendering issues on Pardus
+        self.search_input.addAction(self.create_search_icon(), QLineEdit.LeadingPosition)
         header_layout.addWidget(self.search_input)
 
-        # Virtual Keyboard Toggle Button (keyboard emoji)
-        self.keyboard_btn = QPushButton("⌨")
+        # Virtual Keyboard Toggle Button (text button to prevent broken Unicode icon rendering)
+        self.keyboard_btn = QPushButton("Klavye")
         self.keyboard_btn.setObjectName("KeyboardBtn")
-        self.keyboard_btn.setFixedWidth(36)
+        self.keyboard_btn.setFixedWidth(75)
         self.keyboard_btn.setProperty("class", "AdwSecondaryBtn")
         self.keyboard_btn.clicked.connect(self.toggle_virtual_keyboard_manually)
         header_layout.addWidget(self.keyboard_btn)
@@ -504,14 +507,36 @@ class MainWindow(QMainWindow):
             self.update_theme()
             self.refresh_grid()
 
+    def create_search_icon(self):
+        """Creates a clean custom drawn magnifying glass icon to avoid Unicode font rendering bugs on Pardus."""
+        pixmap = QPixmap(18, 18)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Color: #8a8a8a (neutral gray matching the placeholder text)
+        pen = QPen(QColor("#8a8a8a"))
+        pen.setWidth(2)
+        pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(pen)
+        
+        # Draw a beautiful magnifying glass
+        # Circle radius 4.5, centered at (7.5, 7.5) -> top-left at (3, 3)
+        painter.drawEllipse(3, 3, 9, 9)
+        # Handle line from (10, 10) to (14, 14)
+        painter.drawLine(10, 10, 14, 14)
+        
+        painter.end()
+        return QIcon(pixmap)
+
     def show_about_dialog(self):
         """Displays the About application dialog."""
         QMessageBox.about(
             self,
-            "KitapMarkt Hakkında",
-            "<h3>KitapMarkt v1.0.0</h3>"
+            "Etkileşimli Kitap Dükkanı Hakkında",
+            "<h3>Etkileşimli Kitap Dükkanı v1.0.0</h3>"
             "<p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p>"
-            "<p>© 2026 KitapMarkt Ekibi</p>"
+            "<p>© 2026 Kaan Ferid Altundaş</p>"
         )
 
     def eventFilter(self, obj, event):
@@ -564,7 +589,7 @@ class MainWindow(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Yeni Güncelleme Mevcut",
-            f"<h3>KitapMarkt v{version} sürümü hazır!</h3>"
+            f"<h3>Etkileşimli Kitap Dükkanı v{version} sürümü hazır!</h3>"
             f"<p><b>Yenilikler:</b><br/>{changelog}</p>"
             f"<p>Uygulamayı şimdi güncellemek ister misiniz?</p>",
             QMessageBox.Yes | QMessageBox.No,
@@ -618,7 +643,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(
                 self,
                 "Güncelleme Başarılı",
-                "KitapMarkt başarıyla güncellendi!\nYeni sürümün geçerli olması için lütfen uygulamayı kapatıp yeniden başlatın."
+                "Etkileşimli Kitap Dükkanı başarıyla güncellendi!\nYeni sürümün geçerli olması için lütfen uygulamayı kapatıp yeniden başlatın."
             )
             self.close()
         else:

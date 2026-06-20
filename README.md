@@ -1,4 +1,4 @@
-# KitapMarkt
+# Etkileşimli Kitap Dükkanı
 
 Pardus tabanlı akıllı tahtalar (ETAP) için geliştirilmiş, modern kullanıcı arayüzüne sahip interaktif kitap ve uygulama marketi istemcisidir. 
 
@@ -31,7 +31,7 @@ python3 -m src.main
 
 ## 📦 Debian Paketi Derleme & Standardizasyon
 
-KitapMarkt, Debian ve Lintian standartlarına (Lisans/Copyright ve MD5 kontrol toplamı uyumluluğu) tam uyumlu bir paket derleme yapısına sahiptir.
+Etkileşimli Kitap Dükkanı, Debian ve Lintian standartlarına (Lisans/Copyright ve MD5 kontrol toplamı uyumluluğu) tam uyumlu bir paket derleme yapısına sahiptir.
 
 ### Derleme Adımları
 

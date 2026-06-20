@@ -1,6 +1,6 @@
 # Paketleme ve Standardizasyon Dokümantasyonu
 
-KitapMarkt uygulamasının dağıtımı, debian tabanlı işletim sistemlerine (Pardus, Debian, Ubuntu) uygun olarak standart `.deb` paketi biçiminde yapılır.
+Etkileşimli Kitap Dükkanı uygulamasının dağıtımı, debian tabanlı işletim sistemlerine (Pardus, Debian, Ubuntu) uygun olarak standart `.deb` paketi biçiminde yapılır.
 
 ## 1. Paket Politikası ve Lintian Uyumluluğu
 

@@ -14,14 +14,14 @@ def main():
         handle_cli()
         return
 
-    print("=== KitapMarkt Başlatılıyor ===")
+    print("=== Etkileşimli Kitap Dükkanı Başlatılıyor ===")
     print(f"Grafik Arayüz Motoru (Qt API): {QT_API}")
     
     # Create the Qt Application
     app = QApplication(sys.argv)
-    app.setApplicationName("KitapMarkt")
-    app.setApplicationDisplayName("KitapMarkt")
-    app.setOrganizationName("KitapMarkt Team")
+    app.setApplicationName("Etkileşimli Kitap Dükkanı")
+    app.setApplicationDisplayName("Etkileşimli Kitap Dükkanı")
+    app.setOrganizationName("Kaan Ferid Altundaş")
     app.setOrganizationDomain("kitapmarkt.org")
     
     print("Ana pencere oluşturuluyor...")

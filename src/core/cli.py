@@ -27,7 +27,7 @@ def handle_cli():
     
     args = sys.argv[1:]
     if not args or args[0] in ["-h", "--help", "help"]:
-        print("KitapMarkt CLI Yönetim Paneli")
+        print("Etkileşimli Kitap Dükkanı CLI Yönetim Paneli")
         print("Kullanım: kitapmarkt <komut> [parametreler]")
         print("\nKomutlar:")
         print("  list               Mevcut tüm kitapları listeler.")

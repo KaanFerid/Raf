@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 setup(
     name="kitapmarkt",
     version="1.0.0",
-    description="Pardus Akıllı Tahta Kitap ve Uygulama Marketi",
-    author="KitapMarkt Team",
+    description="Pardus Akıllı Tahta Etkileşimli Kitap Dükkanı",
+    author="Kaan Ferid Altundaş",
     packages=find_packages(),
     install_requires=[
         "PySide6>=6.0.0",

@@ -28,7 +28,7 @@ def add_dir(tar, dir_path):
     tar.addfile(tarinfo)
 
 def build_deb():
-    print("=== KitapMarkt Pure-Python Debian Paketi Derleyici ===")
+    print("=== Etkileşimli Kitap Dükkanı Pure-Python Debian Paketi Derleyici ===")
     
     # 1. Prepare debian-binary content
     debian_binary = b"2.0\n"
@@ -109,7 +109,7 @@ exec python3 -u -m src.main "$@"
 Upstream-Name: kitapmarkt
 
 Files: *
-Copyright: 2026 KitapMarkt Team <info@kitapmarkt.org>
+Copyright: 2026 Kaan Ferid Altundaş <info@kitapmarkt.org>
 License: GPL-3.0+
 """.encode('utf-8')
         
@@ -163,8 +163,8 @@ Section: utils
 Priority: optional
 Architecture: all
 Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
-Maintainer: KitapMarkt Team <info@kitapmarkt.org>
-Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
+Maintainer: Kaan Ferid Altundaş <info@kitapmarkt.org>
+Description: Pardus Akilli Tahta Etkilesimli Kitap Dukkani
  Pardus tabanli akilli tahtalarda interaktif kitap kütüphanelerinin
  hizlica aranmasi, indirilmesi, kurulmasi ve silinmesini saglar.
 """.encode('utf-8')

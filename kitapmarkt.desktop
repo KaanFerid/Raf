@@ -1,8 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=KitapMarkt
-Comment=Pardus Akıllı Tahta Kitap Marketi
+Name=Etkileşimli Kitap Dükkanı
+Comment=Pardus Akıllı Tahta Etkileşimli Kitap Dükkanı
 Exec=kitapmarkt
 Icon=kitapmarkt
 Terminal=false

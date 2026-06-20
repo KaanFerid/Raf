@@ -491,7 +491,7 @@ def create_desktop_launcher(book, apps_dir):
 Version=1.0
 Type=Application
 Name={book['title']}
-Comment={book['publisher']} Kütüphane Kitabı (KitapMarkt)
+Comment={book['publisher']} Kütüphane Kitabı (Etkileşimli Kitap Dükkanı)
 Exec={exec_cmd}
 Icon={icon_path}
 Terminal=false
