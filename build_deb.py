@@ -122,19 +122,19 @@ exec python3 -m src.main "$@"
         deb.write(b"!<arch>\n")
         
         # 1. Write debian-binary
-        deb.write(create_ar_header("debian-binary", len(debian_binary)))
+        deb.write(create_ar_header("debian-binary/", len(debian_binary)))
         deb.write(debian_binary)
         if len(debian_binary) % 2 != 0:
             deb.write(b"\n")
             
         # 2. Write control.tar.gz
-        deb.write(create_ar_header("control.tar.gz", len(control_tar_gz)))
+        deb.write(create_ar_header("control.tar.gz/", len(control_tar_gz)))
         deb.write(control_tar_gz)
         if len(control_tar_gz) % 2 != 0:
             deb.write(b"\n")
             
         # 3. Write data.tar.gz
-        deb.write(create_ar_header("data.tar.gz", len(data_tar_gz)))
+        deb.write(create_ar_header("data.tar.gz/", len(data_tar_gz)))
         deb.write(data_tar_gz)
         if len(data_tar_gz) % 2 != 0:
             deb.write(b"\n")
