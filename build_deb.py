@@ -24,7 +24,7 @@ def build_deb():
     # 2. Prepare control.tar.gz
     print("control.tar.gz hazırlanıyor...")
     control_data = io.BytesIO()
-    with tarfile.open(fileobj=control_data, mode="w:gz") as tar:
+    with tarfile.open(fileobj=control_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
         # Create control content
         control_content = """Package: kitapmarkt
 Version: 1.0.0
@@ -53,7 +53,7 @@ Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
     # 3. Prepare data.tar.gz
     print("data.tar.gz hazırlanıyor...")
     data_data = io.BytesIO()
-    with tarfile.open(fileobj=data_data, mode="w:gz") as tar:
+    with tarfile.open(fileobj=data_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
         # Add launcher script
         launcher_content = """#!/bin/bash
 export PYTHONPATH="/usr/share/kitapmarkt:$PYTHONPATH"
