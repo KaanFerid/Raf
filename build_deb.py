@@ -15,6 +15,17 @@ def create_ar_header(name, size, mode=0o100644):
     magic = b"`\n"
     return name_field + ts_field + owner_field + group_field + mode_field + size_field + magic
 
+def add_dir(tar, dir_path):
+    tarinfo = tarfile.TarInfo(name=dir_path)
+    tarinfo.type = tarfile.DIRTYPE
+    tarinfo.mode = 0o755
+    tarinfo.uname = "root"
+    tarinfo.gname = "root"
+    tarinfo.uid = 0
+    tarinfo.gid = 0
+    tarinfo.mtime = int(time.time())
+    tar.addfile(tarinfo)
+
 def build_deb():
     print("=== KitapMarkt Pure-Python Debian Paketi Derleyici ===")
     
@@ -54,6 +65,21 @@ Description: Pardus Akilli Tahta Kitap ve Uygulama Marketi
     print("data.tar.gz hazırlanıyor...")
     data_data = io.BytesIO()
     with tarfile.open(fileobj=data_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
+        # Add parent directories first so dpkg can extract files into them
+        dirs_to_create = [
+            "usr",
+            "usr/bin",
+            "usr/share",
+            "usr/share/applications",
+            "usr/share/pixmaps",
+            "usr/share/kitapmarkt",
+            "usr/share/kitapmarkt/src",
+            "usr/share/kitapmarkt/src/core",
+            "usr/share/kitapmarkt/src/ui",
+            "usr/share/kitapmarkt/src/assets"
+        ]
+        for d in dirs_to_create:
+            add_dir(tar, d)
         # Add launcher script
         launcher_content = """#!/bin/bash
 export PYTHONPATH="/usr/share/kitapmarkt:$PYTHONPATH"
