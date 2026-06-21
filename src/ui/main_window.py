@@ -64,13 +64,15 @@ class PreferencesDialog(QDialog):
         lang_layout.setSpacing(8)
         
         self.lang_combo = QComboBox()
-        self.lang_combo.addItem("T\u00fcrk\u00e7e", "tr")
-        self.lang_combo.addItem("English", "en")
+        available_langs = translation_manager.get_available_languages()
         
-        if current_lang == "en":
-            self.lang_combo.setCurrentIndex(1)
-        else:
-            self.lang_combo.setCurrentIndex(0)
+        selected_index = 0
+        for idx, (lang_code, display_name) in enumerate(available_langs.items()):
+            self.lang_combo.addItem(display_name, lang_code)
+            if lang_code == current_lang:
+                selected_index = idx
+                
+        self.lang_combo.setCurrentIndex(selected_index)
             
         lang_layout.addWidget(self.lang_combo)
         layout.addWidget(self.lang_group)
