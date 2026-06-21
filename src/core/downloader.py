@@ -3,6 +3,7 @@ import time
 import re
 import requests
 from src.qt_compat import QThread, Signal
+from src.core.translation import tr
 
 class DownloadWorker(QThread):
     # Signals to communicate with the GUI thread
@@ -115,7 +116,7 @@ class DownloadWorker(QThread):
                                         os.remove(temp_dest_path)
                                     except:
                                         pass
-                                self.error.emit(self.book_id, "İndirme iptal edildi.")
+                                self.error.emit(self.book_id, tr("downloader.download_cancelled"))
                                 return
 
                             if chunk:
@@ -153,7 +154,7 @@ class DownloadWorker(QThread):
                                 os.remove(temp_dest_path)
                             except:
                                 pass
-                        self.error.emit(self.book_id, f"Bağlantı hatası: {str(e)}")
+                        self.error.emit(self.book_id, tr("downloader.connection_error", error=str(e)))
                         return
                     
                     # Sleep 3 seconds before retrying

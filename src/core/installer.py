@@ -6,6 +6,7 @@ import json
 import re
 from src.qt_compat import QThread, Signal
 from src.core.config import get_cached_package_name, set_cached_package_name
+from src.core.translation import tr
 
 MOCK_DB_PATH = os.path.abspath(os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
@@ -55,21 +56,21 @@ class InstallerWorker(QThread):
 
     def run_mock(self):
         if self.action == "install":
-            self.status_changed.emit(self.book_id, f"Simülasyon: '{self.book['title']}' kuruluyor...")
+            self.status_changed.emit(self.book_id, tr("installer.sim_installing", title=self.book['title']))
             self.msleep(1500)  # Wait 1.5 seconds (simulate)
             installed = load_mock_installed()
             installed.add(self.book_id)
             save_mock_installed(installed)
-            self.status_changed.emit(self.book_id, "Simüle kurulum tamamlandı!")
+            self.status_changed.emit(self.book_id, tr("installer.sim_install_completed"))
             self.finished.emit(self.book_id, True)
         elif self.action == "uninstall":
-            self.status_changed.emit(self.book_id, f"Simülasyon: '{self.book['title']}' kaldırılıyor...")
+            self.status_changed.emit(self.book_id, tr("installer.sim_uninstalling", title=self.book['title']))
             self.msleep(1000)  # Wait 1 second (simulate)
             installed = load_mock_installed()
             if self.book_id in installed:
                 installed.remove(self.book_id)
             save_mock_installed(installed)
-            self.status_changed.emit(self.book_id, "Simüle kaldırma tamamlandı!")
+            self.status_changed.emit(self.book_id, tr("installer.sim_uninstall_completed"))
             self.finished.emit(self.book_id, True)
 
     def install(self):
@@ -80,7 +81,7 @@ class InstallerWorker(QThread):
         elif file_type in ['zip', 'fernus']:
             self.install_zip()
         else:
-            self.status_changed.emit(self.book_id, "Hata: Desteklenmeyen dosya türü.")
+            self.status_changed.emit(self.book_id, tr("installer.unsupported_file_type"))
             self.finished.emit(self.book_id, False)
 
     def uninstall(self):
@@ -91,11 +92,11 @@ class InstallerWorker(QThread):
         elif file_type in ['zip', 'fernus']:
             self.uninstall_zip()
         else:
-            self.status_changed.emit(self.book_id, "Hata: Desteklenmeyen dosya türü.")
+            self.status_changed.emit(self.book_id, tr("installer.unsupported_file_type"))
             self.finished.emit(self.book_id, False)
 
     def install_deb(self):
-        self.status_changed.emit(self.book_id, "Paket bilgileri sorgulanıyor...")
+        self.status_changed.emit(self.book_id, tr("installer.querying_package_info"))
         
         # Extract the exact package name from the downloaded .deb file
         try:
@@ -114,7 +115,7 @@ class InstallerWorker(QThread):
         except Exception as e:
             print(f"[{self.book_id}] Error reading package name from deb file: {e}")
 
-        self.status_changed.emit(self.book_id, "Sistem paketi kuruluyor (Yetki istenebilir)...")
+        self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
         
         # We will use pkexec apt-get install -y ./file.deb
         # This will pop up a PolicyKit password prompt for security.
@@ -135,22 +136,22 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, "Kurulum tamamlandı!")
+                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             else:
-                self.status_changed.emit(self.book_id, f"Kurulum başarısız oldu (Hata Kodu: {process.returncode})")
+                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
         except Exception as e:
             self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, f"Hata: {str(e)}")
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
 
     def uninstall_deb(self):
-        self.status_changed.emit(self.book_id, "Sistem paketi kaldırılıyor (Yetki istenebilir)...")
+        self.status_changed.emit(self.book_id, tr("installer.uninstalling_system_package"))
         package_name = get_deb_package_name(self.book)
         
         if not package_name:
-            self.status_changed.emit(self.book_id, "Hata: Paket adı bulunamadı.")
+            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
             self.finished.emit(self.book_id, False)
             return
 
@@ -171,18 +172,18 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, "Paket başarıyla kaldırıldı!")
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
                 self.finished.emit(self.book_id, True)
             else:
-                self.status_changed.emit(self.book_id, f"Kaldırma başarısız (Hata Kodu: {process.returncode})")
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
         except Exception as e:
             self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, f"Hata: {str(e)}")
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
 
     def install_zip(self):
-        self.status_changed.emit(self.book_id, "Dosyalar çıkarılıyor...")
+        self.status_changed.emit(self.book_id, tr("installer.extracting_files"))
         
         apps_dir = os.path.expanduser(f"~/.local/share/etkilesimli-kitap-kutuphanesi/apps/{self.book_id}")
         if os.path.exists(apps_dir):
@@ -199,7 +200,7 @@ class InstallerWorker(QThread):
                     zip_ref.extract(file, apps_dir)
                     if i % max(1, total_files // 10) == 0:
                         percent = int((i / total_files) * 100)
-                        self.status_changed.emit(self.book_id, f"Çıkartılıyor: %{percent}")
+                        self.status_changed.emit(self.book_id, tr("installer.extracting_percent", percent=percent))
             
             # Make sure all files are executable if they are scripts/binaries
             for root, dirs, files in os.walk(apps_dir):
@@ -211,19 +212,19 @@ class InstallerWorker(QThread):
                         except:
                             pass
 
-            self.status_changed.emit(self.book_id, "Masaüstü kısayolu oluşturuluyor...")
+            self.status_changed.emit(self.book_id, tr("installer.creating_desktop_launcher"))
             create_desktop_launcher(self.book, apps_dir)
             
-            self.status_changed.emit(self.book_id, "Kurulum tamamlandı!")
+            self.status_changed.emit(self.book_id, tr("installer.install_completed"))
             self.finished.emit(self.book_id, True)
 
         except Exception as e:
             self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, f"Hata: {str(e)}")
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
 
     def uninstall_zip(self):
-        self.status_changed.emit(self.book_id, "Dosyalar siliniyor...")
+        self.status_changed.emit(self.book_id, tr("installer.deleting_files"))
         
         apps_dir = os.path.expanduser(f"~/.local/share/etkilesimli-kitap-kutuphanesi/apps/{self.book_id}")
         desktop_file = os.path.expanduser(f"~/.local/share/applications/etkilesimli-kitap-kutuphanesi-{self.book_id}.desktop")
@@ -234,11 +235,11 @@ class InstallerWorker(QThread):
             if os.path.exists(desktop_file):
                 os.remove(desktop_file)
                 
-            self.status_changed.emit(self.book_id, "Kütüphane kaldırıldı!")
+            self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
             self.finished.emit(self.book_id, True)
         except Exception as e:
             self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, f"Hata: {str(e)}")
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
 
 
@@ -268,8 +269,8 @@ def turkish_to_ascii(text):
     """Normalizes Turkish characters to their standard ASCII lowercase equivalents."""
     text = text.lower()
     mapping = {
-        'ı': 'i', 'i̇': 'i', 'İ': 'i', 'İ': 'i',
-        'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c'
+        '\u0131': 'i', 'i\u0307': 'i', '\u0130': 'i', 'I\u0307': 'i',
+        '\u011f': 'g', '\u00fc': 'u', '\u015f': 's', '\u00f6': 'o', '\u00e7': 'c'
     }
     for k, v in mapping.items():
         text = text.replace(k, v)
@@ -491,7 +492,7 @@ def create_desktop_launcher(book, apps_dir):
 Version=1.0
 Type=Application
 Name={book['title']}
-Comment={book['publisher']} Kütüphane Kitabı (Etkileşimli Kitap Kütüphanesi)
+Comment={tr("installer.desktop_comment", publisher=book['publisher'])}
 Exec={exec_cmd}
 Icon={icon_path}
 Terminal=false

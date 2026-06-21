@@ -12,34 +12,37 @@ from src.ui.components import BookCard
 from src.core.database import Database
 from src.core.downloader import DownloadWorker
 from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name, get_all_installed_packages
+from src.core.translation import tr, translation_manager
 from src.core.config import load_config, save_config
 from src.core.updater import UpdateChecker, UpdateInstaller
+
+
 
 class PreferencesDialog(QDialog):
     """Preferences window styled in Adwaita format for theme configuration."""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Tercihler")
-        self.setFixedSize(380, 360)
+        self.setFixedSize(380, 430)
         self.init_ui()
         
     def init_ui(self):
         self.config = load_config()
         current_mode = self.config.get("theme_mode", "system")
+        current_lang = self.config.get("language", "tr")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
         
         # Appearance setting frame
-        group_box = QGroupBox("Görünüm")
-        group_layout = QVBoxLayout(group_box)
+        self.appearance_group = QGroupBox()
+        group_layout = QVBoxLayout(self.appearance_group)
         group_layout.setContentsMargins(15, 12, 15, 12)
         group_layout.setSpacing(8)
         
-        self.radio_system = QRadioButton("Sistem Teması (Otomatik)")
-        self.radio_light = QRadioButton("Açık Tema")
-        self.radio_dark = QRadioButton("Koyu Tema")
+        self.radio_system = QRadioButton()
+        self.radio_light = QRadioButton()
+        self.radio_dark = QRadioButton()
         
         if current_mode == "system":
             self.radio_system.setChecked(True)
@@ -52,21 +55,39 @@ class PreferencesDialog(QDialog):
         group_layout.addWidget(self.radio_light)
         group_layout.addWidget(self.radio_dark)
         
-        layout.addWidget(group_box)
+        layout.addWidget(self.appearance_group)
+        
+        # Language setting frame
+        self.lang_group = QGroupBox()
+        lang_layout = QVBoxLayout(self.lang_group)
+        lang_layout.setContentsMargins(15, 12, 15, 12)
+        lang_layout.setSpacing(8)
+        
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItem("T\u00fcrk\u00e7e", "tr")
+        self.lang_combo.addItem("English", "en")
+        
+        if current_lang == "en":
+            self.lang_combo.setCurrentIndex(1)
+        else:
+            self.lang_combo.setCurrentIndex(0)
+            
+        lang_layout.addWidget(self.lang_combo)
+        layout.addWidget(self.lang_group)
         
         # Disk Info Box
-        disk_box = QGroupBox("Sistem ve Önbellek")
-        disk_layout = QVBoxLayout(disk_box)
+        self.disk_group = QGroupBox()
+        disk_layout = QVBoxLayout(self.disk_group)
         disk_layout.setContentsMargins(15, 12, 15, 12)
         disk_layout.setSpacing(8)
         
-        self.disk_label = QLabel(self.get_disk_info())
+        self.disk_label = QLabel()
         self.disk_label.setStyleSheet("color: #8a8a8a; font-size: 12px;")
         
-        self.cache_label = QLabel(self.get_cache_size())
+        self.cache_label = QLabel()
         self.cache_label.setStyleSheet("color: #8a8a8a; font-size: 12px;")
         
-        self.clear_btn = QPushButton("Önbelleği Temizle")
+        self.clear_btn = QPushButton()
         self.clear_btn.setProperty("class", "AdwSecondaryBtn")
         self.clear_btn.clicked.connect(self.clear_cache)
         
@@ -74,29 +95,46 @@ class PreferencesDialog(QDialog):
         disk_layout.addWidget(self.cache_label)
         disk_layout.addWidget(self.clear_btn)
         
-        layout.addWidget(disk_box)
+        layout.addWidget(self.disk_group)
         
         # Actions
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
         
-        cancel_btn = QPushButton("İptal")
-        cancel_btn.setProperty("class", "AdwSecondaryBtn")
-        cancel_btn.clicked.connect(self.reject)
+        self.cancel_btn = QPushButton()
+        self.cancel_btn.setProperty("class", "AdwSecondaryBtn")
+        self.cancel_btn.clicked.connect(self.reject)
         
-        save_btn = QPushButton("Kaydet")
-        save_btn.setProperty("class", "AdwPrimaryBtn")
-        save_btn.clicked.connect(self.save_preferences)
+        self.save_btn = QPushButton()
+        self.save_btn.setProperty("class", "AdwPrimaryBtn")
+        self.save_btn.clicked.connect(self.save_preferences)
         
-        button_layout.addWidget(cancel_btn)
-        button_layout.addWidget(save_btn)
+        button_layout.addWidget(self.cancel_btn)
+        button_layout.addWidget(self.save_btn)
         
         layout.addLayout(button_layout)
+        
+        # Localize strings
+        self.retranslate_ui()
         
         # Synchronize dialog styling with main window style
         if self.parent():
             self.setStyleSheet(self.parent().styleSheet())
             
+    def retranslate_ui(self):
+        self.setWindowTitle(tr("ui.preferences"))
+        self.appearance_group.setTitle(tr("ui.appearance"))
+        self.radio_system.setText(tr("ui.system_theme"))
+        self.radio_light.setText(tr("ui.light_theme"))
+        self.radio_dark.setText(tr("ui.dark_theme"))
+        self.lang_group.setTitle(tr("ui.language"))
+        self.disk_group.setTitle(tr("ui.system_and_cache"))
+        self.clear_btn.setText(tr("ui.clear_cache"))
+        self.cancel_btn.setText(tr("ui.cancel"))
+        self.save_btn.setText(tr("ui.save"))
+        self.disk_label.setText(self.get_disk_info())
+        self.cache_label.setText(self.get_cache_size())
+
     def get_disk_info(self):
         if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
             path = os.path.abspath(os.path.join(
@@ -111,9 +149,9 @@ class PreferencesDialog(QDialog):
             total, used, free = shutil.disk_usage(path)
             free_gb = free / (1024**3)
             total_gb = total / (1024**3)
-            return f"Sistem Boş Alanı: {free_gb:.1f} GB / {total_gb:.1f} GB"
+            return tr("ui.system_free_space", free=f"{free_gb:.1f}", total=f"{total_gb:.1f}")
         except Exception:
-            return "Disk Alanı: Bilinmiyor"
+            return tr("ui.disk_space_unknown")
 
     def get_cache_size(self):
         if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
@@ -126,7 +164,7 @@ class PreferencesDialog(QDialog):
             cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
         if not os.path.exists(cache_dir):
-            return "Önbellek Boyutu: 0.0 MB"
+            return tr("ui.cache_size_zero")
             
         total_size = 0
         try:
@@ -135,9 +173,9 @@ class PreferencesDialog(QDialog):
                     fp = os.path.join(dirpath, f)
                     total_size += os.path.getsize(fp)
             size_mb = total_size / (1024 * 1024)
-            return f"İndirme Önbelleği: {size_mb:.1f} MB"
+            return tr("ui.download_cache_size", size=f"{size_mb:.1f}")
         except Exception:
-            return "Önbellek Boyutu: Bilinmiyor"
+            return tr("ui.cache_size_unknown")
 
     def clear_cache(self):
         if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
@@ -155,11 +193,11 @@ class PreferencesDialog(QDialog):
                     file_path = os.path.join(cache_dir, f)
                     if os.path.isfile(file_path):
                         os.remove(file_path)
-                QMessageBox.information(self, "Başarılı", "İndirme önbelleği başarıyla temizlendi.")
+                QMessageBox.information(self, tr("ui.success"), tr("ui.cache_clear_success"))
                 self.cache_label.setText(self.get_cache_size())
                 self.disk_label.setText(self.get_disk_info())
             except Exception as e:
-                QMessageBox.warning(self, "Hata", f"Önbellek temizlenirken hata oluştu:\n{e}")
+                QMessageBox.warning(self, tr("ui.error"), tr("ui.cache_clear_error", error=str(e)))
 
     def save_preferences(self):
         if self.radio_system.isChecked():
@@ -170,14 +208,21 @@ class PreferencesDialog(QDialog):
             mode = "dark"
             
         self.config["theme_mode"] = mode
+        
+        # Save active language
+        selected_lang = self.lang_combo.currentData()
+        self.config["language"] = selected_lang
         save_config(self.config)
+        
+        # Notify dynamic language switch
+        translation_manager.set_language(selected_lang)
+        
         self.accept()
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Etkileşimli Kitap Kütüphanesi")
         self.resize(960, 650)
         self.setMinimumSize(950, 550)
         
@@ -187,9 +232,9 @@ class MainWindow(QMainWindow):
         self.theme_timer.timeout.connect(self.check_system_theme_update)
         
         # Core components
-        print("Kitap veritabanı yükleniyor...")
+        print("Loading book database...")
         self.db = Database()
-        print(f"Veritabanı yüklendi. Toplam {len(self.db.get_all_books())} kitap mevcut.")
+        print(f"Database loaded. Total {len(self.db.get_all_books())} books available.")
         
         # State tracking
         self.active_downloads = {}      # book_id -> DownloadWorker
@@ -198,7 +243,7 @@ class MainWindow(QMainWindow):
         
         # Network & Category state
         self.is_offline = False
-        self.active_category = "Tümü"
+        self.active_category = "all"
         self.check_network_status()
         
         self.init_ui()
@@ -213,6 +258,14 @@ class MainWindow(QMainWindow):
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.refresh_all_statuses)
         self.refresh_timer.start(5000) # every 5 seconds
+        
+        # Register translation change listener
+        translation_manager.register_listener(self.retranslate_ui)
+
+    def closeEvent(self, event):
+        # Unregister translation listener to prevent memory leaks
+        translation_manager.unregister_listener(self.retranslate_ui)
+        super().closeEvent(event)
 
     def get_system_theme(self):
         """Checks the system preferred theme using standard D-Bus / desktop portal interface."""
@@ -236,7 +289,7 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
-        # Gsettings fallback for pure GNOME environment
+        # Gsettings fallback for GNOME
         try:
             res = subprocess.run([
                 "gsettings", "get", 
@@ -310,11 +363,11 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(16)
 
         # App branding Title
-        app_title = QLabel("Etkileşimli Kitap Kütüphanesi")
-        app_title.setObjectName("AppTitleLabel")
-        app_title.setMinimumWidth(260)
-        app_title.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        header_layout.addWidget(app_title)
+        self.app_title_label = QLabel()
+        self.app_title_label.setObjectName("AppTitleLabel")
+        self.app_title_label.setMinimumWidth(260)
+        self.app_title_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        header_layout.addWidget(self.app_title_label)
 
         header_layout.addStretch(1)
 
@@ -326,13 +379,13 @@ class MainWindow(QMainWindow):
         switcher_layout.setContentsMargins(0, 0, 0, 0)
         switcher_layout.setSpacing(0)
 
-        self.tab_market_btn = QPushButton("Market")
+        self.tab_market_btn = QPushButton()
         self.tab_market_btn.setCheckable(True)
         self.tab_market_btn.setChecked(True)
         self.tab_market_btn.setProperty("class", "ViewSwitcherBtn")
         self.tab_market_btn.setMinimumWidth(100)
 
-        self.tab_library_btn = QPushButton("Kütüphanem")
+        self.tab_library_btn = QPushButton()
         self.tab_library_btn.setCheckable(True)
         self.tab_library_btn.setProperty("class", "ViewSwitcherBtn")
         self.tab_library_btn.setMinimumWidth(130)
@@ -353,7 +406,6 @@ class MainWindow(QMainWindow):
 
         # Search Bar input field
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Ara...")
         self.search_input.setFixedWidth(180)
         self.search_input.textChanged.connect(self.on_search_changed)
         self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
@@ -361,14 +413,8 @@ class MainWindow(QMainWindow):
         self.search_input.addAction(self.create_search_icon(), QLineEdit.LeadingPosition)
         header_layout.addWidget(self.search_input)
 
-        # (Virtual Keyboard manual button removed to clean up the layout as requested)
-
         # Publisher Filter Combo Box
         self.publisher_combo = QComboBox()
-        self.publisher_combo.addItem("Tüm Yayıncılar")
-        publishers = sorted(list(set(b['publisher'] for b in self.db.get_all_books())))
-        for pub in publishers:
-            self.publisher_combo.addItem(pub)
         self.publisher_combo.currentTextChanged.connect(self.on_filter_changed)
         header_layout.addWidget(self.publisher_combo)
 
@@ -389,25 +435,26 @@ class MainWindow(QMainWindow):
         category_layout.setContentsMargins(20, 8, 20, 8)
         category_layout.setSpacing(8)
         
-        category_label = QLabel("Kategori:")
-        category_label.setStyleSheet("font-weight: bold; color: #8a8a8a; font-size: 12px;")
-        category_layout.addWidget(category_label)
+        self.category_label = QLabel()
+        self.category_label.setStyleSheet("font-weight: bold; color: #8a8a8a; font-size: 12px;")
+        category_layout.addWidget(self.category_label)
         
+        self.category_keys = ["all", "primary", "middle", "high", "general"]
         self.cat_buttons = {}
-        categories = ["Tümü", "İlkokul", "Ortaokul", "Lise", "Genel"]
         self.cat_group = QButtonGroup(self)
         self.cat_group.setExclusive(True)
         
-        for cat in categories:
-            btn = QPushButton(cat)
+        for cat_key in self.category_keys:
+            btn = QPushButton()
             btn.setCheckable(True)
             btn.setProperty("class", "CategoryFilterBtn")
-            if cat == self.active_category:
+            btn.setProperty("category_key", cat_key)
+            if cat_key == self.active_category:
                 btn.setChecked(True)
             btn.clicked.connect(self.on_category_changed)
             self.cat_group.addButton(btn)
             category_layout.addWidget(btn)
-            self.cat_buttons[cat] = btn
+            self.cat_buttons[cat_key] = btn
             
         category_layout.addStretch(1)
         main_layout.addWidget(category_widget)
@@ -438,7 +485,7 @@ class MainWindow(QMainWindow):
         placeholder_layout.setContentsMargins(40, 80, 40, 80)
         placeholder_layout.setAlignment(Qt.AlignCenter)
         
-        self.placeholder_label = QLabel("Kütüphaneniz boş.\nMarket sekmesinden kitap inceleyip yükleyebilirsiniz.")
+        self.placeholder_label = QLabel()
         self.placeholder_label.setAlignment(Qt.AlignCenter)
         self.placeholder_label.setStyleSheet("color: #8a8a8a; font-size: 15px; font-weight: 500;")
         placeholder_layout.addWidget(self.placeholder_label)
@@ -454,15 +501,53 @@ class MainWindow(QMainWindow):
         self.statusBar.setStyleSheet("background-color: transparent; color: #8a8a8a; border-top: 1px solid transparent;")
         self.setStatusBar(self.statusBar)
         
-        self.offline_badge = QLabel("  ÇEVRİMDIŞI MOD  ")
+        self.offline_badge = QLabel()
         self.offline_badge.setStyleSheet("background-color: #c01c28; color: #ffffff; font-weight: bold; border-radius: 4px; font-size: 11px;")
         self.offline_badge.setVisible(self.is_offline)
         self.statusBar.addPermanentWidget(self.offline_badge)
         
-        self.statusBar.showMessage("Hazır")
+        # Localize strings initially
+        self.retranslate_ui()
 
-        # Load initial view list
+    def retranslate_ui(self):
+        self.setWindowTitle(tr("ui.app_title"))
+        self.app_title_label.setText(tr("ui.app_title"))
+        self.tab_market_btn.setText(tr("ui.market"))
+        self.tab_library_btn.setText(tr("ui.my_library"))
+        self.search_input.setPlaceholderText(tr("ui.search_placeholder"))
+        
+        # Repopulate publishers combo box
+        self.publisher_combo.blockSignals(True)
+        selected_pub = self.publisher_combo.currentText()
+        self.publisher_combo.clear()
+        self.publisher_combo.addItem(tr("ui.all_publishers"))
+        
+        publishers = sorted(list(set(b['publisher'] for b in self.db.get_all_books())))
+        for pub in publishers:
+            self.publisher_combo.addItem(pub)
+            
+        index = self.publisher_combo.findText(selected_pub)
+        if index >= 0:
+            self.publisher_combo.setCurrentIndex(index)
+        else:
+            self.publisher_combo.setCurrentIndex(0)
+        self.publisher_combo.blockSignals(False)
+        
+        # Localize category buttons
+        self.category_label.setText(tr("ui.category_label"))
+        self.cat_buttons["all"].setText(tr("categories.all"))
+        self.cat_buttons["primary"].setText(tr("categories.primary"))
+        self.cat_buttons["middle"].setText(tr("categories.middle"))
+        self.cat_buttons["high"].setText(tr("categories.high"))
+        self.cat_buttons["general"].setText(tr("categories.general"))
+        
+        self.offline_badge.setText(tr("ui.offline_mode"))
+        self.statusBar.showMessage(tr("ui.ready"))
+        
+        # Refresh dynamic strings in placeholder labels and grid cards
         self.refresh_grid()
+        for card in self.card_widgets.values():
+            card.retranslate_ui(is_offline=self.is_offline)
 
     def check_network_status(self):
         """Checks if the system has an active internet connection."""
@@ -479,7 +564,7 @@ class MainWindow(QMainWindow):
     def on_category_changed(self):
         btn = self.sender()
         if btn and btn.isChecked():
-            self.active_category = btn.text()
+            self.active_category = btn.property("category_key")
             self.refresh_grid()
 
     def show_hamburger_menu(self):
@@ -487,10 +572,10 @@ class MainWindow(QMainWindow):
         menu = QMenu(self)
         menu.setStyleSheet(self.styleSheet())
         
-        pref_action = menu.addAction("Tercihler...")
+        pref_action = menu.addAction(tr("ui.preferences_menu"))
         pref_action.triggered.connect(self.open_preferences)
         
-        about_action = menu.addAction("Hakkında")
+        about_action = menu.addAction(tr("ui.about_menu"))
         about_action.triggered.connect(self.show_about_dialog)
         
         menu.exec(self.menu_btn.mapToGlobal(self.menu_btn.rect().bottomLeft()))
@@ -533,10 +618,8 @@ class MainWindow(QMainWindow):
         """Displays the About application dialog."""
         QMessageBox.about(
             self,
-            "Etkileşimli Kitap Kütüphanesi Hakkında",
-            "<h3>Etkileşimli Kitap Kütüphanesi v1.0.0</h3>"
-            "<p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p>"
-            "<p>© 2026 Kaan Ferid Altundaş</p>"
+            tr("ui.about_title"),
+            tr("ui.about_content")
         )
 
     def eventFilter(self, obj, event):
@@ -584,10 +667,8 @@ class MainWindow(QMainWindow):
         """Callback triggered when the UpdateChecker thread detects a newer version."""
         reply = QMessageBox.question(
             self,
-            "Yeni Güncelleme Mevcut",
-            f"<h3>Etkileşimli Kitap Kütüphanesi v{version} sürümü hazır!</h3>"
-            f"<p><b>Yenilikler:</b><br/>{changelog}</p>"
-            f"<p>Uygulamayı şimdi güncellemek ister misiniz?</p>",
+            tr("ui.new_update_available"),
+            tr("ui.update_prompt", version=version, changelog=changelog),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes
         )
@@ -607,7 +688,7 @@ class MainWindow(QMainWindow):
             cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
         file_path = os.path.join(cache_dir, f"etkilesimli-kitap-kutuphanesi_{version}_update.deb")
-        self.statusBar.showMessage("Güncelleme indiriliyor...")
+        self.statusBar.showMessage(tr("ui.downloading_update"))
         
         # Reuse DownloadWorker for downloading update deb
         self.update_download_worker = DownloadWorker("app_update", download_url, file_path)
@@ -618,10 +699,10 @@ class MainWindow(QMainWindow):
         
     def on_update_download_progress(self, bid, percent, speed_str):
         pct = percent if percent >= 0 else 50
-        self.statusBar.showMessage(f"Güncelleme indiriliyor: %{pct} ({speed_str})")
+        self.statusBar.showMessage(tr("ui.downloading_update_percent", percent=pct, speed=speed_str))
         
     def on_update_download_finished(self, bid, file_path):
-        self.statusBar.showMessage("Güncelleme dosyası indirildi, kuruluyor...")
+        self.statusBar.showMessage(tr("ui.update_downloaded_installing"))
         
         # Start installation process
         self.update_installer_worker = UpdateInstaller(file_path)
@@ -630,24 +711,24 @@ class MainWindow(QMainWindow):
         self.update_installer_worker.start()
         
     def on_update_download_error(self, bid, err_msg):
-        self.statusBar.showMessage("Güncelleme indirme hatası!", 5000)
-        QMessageBox.warning(self, "Güncelleme Başarısız", f"Güncelleme dosyası indirilemedi:\n{err_msg}")
+        self.statusBar.showMessage(tr("ui.update_download_error_status"), 5000)
+        QMessageBox.warning(self, tr("ui.update_download_error_status"), tr("ui.update_download_failed", error=err_msg))
         
     def on_update_install_finished(self, success):
         if success:
-            self.statusBar.showMessage("Güncelleme tamamlandı!", 5000)
+            self.statusBar.showMessage(tr("ui.update_completed_status"), 5000)
             QMessageBox.information(
                 self,
-                "Güncelleme Başarılı",
-                "Etkileşimli Kitap Kütüphanesi başarıyla güncellendi!\nYeni sürümün geçerli olması için lütfen uygulamayı kapatıp yeniden başlatın."
+                tr("ui.update_successful_title"),
+                tr("ui.update_successful_message")
             )
             self.close()
         else:
-            self.statusBar.showMessage("Güncelleme hatası!", 5000)
+            self.statusBar.showMessage(tr("ui.update_error_status"), 5000)
             QMessageBox.critical(
                 self,
-                "Güncelleme Hatası",
-                "Güncelleme yüklenemedi. Lütfen yönetici şifresini doğru girdiğinizden emin olun."
+                tr("ui.update_error_title"),
+                tr("ui.update_error_message")
             )
 
     def on_tab_changed(self):
@@ -664,11 +745,11 @@ class MainWindow(QMainWindow):
         pub_filter = self.publisher_combo.currentText()
         
         books = self.db.search_books(query)
-        if pub_filter != "Tüm Yayıncılar":
+        if pub_filter != tr("ui.all_publishers"):
             books = [b for b in books if b['publisher'] == pub_filter]
             
         # Filter by active category
-        if hasattr(self, "active_category") and self.active_category != "Tümü":
+        if hasattr(self, "active_category") and self.active_category != "all":
             books = [b for b in books if b.get('category') == self.active_category]
             
         # Filter by switcher tab state
@@ -687,7 +768,7 @@ class MainWindow(QMainWindow):
 
         # Retrieve filtered list
         books = self.get_filtered_books()
-        self.count_label.setText(f"{len(books)} kitap listelendi.")
+        self.count_label.setText(tr("ui.books_listed", count=len(books)))
 
         # Cache package status query
         installed_set = get_all_installed_packages()
@@ -725,9 +806,9 @@ class MainWindow(QMainWindow):
         # Toggle empty-state placeholder view
         if len(books) == 0:
             if self.tab_library_btn.isChecked():
-                self.placeholder_label.setText("Kütüphanenizde yüklü kitap bulunamadı.\nMarket sekmesinden kitap inceleyip yükleyebilirsiniz.")
+                self.placeholder_label.setText(tr("ui.no_installed_books_found"))
             else:
-                self.placeholder_label.setText("Aramanızla eşleşen kitap bulunamadı.")
+                self.placeholder_label.setText(tr("ui.no_books_found"))
             self.placeholder_widget.show()
         else:
             self.placeholder_widget.hide()
@@ -771,7 +852,7 @@ class MainWindow(QMainWindow):
         local_file_path = os.path.join(cache_dir, file_name)
 
         card = self.card_widgets[book_id]
-        card.update_status(is_installed=False, downloading=True, percent=0, speed_str="Hazırlanıyor...")
+        card.update_status(is_installed=False, downloading=True, percent=0, speed_str=tr("ui.download_preparing"))
 
         worker = DownloadWorker(book_id, book['download_url'], local_file_path)
         worker.progress_changed.connect(self.on_download_progress)
@@ -779,7 +860,7 @@ class MainWindow(QMainWindow):
         worker.error.connect(self.on_download_error)
         
         self.active_downloads[book_id] = worker
-        self.statusBar.showMessage(f"{book['title']} indiriliyor...")
+        self.statusBar.showMessage(tr("ui.downloading_status", title=book['title']))
         worker.start()
 
     def on_download_progress(self, book_id, percent, speed_str):
@@ -801,21 +882,26 @@ class MainWindow(QMainWindow):
         if worker:
             worker.deleteLater()
 
-        self.statusBar.showMessage(f"İndirme hatası: {err_msg}", 5000)
+        self.statusBar.showMessage(tr("ui.download_error_status", error=err_msg), 5000)
         
         if book_id in self.card_widgets:
             card = self.card_widgets[book_id]
             card.update_status(is_installed=False)
             
-        if "İndirme iptal edildi" not in err_msg:
-            QMessageBox.critical(self, "İndirme Hatası", f"Dosya indirilirken hata oluştu:\n{err_msg}")
+        is_cancelled = (
+            err_msg == tr("downloader.download_cancelled") or
+            "\u0130ndirme iptal edildi" in err_msg or
+            "cancelled" in err_msg.lower()
+        )
+        if not is_cancelled:
+            QMessageBox.critical(self, tr("ui.download_error_title"), tr("ui.download_error_message", error=err_msg))
 
     def cancel_download(self, book):
         book_id = book['id']
         if book_id in self.active_downloads:
             worker = self.active_downloads[book_id]
             worker.cancel()
-            self.statusBar.showMessage("İndirme iptal ediliyor...", 3000)
+            self.statusBar.showMessage(tr("ui.cancelling_download"), 3000)
 
     def start_installation(self, book, local_file_path):
         book_id = book['id']
@@ -823,12 +909,12 @@ class MainWindow(QMainWindow):
             return
 
         card = self.card_widgets[book_id]
-        card.status_label.setText("Kuruluyor")
+        card.status_label.setText(tr("ui.installing_btn"))
         card.status_label.setObjectName("StatusDownloadingLabel")
         card.status_label.style().unpolish(card.status_label)
         card.status_label.style().polish(card.status_label)
         card.primary_btn.setEnabled(False)
-        card.primary_btn.setText("Kuruluyor")
+        card.primary_btn.setText(tr("ui.installing_btn"))
         
         worker = InstallerWorker(book, local_file_path, action="install")
         worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
@@ -836,7 +922,7 @@ class MainWindow(QMainWindow):
         worker.output_received.connect(self.on_install_output)
         
         self.active_installations[book_id] = worker
-        self.statusBar.showMessage(f"{book['title']} kuruluyor...")
+        self.statusBar.showMessage(tr("ui.installing_status", title=book['title']))
         worker.start()
 
     def on_install_output(self, book_id, text):
@@ -855,7 +941,7 @@ class MainWindow(QMainWindow):
         card.update_status(installed, is_offline=self.is_offline)
         
         if success and installed:
-            self.statusBar.showMessage(f"{book['title']} başarıyla kuruldu!", 5000)
+            self.statusBar.showMessage(tr("ui.install_success_status", title=book['title']), 5000)
             if book.get('file_type') == 'deb':
                 try:
                     if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
@@ -874,8 +960,8 @@ class MainWindow(QMainWindow):
             # Trigger refresh to update list layout view
             self.refresh_grid()
         else:
-            self.statusBar.showMessage(f"{book['title']} kurulum hatası!", 5000)
-            QMessageBox.critical(self, "Kurulum Hatası", f"'{book['title']}' kurulumu başarısız oldu. Lütfen yönetici şifresini doğru girdiğinizden emin olun.")
+            self.statusBar.showMessage(tr("ui.install_error_status", title=book['title']), 5000)
+            QMessageBox.critical(self, tr("ui.install_error_title"), tr("ui.install_error_message", title=book['title']))
 
     def start_uninstallation(self, book):
         book_id = book['id']
@@ -884,8 +970,8 @@ class MainWindow(QMainWindow):
 
         reply = QMessageBox.question(
             self,
-            "Kütüphaneyi Kaldır",
-            f"'{book['title']}' kütüphanesini sistemden kaldırmak istediğinize emin misiniz?",
+            tr("ui.uninstall_library_title"),
+            tr("ui.uninstall_library_prompt", title=book['title']),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -896,7 +982,7 @@ class MainWindow(QMainWindow):
         card = self.card_widgets[book_id]
         card.primary_btn.setEnabled(False)
         card.secondary_btn.setEnabled(False)
-        card.primary_btn.setText("Kaldırılıyor")
+        card.primary_btn.setText(tr("ui.uninstalling_btn"))
         
         worker = InstallerWorker(book, None, action="uninstall")
         worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
@@ -904,7 +990,7 @@ class MainWindow(QMainWindow):
         worker.output_received.connect(self.on_install_output)
         
         self.active_installations[book_id] = worker
-        self.statusBar.showMessage(f"{book['title']} kaldırılıyor...")
+        self.statusBar.showMessage(tr("ui.uninstalling_status", title=book['title']))
         worker.start()
 
     def on_uninstallation_finished(self, book_id, success):
@@ -921,19 +1007,19 @@ class MainWindow(QMainWindow):
         card.update_status(installed, is_offline=self.is_offline)
         
         if success and not installed:
-            self.statusBar.showMessage(f"{book['title']} başarıyla kaldırıldı!", 5000)
+            self.statusBar.showMessage(tr("ui.uninstall_success_status", title=book['title']), 5000)
             self.refresh_grid()
         else:
-            self.statusBar.showMessage(f"{book['title']} kaldırma hatası!", 5000)
-            QMessageBox.critical(self, "Kaldırma Hatası", f"'{book['title']}' kaldırılırken hata oluştu.")
+            self.statusBar.showMessage(tr("ui.uninstall_error_status", title=book['title']), 5000)
+            QMessageBox.critical(self, tr("ui.uninstall_error_title"), tr("ui.uninstall_error_message", title=book['title']))
 
     def launch_book(self, book):
         if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
-            print(f"[GELİŞTİRİCİ MODU] Kitap başlatıldı: {book['title']} (Dosya: {book['file_name']})")
+            print(f"[DEVELOPER MODE] Book launched: {book['title']} (File: {book['file_name']})")
             QMessageBox.information(
                 self,
-                "Kitap Başlatıldı (Simülasyon)",
-                f"Geliştirici Modu:\n'{book['title']}' kütüphane uygulaması simüle edilerek başlatıldı.\n\nYayınevi: {book['publisher']}\nDosya: {book['file_name']}"
+                tr("ui.book_launched_sim_title"),
+                tr("ui.book_launched_sim_message", title=book['title'], publisher=book['publisher'], filename=book['file_name'])
             )
             return
         
@@ -945,17 +1031,17 @@ class MainWindow(QMainWindow):
             
             try:
                 subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                self.statusBar.showMessage(f"Başlatılıyor: {book['title']}", 3000)
+                self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
             except Exception as e:
                 try:
                     subprocess.Popen([package_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    self.statusBar.showMessage(f"Başlatılıyor: {book['title']}", 3000)
+                    self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
                 except Exception as e2:
-                    self.statusBar.showMessage("Çalıştırma hatası!", 5000)
+                    self.statusBar.showMessage(tr("ui.launch_error_status"), 5000)
                     QMessageBox.warning(
                         self, 
-                        "Uygulama Başlatılamadı", 
-                        f"Kütüphane başlatılamadı.\\nSistem menüsünden (Pardus) aramayı deneyebilirsiniz.\\nDetay: {str(e2)}"
+                        tr("ui.app_launch_failed_title"), 
+                        tr("ui.app_launch_failed_message", error=str(e2))
                     )
                     
         elif file_type in ['zip', 'fernus']:
@@ -964,7 +1050,7 @@ class MainWindow(QMainWindow):
             
             try:
                 subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                self.statusBar.showMessage(f"Başlatılıyor: {book['title']}", 3000)
+                self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
             except Exception as e:
-                self.statusBar.showMessage("Çalıştırma hatası!", 5000)
-                QMessageBox.warning(self, "Uygulama Başlatılamadı", f"Kitap başlatılamadı:\n{str(e)}")
+                self.statusBar.showMessage(tr("ui.launch_error_status"), 5000)
+                QMessageBox.warning(self, tr("ui.app_launch_failed_title"), tr("ui.book_launch_failed_message", error=str(e)))

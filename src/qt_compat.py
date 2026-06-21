@@ -57,6 +57,6 @@ except ImportError:
             from PyQt5.QtGui import QPainter, QColor, QFont, QLinearGradient, QIcon, QPixmap, QPen
             QT_API = "PyQt5"
         except ImportError:
-            print("Hata: PySide6, PyQt6 veya PyQt5 kütüphanesi bulunamadı!")
-            print("Lütfen 'pip install PySide6', 'pip install PyQt6' veya 'pip install PyQt5' komutuyla birini kurun.")
+            print("Error: PySide6, PyQt6 or PyQt5 library not found!")
+            print("Please install one of them via 'pip install PySide6', 'pip install PyQt6' or 'pip install PyQt5'.")
             sys.exit(1)

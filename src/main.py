@@ -14,22 +14,24 @@ def main():
         handle_cli()
         return
 
-    print("=== Etkileşimli Kitap Kütüphanesi Başlatılıyor ===")
-    print(f"Grafik Arayüz Motoru (Qt API): {QT_API}")
+    from src.core.translation import tr
+
+    print(f"=== {tr('ui.app_title')} ===")
+    print(f"Qt API: {QT_API}")
     
     # Create the Qt Application
     app = QApplication(sys.argv)
-    app.setApplicationName("Etkileşimli Kitap Kütüphanesi")
-    app.setApplicationDisplayName("Etkileşimli Kitap Kütüphanesi")
-    app.setOrganizationName("Kaan Ferid Altundaş")
+    app.setApplicationName("etkilesimli-kitap-kutuphanesi")
+    app.setApplicationDisplayName(tr("ui.app_display_name"))
+    app.setOrganizationName("Kaan Ferid Altundas")
     app.setOrganizationDomain("etkilesimlikitapkutuphanesi.org")
     
-    print("Ana pencere oluşturuluyor...")
+    print("Creating main window...")
     # Create and show the main window
     window = MainWindow()
-    print("Ana pencere gösteriliyor...")
+    print("Showing main window...")
     window.show()
-    print("Etkinlik döngüsü (event loop) başlatıldı. Uygulama hazır.")
+    print("Event loop started. Application ready.")
     
     # Execute the application loop (exec() in PySide6, exec_() in PyQt5)
     if hasattr(app, 'exec'):

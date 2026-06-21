@@ -3,9 +3,12 @@ from setuptools import setup, find_packages
 setup(
     name="etkilesimli-kitap-kutuphanesi",
     version="1.0.0",
-    description="Pardus Akıllı Tahta Etkileşimli Kitap Kütüphanesi",
-    author="Kaan Ferid Altundaş",
+    description="Interactive Book Library for Pardus Smart Boards",
+    author="Kaan Ferid Altundas",
     packages=find_packages(),
+    package_data={
+        "src": ["assets/locales/*.json", "assets/books.json", "assets/etkilesimli-kitap-kutuphanesi.png"],
+    },
     install_requires=[
         "PySide6>=6.0.0",
         "requests>=2.25.0",

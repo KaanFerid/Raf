@@ -1,6 +1,7 @@
 from src.qt_compat import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QProgressBar, QFrame, QSizePolicy,
                              Signal, Qt, QPainter, QColor, QFont)
+from src.core.translation import tr
 
 class PublisherBadge(QWidget):
     """Draws a clean flat Adwaita-style rounded-square avatar with publisher initials."""
@@ -94,7 +95,7 @@ class BookCard(QFrame):
         info_layout.addWidget(self.pub_label)
 
         file_type_str = self.book.get('file_type', 'deb').upper()
-        self.details_label = QLabel(f"Tür: {file_type_str}")
+        self.details_label = QLabel(tr("ui.type_label", type=file_type_str))
         self.details_label.setObjectName("BookDetailsLabel")
         info_layout.addWidget(self.details_label)
 
@@ -122,13 +123,13 @@ class BookCard(QFrame):
         action_layout.addWidget(self.status_label)
 
         # Primary Action Button
-        self.primary_btn = QPushButton("Yükle")
+        self.primary_btn = QPushButton(tr("ui.install_btn"))
         self.primary_btn.clicked.connect(self.on_primary_btn_clicked)
         self.primary_btn.setMinimumWidth(90)
         action_layout.addWidget(self.primary_btn)
 
         # Secondary Action Button (Uninstall)
-        self.secondary_btn = QPushButton("Kaldır")
+        self.secondary_btn = QPushButton(tr("ui.uninstall_btn"))
         self.secondary_btn.clicked.connect(self.on_secondary_btn_clicked)
         self.secondary_btn.setVisible(False)
         self.secondary_btn.setMinimumWidth(90)
@@ -143,7 +144,7 @@ class BookCard(QFrame):
         self.downloading = downloading
 
         if downloading:
-            self.status_label.setText("İndiriliyor")
+            self.status_label.setText(tr("ui.downloading_btn"))
             self.status_label.setObjectName("StatusDownloadingLabel")
             
             self.progress_bar.setVisible(True)
@@ -152,20 +153,20 @@ class BookCard(QFrame):
             self.status_info_label.setVisible(True)
             self.status_info_label.setText(speed_str)
             
-            self.primary_btn.setText("İptal Et")
+            self.primary_btn.setText(tr("ui.cancel_btn"))
             self.primary_btn.setProperty("class", "AdwSecondaryBtn")
             self.primary_btn.setEnabled(True)
             self.primary_btn.setToolTip("")
             self.secondary_btn.setVisible(False)
             
         elif is_installed:
-            self.status_label.setText("Yüklendi")
+            self.status_label.setText(tr("ui.installed_btn"))
             self.status_label.setObjectName("StatusInstalledLabel")
             
             self.progress_bar.setVisible(False)
             self.status_info_label.setVisible(False)
             
-            self.primary_btn.setText("Çalıştır")
+            self.primary_btn.setText(tr("ui.run_btn"))
             self.primary_btn.setProperty("class", "AdwSuccessBtn")
             self.primary_btn.setEnabled(True)
             self.primary_btn.setToolTip("")
@@ -175,17 +176,17 @@ class BookCard(QFrame):
             self.secondary_btn.setProperty("class", "AdwDangerBtn")
             
         else:
-            self.status_label.setText("Yüklü Değil")
+            self.status_label.setText(tr("ui.not_installed_btn"))
             self.status_label.setObjectName("StatusNotInstalledLabel")
             
             self.progress_bar.setVisible(False)
             self.status_info_label.setVisible(False)
             
-            self.primary_btn.setText("Yükle")
+            self.primary_btn.setText(tr("ui.install_btn"))
             self.primary_btn.setProperty("class", "AdwPrimaryBtn")
             if is_offline:
                 self.primary_btn.setEnabled(False)
-                self.primary_btn.setToolTip("Çevrimdışı modda indirme yapılamaz.")
+                self.primary_btn.setToolTip(tr("ui.offline_download_tooltip"))
             else:
                 self.primary_btn.setEnabled(True)
                 self.primary_btn.setToolTip("")
@@ -199,6 +200,12 @@ class BookCard(QFrame):
         self.primary_btn.style().polish(self.primary_btn)
         self.secondary_btn.style().unpolish(self.secondary_btn)
         self.secondary_btn.style().polish(self.secondary_btn)
+
+    def retranslate_ui(self, is_offline=False):
+        file_type_str = self.book.get('file_type', 'deb').upper()
+        self.details_label.setText(tr("ui.type_label", type=file_type_str))
+        self.secondary_btn.setText(tr("ui.uninstall_btn"))
+        self.update_status(self.is_installed, self.downloading, self.progress_bar.value(), self.status_info_label.text(), is_offline=is_offline)
 
     def on_primary_btn_clicked(self):
         if self.downloading:

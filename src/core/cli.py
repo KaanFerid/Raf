@@ -11,12 +11,13 @@ from src.qt_compat import QApplication, QEventLoop
 from src.core.database import Database
 from src.core.installer import InstallerWorker, is_book_installed, get_all_installed_packages
 from src.core.downloader import DownloadWorker
+from src.core.translation import tr
 
 def print_progress_bar(percent, speed_str):
     bar_length = 40
     filled_length = int(round(bar_length * percent / 100))
     bar = '=' * filled_length + '-' * (bar_length - filled_length)
-    sys.stdout.write(f"\rİndiriliyor: [{bar}] %{percent} ({speed_str})")
+    sys.stdout.write("\r" + tr("cli.downloading_progress", bar=bar, percent=percent, speed=speed_str))
     sys.stdout.flush()
 
 def handle_cli():
@@ -27,45 +28,47 @@ def handle_cli():
     
     args = sys.argv[1:]
     if not args or args[0] in ["-h", "--help", "help"]:
-        print("Etkileşimli Kitap Kütüphanesi CLI Yönetim Paneli")
-        print("Kullanım: etkilesimli-kitap-kutuphanesi <komut> [parametreler]")
-        print("\nKomutlar:")
-        print("  list               Mevcut tüm kitapları listeler.")
-        print("  list-installed     Sistemde yüklü olan kitapları listeler.")
-        print("  search <terim>     Kitaplarda arama yapar.")
-        print("  install <id>       Belirtilen kitap ID'sine sahip kitabı indirir ve kurar.")
-        print("  uninstall <id>     Belirtilen kitap ID'sine sahip kitabı sistemden kaldırır.")
-        print("  clean              İndirme önbelleğini temizler.")
+        print(tr("cli.panel_title"))
+        print(tr("cli.usage"))
+        print("\n" + tr("cli.commands_header"))
+        print(tr("cli.cmd_list"))
+        print(tr("cli.cmd_list_installed"))
+        print(tr("cli.cmd_search"))
+        print(tr("cli.cmd_install"))
+        print(tr("cli.cmd_uninstall"))
+        print(tr("cli.cmd_clean"))
         sys.exit(0)
         
     cmd = args[0]
     
     if cmd == "list":
         books = db.get_all_books()
-        print(f"Toplam {len(books)} kitap mevcut:")
-        print(f"{'ID':<35} | {'Başlık':<45} | {'Kategori':<12}")
+        print(tr("cli.total_books", count=len(books)))
+        print(tr("cli.list_header", id=tr("cli.id"), title=tr("cli.title"), category=tr("cli.category")))
         print("-" * 100)
         for b in books:
-            print(f"{b['id']:<35} | {b['title'][:45]:<45} | {b.get('category', 'Genel'):<12}")
+            cat_key = b.get('category', 'general')
+            localized_cat = tr(f"categories.{cat_key}")
+            print(f"{b['id']:<35} | {b['title'][:45]:<45} | {localized_cat:<12}")
             
     elif cmd == "list-installed":
         books = db.get_all_books()
         installed_set = get_all_installed_packages()
         installed_books = [b for b in books if is_book_installed(b, installed_set)]
-        print(f"Toplam {len(installed_books)} yüklü kitap mevcut:")
-        print(f"{'ID':<35} | {'Başlık':<45} | {'Tür':<6}")
+        print(tr("cli.total_installed", count=len(installed_books)))
+        print(tr("cli.installed_header", id=tr("cli.id"), title=tr("cli.title"), type=tr("cli.type")))
         print("-" * 92)
         for b in installed_books:
             print(f"{b['id']:<35} | {b['title'][:45]:<45} | {b.get('file_type', 'deb').upper():<6}")
             
     elif cmd == "search":
         if len(args) < 2:
-            print("Hata: Arama terimi belirtilmedi. Örnek: etkilesimli-kitap-kutuphanesi search Ankara")
+            print(tr("cli.search_missing_term"))
             sys.exit(1)
         query = " ".join(args[1:])
         books = db.search_books(query)
-        print(f"Arama sonuçları ({len(books)} adet):")
-        print(f"{'ID':<35} | {'Başlık':<45} | {'Yayıncı':<25}")
+        print(tr("cli.search_results", count=len(books)))
+        print(tr("cli.search_header", id=tr("cli.id"), title=tr("cli.title"), publisher=tr("cli.publisher")))
         print("-" * 110)
         for b in books:
             print(f"{b['id']:<35} | {b['title'][:45]:<45} | {b['publisher'][:25]:<25}")
@@ -85,24 +88,24 @@ def handle_cli():
                         files_deleted += 1
                     except:
                         pass
-            print(f"Başarılı: İndirme önbelleği temizlendi. {files_deleted} dosya silindi.")
+            print(tr("cli.clean_success", count=files_deleted))
         else:
-            print("Önbellek klasörü boş veya mevcut değil.")
+            print(tr("cli.clean_empty"))
             
     elif cmd == "install":
         if len(args) < 2:
-            print("Hata: Kurulacak kitap ID'si belirtilmedi. Örnek: etkilesimli-kitap-kutuphanesi install akademikbasariyayinlarikutuphane")
+            print(tr("cli.install_missing_id"))
             sys.exit(1)
         book_id = args[1]
         books = db.get_all_books()
         book = next((b for b in books if b['id'] == book_id), None)
         if not book:
-            print(f"Hata: '{book_id}' ID'li kitap bulunamadı. Tüm kitapları listelemek için 'etkilesimli-kitap-kutuphanesi list' komutunu çalıştırın.")
+            print(tr("cli.book_not_found", id=book_id))
             sys.exit(1)
             
         installed_set = get_all_installed_packages()
         if is_book_installed(book, installed_set):
-            print(f"Bilgi: '{book['title']}' zaten sistemde yüklü.")
+            print(tr("cli.already_installed", title=book['title']))
             sys.exit(0)
             
         # Download step
@@ -112,7 +115,7 @@ def handle_cli():
             cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
             
         file_path = os.path.join(cache_dir, book['file_name'])
-        print(f"Kuruluyor: {book['title']}")
+        print(tr("cli.installing_book", title=book['title']))
         
         # We start the download worker using QEventLoop
         loop = QEventLoop()
@@ -123,12 +126,12 @@ def handle_cli():
             print_progress_bar(percent, speed_str)
             
         def on_finished(bid, path):
-            print("\nİndirme tamamlandı.")
+            print("\n" + tr("cli.download_completed"))
             download_success[0] = True
             loop.quit()
             
         def on_error(bid, msg):
-            print(f"\nİndirme hatası: {msg}")
+            print("\n" + tr("cli.download_error", error=msg))
             loop.quit()
             
         worker.progress_changed.connect(on_progress)
@@ -139,16 +142,16 @@ def handle_cli():
         loop.exec()
         
         if not download_success[0]:
-            print("Hata: İndirme başarısız olduğu için kuruluma geçilemiyor.")
+            print(tr("cli.install_failed_download"))
             sys.exit(1)
             
         # Install step
-        print("Paket sisteme kuruluyor...")
+        print(tr("cli.installing_package"))
         install_loop = QEventLoop()
         install_success = [False]
         
         inst_worker = InstallerWorker(book, file_path, action="install")
-        inst_worker.status_changed.connect(lambda bid, msg: print(f" Durum: {msg}"))
+        inst_worker.status_changed.connect(lambda bid, msg: print(tr("cli.status_prefix", status=msg)))
         
         def on_inst_finished(bid, success):
             install_success[0] = success
@@ -159,34 +162,34 @@ def handle_cli():
         install_loop.exec()
         
         if install_success[0]:
-            print(f"\nBaşarılı: '{book['title']}' başarıyla kuruldu.")
+            print("\n" + tr("cli.install_completed_success", title=book['title']))
             sys.exit(0)
         else:
-            print(f"\nHata: '{book['title']}' kurulumu başarısız oldu.")
+            print("\n" + tr("cli.install_completed_failed", title=book['title']))
             sys.exit(1)
             
     elif cmd == "uninstall":
         if len(args) < 2:
-            print("Hata: Kaldırılacak kitap ID'si belirtilmedi. Örnek: etkilesimli-kitap-kutuphanesi uninstall akademikbasariyayinlarikutuphane")
+            print(tr("cli.uninstall_missing_id"))
             sys.exit(1)
         book_id = args[1]
         books = db.get_all_books()
         book = next((b for b in books if b['id'] == book_id), None)
         if not book:
-            print(f"Hata: '{book_id}' ID'li kitap bulunamadı.")
+            print(tr("cli.uninstall_book_not_found", id=book_id))
             sys.exit(1)
             
         installed_set = get_all_installed_packages()
         if not is_book_installed(book, installed_set):
-            print(f"Bilgi: '{book['title']}' zaten sistemde yüklü değil.")
+            print(tr("cli.uninstall_already_removed", title=book['title']))
             sys.exit(0)
             
-        print(f"Kaldırılıyor: {book['title']}")
+        print(tr("cli.uninstalling_book", title=book['title']))
         uninstall_loop = QEventLoop()
         uninstall_success = [False]
         
         inst_worker = InstallerWorker(book, None, action="uninstall")
-        inst_worker.status_changed.connect(lambda bid, msg: print(f" Durum: {msg}"))
+        inst_worker.status_changed.connect(lambda bid, msg: print(tr("cli.status_prefix", status=msg)))
         
         def on_uninst_finished(bid, success):
             uninstall_success[0] = success
@@ -197,12 +200,12 @@ def handle_cli():
         uninstall_loop.exec()
         
         if uninstall_success[0]:
-            print(f"\nBaşarılı: '{book['title']}' başarıyla sistemden kaldırıldı.")
+            print("\n" + tr("cli.uninstall_completed_success", title=book['title']))
             sys.exit(0)
         else:
-            print(f"\nHata: '{book['title']}' kaldırma işlemi başarısız oldu.")
+            print("\n" + tr("cli.uninstall_completed_failed", title=book['title']))
             sys.exit(1)
             
     else:
-        print(f"Hata: Bilinmeyen komut '{cmd}'. Yardım için 'etkilesimli-kitap-kutuphanesi --help' yazın.")
+        print(tr("cli.unknown_command", cmd=cmd))
         sys.exit(1)

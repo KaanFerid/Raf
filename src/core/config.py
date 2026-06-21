@@ -10,7 +10,7 @@ CONFIG_PATH = os.path.abspath(os.path.join(
 def load_config():
     if not os.path.exists(CONFIG_PATH):
         os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-        default_config = {"theme_mode": "system"} # "system", "light", "dark"
+        default_config = {"theme_mode": "system", "language": "tr"} # "system", "light", "dark"
         save_config(default_config)
         return default_config
     try:

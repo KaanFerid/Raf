@@ -3,6 +3,7 @@ import json
 import requests
 import subprocess
 from src.qt_compat import QThread, Signal
+from src.core.translation import tr
 
 APP_VERSION = "1.0.0"
 # Remote update metadata file
@@ -72,13 +73,13 @@ class UpdateInstaller(QThread):
     def run(self):
         # 1. Developer simulation path
         if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
-            self.status_changed.emit("Güncelleme paketi simüle edilerek yükleniyor...")
+            self.status_changed.emit(tr("updater.sim_installing"))
             self.msleep(2000)
             self.finished.emit(True)
             return
 
         # 2. Production system installation path
-        self.status_changed.emit("Sistem güncellemesi yapılıyor (Yetki istenebilir)...")
+        self.status_changed.emit(tr("updater.system_updating"))
         # Run pkexec apt-get install --reinstall -y ./file.deb
         cmd = ["pkexec", "apt-get", "install", "--reinstall", "-y", self.file_path]
         try:

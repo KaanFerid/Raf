@@ -23,7 +23,7 @@ def test_ui_features():
     
     print("Testing category filtering...")
     # Verify categories exist
-    categories = ["Tümü", "İlkokul", "Ortaokul", "Lise", "Genel"]
+    categories = ["all", "primary", "middle", "high", "general"]
     for cat in categories:
         assert cat in window.cat_buttons, f"Button for category {cat} missing"
         
@@ -31,22 +31,22 @@ def test_ui_features():
     all_count = len(window.get_filtered_books())
     print(f"All books count: {all_count}")
     
-    # Filter by Lise
-    window.cat_buttons["Lise"].click()
+    # Filter by high
+    window.cat_buttons["high"].click()
     lise_books = window.get_filtered_books()
-    print(f"Lise books count: {len(lise_books)}")
-    assert len(lise_books) > 0, "No Lise books found"
-    assert len(lise_books) < all_count, "Filtering by Lise did not change count"
+    print(f"High books count: {len(lise_books)}")
+    assert len(lise_books) > 0, "No high books found"
+    assert len(lise_books) < all_count, "Filtering by high did not change count"
     for b in lise_books:
-        assert b.get("category") == "Lise", f"Book {b['id']} has wrong category: {b.get('category')}"
+        assert b.get("category") == "high", f"Book {b['id']} has wrong category: {b.get('category')}"
         
-    # Filter by İlkokul
-    window.cat_buttons["İlkokul"].click()
+    # Filter by primary
+    window.cat_buttons["primary"].click()
     ilkokul_books = window.get_filtered_books()
-    print(f"İlkokul books count: {len(ilkokul_books)}")
-    assert len(ilkokul_books) > 0, "No İlkokul books found"
+    print(f"Primary books count: {len(ilkokul_books)}")
+    assert len(ilkokul_books) > 0, "No primary books found"
     for b in ilkokul_books:
-        assert b.get("category") == "İlkokul", f"Book {b['id']} has wrong category"
+        assert b.get("category") == "primary", f"Book {b['id']} has wrong category"
         
     print("Testing offline mode logic...")
     # Trigger offline mode
