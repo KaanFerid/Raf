@@ -7,7 +7,7 @@ from src.core.translation import tr
 
 APP_VERSION = "1.0.0"
 # Remote update metadata file
-UPDATE_URL = "https://raw.githubusercontent.com/kaan-gok/etkilesimli-kitap-kutuphanesi/main/update.json"
+UPDATE_URL = "https://raw.githubusercontent.com/kaan-gok/raf/main/update.json"
 
 class UpdateChecker(QThread):
     # Signals to notify the UI
@@ -16,7 +16,7 @@ class UpdateChecker(QThread):
 
     def run(self):
         # 1. Developer simulation path
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             mock_path = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
@@ -72,7 +72,7 @@ class UpdateInstaller(QThread):
 
     def run(self):
         # 1. Developer simulation path
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             self.status_changed.emit(tr("updater.sim_installing"))
             self.msleep(2000)
             self.finished.emit(True)

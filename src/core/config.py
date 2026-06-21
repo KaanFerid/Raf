@@ -3,7 +3,7 @@ import json
 
 CONFIG_PATH = os.path.abspath(os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-    "mock_system" if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1" else os.path.expanduser("~/.config/etkilesimli-kitap-kutuphanesi"),
+    "mock_system" if os.environ.get("RAF_DEV") == "1" else os.path.expanduser("~/.config/raf"),
     "config.json"
 ))
 

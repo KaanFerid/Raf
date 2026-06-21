@@ -43,7 +43,7 @@ def inspect_deb(filename):
             offset += 1
 
 if __name__ == "__main__":
-    filename = "etkilesimli-kitap-kutuphanesi_1.0.0_all.deb"
+    filename = "raf_1.0.0_all.deb"
     if not os.path.exists(filename):
         # Check parent directory
         parent_filename = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), filename)

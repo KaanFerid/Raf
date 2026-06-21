@@ -3,7 +3,7 @@ import sys
 import time
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
-os.environ["ETKILESIMLI_KITAP_KUTUPHANESI_DEV"] = "1"
+os.environ["RAF_DEV"] = "1"
 
 # Dynamically resolve project root (parent of tests/)
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

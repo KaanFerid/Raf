@@ -21,14 +21,14 @@ def main():
     
     # Create the Qt Application
     app = QApplication(sys.argv)
-    app.setApplicationName("etkilesimli-kitap-kutuphanesi")
+    app.setApplicationName("raf")
     app.setApplicationDisplayName(tr("ui.app_display_name"))
     app.setOrganizationName("Kaan Ferid Altundas")
-    app.setOrganizationDomain("etkilesimlikitapkutuphanesi.org")
+    app.setOrganizationDomain("raf.org")
     
     # Set application window icon
     import os
-    icon_path = os.path.join(os.path.dirname(__file__), "assets", "etkilesimli-kitap-kutuphanesi.png")
+    icon_path = os.path.join(os.path.dirname(__file__), "assets", "raf.png")
     if os.path.exists(icon_path):
         try:
             if QT_API == "PySide6":

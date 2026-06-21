@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Raf
+Comment=Pardus Akıllı Tahta İnteraktif Kitap Rafı
+Exec=raf
+Icon=raf
+Terminal=false
+Categories=Education;Network;
+StartupNotify=true

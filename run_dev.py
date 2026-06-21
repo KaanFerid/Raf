@@ -3,10 +3,10 @@ import os
 import sys
 
 # Enable developer/simulator mode
-os.environ["ETKILESIMLI_KITAP_KUTUPHANESI_DEV"] = "1"
+os.environ["RAF_DEV"] = "1"
 
 print("==================================================")
-print("  ETKİLEŞİMLİ KİTAP KÜTÜPHANESİ - SİMÜLATÖR MODU   ")
+print("              RAF - SİMÜLATÖR MODU                ")
 print("==================================================")
 print("Bu modda:")
 print(" - Paket indirmeleri local 'mock_system/cache/' klasörüne yapılır.")

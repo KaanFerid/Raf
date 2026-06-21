@@ -1,6 +1,6 @@
-# Interactive Book Library - Development Summary
+# Raf - Development Summary
 
-This document summarizes all completed stages, added features, architectural structure, and verification methods in the **Interactive Book Library** project, developed with a modern user interface for Pardus-based smart boards (ETAP).
+This document summarizes all completed stages, added features, architectural structure, and verification methods in the **Raf** project, developed with a modern user interface for Pardus-based smart boards (ETAP).
 
 ---
 
@@ -41,7 +41,7 @@ This document summarizes all completed stages, added features, architectural str
 * **Pure-Python Debian Compiler (`build_deb.py`):** Automatically packages the `.deb` archive on developer machines where standard `dpkg` utilities are missing.
 * **Lintian Alignment:**
   * Compiles checksum summaries of all packaged files into `md5sums`.
-  * Integrates upstream author copyright declarations in `usr/share/doc/etkilesimli-kitap-kutuphanesi/copyright` with strict `644` file permissions.
+  * Integrates upstream author copyright declarations in `usr/share/doc/raf/copyright` with strict `644` file permissions.
 * **Self-Updater (Application self-update):** Periodically runs an asynchronous checker in the background to detect updates, download the packages, and trigger updates via `pkexec apt-get install`.
 * **Google Drive Warn Bypass:** Bypasses Google Drive virus warning screens programmatically to guarantee direct download operations.
 

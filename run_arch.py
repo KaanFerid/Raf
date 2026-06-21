@@ -4,10 +4,10 @@ import sys
 import subprocess
 
 # 1. Force Simulator/Developer Mode
-os.environ["ETKILESIMLI_KITAP_KUTUPHANESI_DEV"] = "1"
+os.environ["RAF_DEV"] = "1"
 
 print("==================================================")
-print("  ETKİLEŞİMLİ KİTAP KÜTÜPHANESİ - SİMÜLATÖRÜ     ")
+print("              RAF - SİMÜLATÖRÜ                    ")
 print("==================================================")
 print("Bu çalıştırıcı:")
 print(" - Sisteminizde hiçbir kalıcı değişiklik yapmaz.")
@@ -64,7 +64,7 @@ def run_in_venv():
     cmd = [
         venv_python, 
         "-c", 
-        "import os; os.environ['ETKILESIMLI_KITAP_KUTUPHANESI_DEV'] = '1'; from src.main import main; main()"
+        "import os; os.environ['RAF_DEV'] = '1'; from src.main import main; main()"
     ]
     
     # Forward the arguments as well

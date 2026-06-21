@@ -138,7 +138,7 @@ class PreferencesDialog(QDialog):
         self.cache_label.setText(self.get_cache_size())
 
     def get_disk_info(self):
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             path = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system"
@@ -156,14 +156,14 @@ class PreferencesDialog(QDialog):
             return tr("ui.disk_space_unknown")
 
     def get_cache_size(self):
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
             
         if not os.path.exists(cache_dir):
             return tr("ui.cache_size_zero")
@@ -180,14 +180,14 @@ class PreferencesDialog(QDialog):
             return tr("ui.cache_size_unknown")
 
     def clear_cache(self):
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
             
         if os.path.exists(cache_dir):
             try:
@@ -680,16 +680,16 @@ class MainWindow(QMainWindow):
 
     def start_app_update(self, version, download_url):
         """Starts downloading the update deb file."""
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "mock_system",
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
             
-        file_path = os.path.join(cache_dir, f"etkilesimli-kitap-kutuphanesi_{version}_update.deb")
+        file_path = os.path.join(cache_dir, f"raf_{version}_update.deb")
         self.statusBar.showMessage(tr("ui.downloading_update"))
         
         # Reuse DownloadWorker for downloading update deb
@@ -843,14 +843,14 @@ class MainWindow(QMainWindow):
             return
 
         file_name = book['file_name']
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                 "mock_system", 
                 "cache"
             ))
         else:
-            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
         local_file_path = os.path.join(cache_dir, file_name)
 
         card = self.card_widgets[book_id]
@@ -946,14 +946,14 @@ class MainWindow(QMainWindow):
             self.statusBar.showMessage(tr("ui.install_success_status", title=book['title']), 5000)
             if book.get('file_type') == 'deb':
                 try:
-                    if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+                    if os.environ.get("RAF_DEV") == "1":
                         cache_dir = os.path.abspath(os.path.join(
                             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                             "mock_system", 
                             "cache"
                         ))
                     else:
-                        cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+                        cache_dir = os.path.expanduser("~/.cache/raf/downloads")
                     local_file_path = os.path.join(cache_dir, book['file_name'])
                     if os.path.exists(local_file_path):
                         os.remove(local_file_path)
@@ -1016,7 +1016,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, tr("ui.uninstall_error_title"), tr("ui.uninstall_error_message", title=book['title']))
 
     def launch_book(self, book):
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             print(f"[DEVELOPER MODE] Book launched: {book['title']} (File: {book['file_name']})")
             QMessageBox.information(
                 self,
@@ -1047,7 +1047,7 @@ class MainWindow(QMainWindow):
                     )
                     
         elif file_type in ['zip', 'fernus']:
-            desktop_name = f"etkilesimli-kitap-kutuphanesi-{book['id']}"
+            desktop_name = f"raf-{book['id']}"
             cmd = ["gtk-launch", desktop_name]
             
             try:

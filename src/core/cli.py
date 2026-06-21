@@ -74,10 +74,10 @@ def handle_cli():
             print(f"{b['id']:<35} | {b['title'][:45]:<45} | {b['publisher'][:25]:<25}")
             
     elif cmd == "clean":
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "mock_system", "cache"))
         else:
-            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
         if os.path.exists(cache_dir):
             files_deleted = 0
             for f in os.listdir(cache_dir):
@@ -109,10 +109,10 @@ def handle_cli():
             sys.exit(0)
             
         # Download step
-        if os.environ.get("ETKILESIMLI_KITAP_KUTUPHANESI_DEV") == "1":
+        if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "mock_system", "cache"))
         else:
-            cache_dir = os.path.expanduser("~/.cache/etkilesimli-kitap-kutuphanesi/downloads")
+            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
             
         file_path = os.path.join(cache_dir, book['file_name'])
         print(tr("cli.installing_book", title=book['title']))

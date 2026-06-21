@@ -1,1 +1,1 @@
-# Core logic package for Etkileşimli Kitap Kütüphanesi
+# Core logic package for Raf

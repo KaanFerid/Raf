@@ -1,11 +1,11 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: etkilesimli-kitap-kutuphanesi
+Upstream-Name: raf
 
 Files: *
 Copyright: 2026 Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 License: GPL-3.0+
 
-Files: src/assets/etkilesimli-kitap-kutuphanesi.*
+Files: src/assets/raf.*
 Copyright: Nick Frost and Greg Lapin (https://icon-icons.com/authors/237-nick-frost-and-greg-lapin)
 License: Free/Attribution
 

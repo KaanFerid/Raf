@@ -1,6 +1,6 @@
 # Packaging and Standardization Documentation
 
-The Interactive Book Library application is distributed as a standard `.deb` package suitable for Debian-based operating systems (Pardus, Debian, Ubuntu).
+The Raf application is distributed as a standard `.deb` package suitable for Debian-based operating systems (Pardus, Debian, Ubuntu).
 
 ## 1. Package Policy & Lintian Compliance
 
@@ -15,7 +15,7 @@ The project can be packaged using two alternative channels:
 
 ### Standard Channel (`scripts/build_deb.sh`)
 If the packaging utility `dpkg-deb` is installed on the host system, this script:
-1. Allocates the temporary directory `build/etkilesimli-kitap-kutuphanesi-pkg`.
+1. Allocates the temporary directory `build/raf-pkg`.
 2. Copies codebase source directories and configuration targets to this path.
 3. Automatically computes file MD5 sums to generate `DEBIAN/md5sums`.
 4. Enforces strict directory and file permissions (`0o755` and `0o644`).

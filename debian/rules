@@ -4,12 +4,12 @@
 	dh $@ --with python3
 
 override_dh_auto_install:
-	python3 setup.py install --root=$(CURDIR)/debian/etkilesimli-kitap-kutuphanesi --install-layout=deb
+	python3 setup.py install --root=$(CURDIR)/debian/raf --install-layout=deb
 	
 	# Install desktop entry
-	mkdir -p $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/applications
-	cp data/etkilesimli-kitap-kutuphanesi.desktop $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/applications/
+	mkdir -p $(CURDIR)/debian/raf/usr/share/applications
+	cp data/raf.desktop $(CURDIR)/debian/raf/usr/share/applications/
 	
 	# Install application icon
-	mkdir -p $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/pixmaps
-	cp src/assets/etkilesimli-kitap-kutuphanesi.png $(CURDIR)/debian/etkilesimli-kitap-kutuphanesi/usr/share/pixmaps/
+	mkdir -p $(CURDIR)/debian/raf/usr/share/pixmaps
+	cp src/assets/raf.png $(CURDIR)/debian/raf/usr/share/pixmaps/

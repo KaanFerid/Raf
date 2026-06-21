@@ -1,18 +1,18 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="etkilesimli-kitap-kutuphanesi",
+    name="raf",
     version="1.0.0",
-    description="Interactive Book Library for Pardus Smart Boards",
+    description="Raf: Interactive Book Library for Pardus Smart Boards",
     author="Kaan Ferid Altundas",
     packages=find_packages(),
     package_data={
         "src": [
             "assets/locales/*.json",
             "assets/books.json",
-            "assets/etkilesimli-kitap-kutuphanesi.png",
-            "assets/etkilesimli-kitap-kutuphanesi.ico",
-            "assets/etkilesimli-kitap-kutuphanesi.svg"
+            "assets/raf.png",
+            "assets/raf.ico",
+            "assets/raf.svg"
         ],
     },
     install_requires=[
@@ -21,7 +21,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "etkilesimli-kitap-kutuphanesi=src.main:main",
+            "raf=src.main:main",
         ],
     },
     include_package_data=True,

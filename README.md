@@ -1,4 +1,4 @@
-# Interactive Book Library
+# Raf
 
 Interactive book library client with a modern user interface, developed for Pardus-based smart boards (ETAP).
 
@@ -31,11 +31,11 @@ python3 -m src.main
 
 ## 📦 Debian Package Compilation & Standardization
 
-Interactive Book Library has a package compilation structure fully compliant with Debian and Lintian standards (License/Copyright and MD5 checksum compatibility).
+Raf has a package compilation structure fully compliant with Debian and Lintian standards (License/Copyright and MD5 checksum compatibility).
 
 ### Compilation Steps
 
-You can compile the Debian package by running the following script in the project directory. When compilation is complete, the package `etkilesimli-kitap-kutuphanesi_1.0.0_all.deb` will be created in the root directory:
+You can compile the Debian package by running the following script in the project directory. When compilation is complete, the package `raf_1.0.0_all.deb` will be created in the root directory:
 
 ```bash
 ./scripts/build_deb.sh

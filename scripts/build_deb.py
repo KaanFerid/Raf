@@ -28,7 +28,7 @@ def add_dir(tar, dir_path):
     tar.addfile(tarinfo)
 
 def build_deb():
-    print("=== Etkileşimli Kitap Kütüphanesi Pure-Python Debian Paketi Derleyici ===")
+    print("=== Raf Pure-Python Debian Paketi Derleyici ===")
     
     # 1. Prepare debian-binary content
     debian_binary = b"2.0\n"
@@ -50,54 +50,54 @@ def build_deb():
             "usr/share/applications",
             "usr/share/pixmaps",
             "usr/share/doc",
-            "usr/share/doc/etkilesimli-kitap-kutuphanesi",
-            "usr/share/etkilesimli-kitap-kutuphanesi",
-            "usr/share/etkilesimli-kitap-kutuphanesi/src",
-            "usr/share/etkilesimli-kitap-kutuphanesi/src/core",
-            "usr/share/etkilesimli-kitap-kutuphanesi/src/ui",
-            "usr/share/etkilesimli-kitap-kutuphanesi/src/assets"
+            "usr/share/doc/raf",
+            "usr/share/raf",
+            "usr/share/raf/src",
+            "usr/share/raf/src/core",
+            "usr/share/raf/src/ui",
+            "usr/share/raf/src/assets"
         ]
         for d in dirs_to_create:
             add_dir(tar, d)
             
         # Add launcher script
         launcher_content = """#!/bin/bash
-export PYTHONPATH="/usr/share/etkilesimli-kitap-kutuphanesi:$PYTHONPATH"
+export PYTHONPATH="/usr/share/raf:$PYTHONPATH"
 exec python3 -u -m src.main "$@"
 """.encode('utf-8')
         
-        tarinfo = tarfile.TarInfo(name="usr/bin/etkilesimli-kitap-kutuphanesi")
+        tarinfo = tarfile.TarInfo(name="usr/bin/raf")
         tarinfo.size = len(launcher_content)
         tarinfo.mtime = int(time.time())
         tarinfo.mode = 0o755
         tarinfo.uname = "root"
         tarinfo.gname = "root"
         tar.addfile(tarinfo, io.BytesIO(launcher_content))
-        md5_list.append(f"{get_md5(launcher_content)}  usr/bin/etkilesimli-kitap-kutuphanesi\n")
+        md5_list.append(f"{get_md5(launcher_content)}  usr/bin/raf\n")
 
         # Add desktop file
-        with open("data/etkilesimli-kitap-kutuphanesi.desktop", "rb") as f:
+        with open("data/raf.desktop", "rb") as f:
             desktop_content = f.read()
-        tarinfo = tarfile.TarInfo(name="usr/share/applications/etkilesimli-kitap-kutuphanesi.desktop")
+        tarinfo = tarfile.TarInfo(name="usr/share/applications/raf.desktop")
         tarinfo.size = len(desktop_content)
         tarinfo.mtime = int(time.time())
         tarinfo.mode = 0o644
         tarinfo.uname = "root"
         tarinfo.gname = "root"
         tar.addfile(tarinfo, io.BytesIO(desktop_content))
-        md5_list.append(f"{get_md5(desktop_content)}  usr/share/applications/etkilesimli-kitap-kutuphanesi.desktop\n")
+        md5_list.append(f"{get_md5(desktop_content)}  usr/share/applications/raf.desktop\n")
 
         # Add icon file
-        with open("src/assets/etkilesimli-kitap-kutuphanesi.png", "rb") as f:
+        with open("src/assets/raf.png", "rb") as f:
             icon_content = f.read()
-        tarinfo = tarfile.TarInfo(name="usr/share/pixmaps/etkilesimli-kitap-kutuphanesi.png")
+        tarinfo = tarfile.TarInfo(name="usr/share/pixmaps/raf.png")
         tarinfo.size = len(icon_content)
         tarinfo.mtime = int(time.time())
         tarinfo.mode = 0o644
         tarinfo.uname = "root"
         tarinfo.gname = "root"
         tar.addfile(tarinfo, io.BytesIO(icon_content))
-        md5_list.append(f"{get_md5(icon_content)}  usr/share/pixmaps/etkilesimli-kitap-kutuphanesi.png\n")
+        md5_list.append(f"{get_md5(icon_content)}  usr/share/pixmaps/raf.png\n")
 
         # Add copyright file
         copyright_content = b""
@@ -106,19 +106,19 @@ exec python3 -u -m src.main "$@"
                 copyright_content = f.read()
         else:
             copyright_content = """Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: etkilesimli-kitap-kutuphanesi
+Upstream-Name: raf
 Copyright: 2026 Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 License: GPL-3.0+
 """.encode('utf-8')
         
-        tarinfo = tarfile.TarInfo(name="usr/share/doc/etkilesimli-kitap-kutuphanesi/copyright")
+        tarinfo = tarfile.TarInfo(name="usr/share/doc/raf/copyright")
         tarinfo.size = len(copyright_content)
         tarinfo.mtime = int(time.time())
         tarinfo.mode = 0o644
         tarinfo.uname = "root"
         tarinfo.gname = "root"
         tar.addfile(tarinfo, io.BytesIO(copyright_content))
-        md5_list.append(f"{get_md5(copyright_content)}  usr/share/doc/etkilesimli-kitap-kutuphanesi/copyright\n")
+        md5_list.append(f"{get_md5(copyright_content)}  usr/share/doc/raf/copyright\n")
 
         # Recursively add src directory contents
         for root, dirs, files in os.walk("src"):
@@ -128,7 +128,7 @@ License: GPL-3.0+
                 if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
                     continue
                 filepath = os.path.join(root, file)
-                tarpath = os.path.join("usr/share/etkilesimli-kitap-kutuphanesi", filepath)
+                tarpath = os.path.join("usr/share/raf", filepath)
                 
                 tarinfo = tar.gettarinfo(filepath, arcname=tarpath)
                 tarinfo.uname = "root"
@@ -155,15 +155,15 @@ License: GPL-3.0+
     control_data = io.BytesIO()
     with tarfile.open(fileobj=control_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
         # Create control content
-        control_content = """Package: etkilesimli-kitap-kutuphanesi
+        control_content = """Package: raf
 Version: 1.0.0
 Section: utils
 Priority: optional
 Architecture: all
 Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
 Maintainer: Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
-Description: Pardus Akilli Tahta Etkilesimli Kitap Kutuphanesi
- Pardus tabanli akilli tahtalarda interaktif kitap kütüphanelerinin
+Description: Pardus Akilli Tahta Raf Uygulamasi
+ Pardus tabanli akilli tahtalarda interaktif kitap raflarinin
  hizlica aranmasi, indirilmesi, kurulmasi ve silinmesini saglar.
 """.encode('utf-8')
         
@@ -192,7 +192,7 @@ Description: Pardus Akilli Tahta Etkilesimli Kitap Kutuphanesi
     control_tar_gz = control_data.getvalue()
 
     # 4. Write to ar archive (.deb file)
-    output_filename = "etkilesimli-kitap-kutuphanesi_1.0.0_all.deb"
+    output_filename = "raf_1.0.0_all.deb"
     print(f"Bileşenler {output_filename} dosyasına birleştiriliyor...")
     
     with open(output_filename, "wb") as deb:

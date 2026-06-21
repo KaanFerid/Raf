@@ -1,4 +1,4 @@
-# Libadwaita Style Sheets for Etkileşimli Kitap Kütüphanesi
+# Libadwaita Style Sheets for Raf
 
 COMMON_STYLE = """
 QWidget {
