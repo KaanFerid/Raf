@@ -21,32 +21,16 @@ def test_ui_features():
     # Mock check_network_status to prevent overriding test states
     window.check_network_status = lambda: None
     
-    print("Testing category filtering...")
-    # Verify categories exist
-    categories = ["all", "primary", "middle", "high", "general"]
-    for cat in categories:
-        assert cat in window.cat_buttons, f"Button for category {cat} missing"
-        
-    # Test filtering
-    all_count = len(window.get_filtered_books())
-    print(f"All books count: {all_count}")
+    print("Testing action buttons and search box...")
+    assert window.settings_btn is not None
+    assert window.about_btn is not None
+    assert window.search_input is not None
     
-    # Filter by high
-    window.cat_buttons["high"].click()
-    lise_books = window.get_filtered_books()
-    print(f"High books count: {len(lise_books)}")
-    assert len(lise_books) > 0, "No high books found"
-    assert len(lise_books) < all_count, "Filtering by high did not change count"
-    for b in lise_books:
-        assert b.get("category") == "high", f"Book {b['id']} has wrong category: {b.get('category')}"
-        
-    # Filter by primary
-    window.cat_buttons["primary"].click()
-    ilkokul_books = window.get_filtered_books()
-    print(f"Primary books count: {len(ilkokul_books)}")
-    assert len(ilkokul_books) > 0, "No primary books found"
-    for b in ilkokul_books:
-        assert b.get("category") == "primary", f"Book {b['id']} has wrong category"
+    # Test search filtering works
+    window.search_input.setText("Ankara")
+    filtered_books = window.get_filtered_books()
+    for b in filtered_books:
+        assert "ankara" in b['title'].lower() or "ankara" in b['publisher'].lower() or "ankara" in b.get('description', '').lower()
         
     print("Testing offline mode logic...")
     # Trigger offline mode

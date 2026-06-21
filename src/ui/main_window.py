@@ -244,9 +244,8 @@ class MainWindow(QMainWindow):
         self.active_installations = {}  # book_id -> InstallerWorker
         self.card_widgets = {}          # book_id -> BookCard
         
-        # Network & Category state
+        # Network state
         self.is_offline = False
-        self.active_category = "all"
         self.check_network_status()
         
         self.init_ui()
@@ -368,13 +367,24 @@ class MainWindow(QMainWindow):
         # App branding Title
         self.app_title_label = QLabel()
         self.app_title_label.setObjectName("AppTitleLabel")
-        self.app_title_label.setMinimumWidth(260)
+        self.app_title_label.setMinimumWidth(150)
         self.app_title_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         header_layout.addWidget(self.app_title_label)
 
         header_layout.addStretch(1)
 
-        # Center segmented control (View Switcher - Adwaita style)
+        # Search Bar input field (Centered)
+        self.search_input = QLineEdit()
+        self.search_input.setFixedWidth(200)
+        self.search_input.textChanged.connect(self.on_search_changed)
+        self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
+        # Add custom drawn clean search icon to avoid Unicode rendering issues on Pardus
+        self.search_input.addAction(self.create_search_icon(), QLineEdit.LeadingPosition)
+        header_layout.addWidget(self.search_input)
+
+        header_layout.addStretch(1)
+
+        # Right segmented control (View Switcher - Adwaita style)
         switcher_container = QWidget()
         switcher_container.setObjectName("ViewSwitcherContainer")
         switcher_container.setMinimumWidth(240)
@@ -405,62 +415,19 @@ class MainWindow(QMainWindow):
         switcher_layout.addWidget(self.tab_library_btn)
         header_layout.addWidget(switcher_container)
 
-        header_layout.addStretch(1)
+        # Settings/Preferences Button
+        self.settings_btn = QPushButton()
+        self.settings_btn.setProperty("class", "AdwSecondaryBtn")
+        self.settings_btn.clicked.connect(self.open_preferences)
+        header_layout.addWidget(self.settings_btn)
 
-        # Search Bar input field
-        self.search_input = QLineEdit()
-        self.search_input.setFixedWidth(180)
-        self.search_input.textChanged.connect(self.on_search_changed)
-        self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
-        # Add custom drawn clean search icon to avoid Unicode rendering issues on Pardus
-        self.search_input.addAction(self.create_search_icon(), QLineEdit.LeadingPosition)
-        header_layout.addWidget(self.search_input)
-
-        # Publisher Filter Combo Box
-        self.publisher_combo = QComboBox()
-        self.publisher_combo.currentTextChanged.connect(self.on_filter_changed)
-        header_layout.addWidget(self.publisher_combo)
-
-        # Hamburger Menu Button
-        self.menu_btn = QPushButton("☰")
-        self.menu_btn.setObjectName("MenuButton")
-        self.menu_btn.setFixedWidth(36)
-        self.menu_btn.setProperty("class", "AdwSecondaryBtn")
-        self.menu_btn.clicked.connect(self.show_hamburger_menu)
-        header_layout.addWidget(self.menu_btn)
+        # About Button
+        self.about_btn = QPushButton()
+        self.about_btn.setProperty("class", "AdwSecondaryBtn")
+        self.about_btn.clicked.connect(self.show_about_dialog)
+        header_layout.addWidget(self.about_btn)
 
         main_layout.addWidget(header_widget)
-
-        # 1b. Category Filter Bar (Adwaita/Bottles style horizontal pills)
-        category_widget = QWidget()
-        category_widget.setObjectName("CategoryFilterWidget")
-        category_layout = QHBoxLayout(category_widget)
-        category_layout.setContentsMargins(20, 8, 20, 8)
-        category_layout.setSpacing(8)
-        
-        self.category_label = QLabel()
-        self.category_label.setStyleSheet("font-weight: bold; color: #8a8a8a; font-size: 12px;")
-        category_layout.addWidget(self.category_label)
-        
-        self.category_keys = ["all", "primary", "middle", "high", "general"]
-        self.cat_buttons = {}
-        self.cat_group = QButtonGroup(self)
-        self.cat_group.setExclusive(True)
-        
-        for cat_key in self.category_keys:
-            btn = QPushButton()
-            btn.setCheckable(True)
-            btn.setProperty("class", "CategoryFilterBtn")
-            btn.setProperty("category_key", cat_key)
-            if cat_key == self.active_category:
-                btn.setChecked(True)
-            btn.clicked.connect(self.on_category_changed)
-            self.cat_group.addButton(btn)
-            category_layout.addWidget(btn)
-            self.cat_buttons[cat_key] = btn
-            
-        category_layout.addStretch(1)
-        main_layout.addWidget(category_widget)
 
         # 2. Count Label
         self.count_label = QLabel("")
@@ -518,31 +485,8 @@ class MainWindow(QMainWindow):
         self.tab_market_btn.setText(tr("ui.market"))
         self.tab_library_btn.setText(tr("ui.my_library"))
         self.search_input.setPlaceholderText(tr("ui.search_placeholder"))
-        
-        # Repopulate publishers combo box
-        self.publisher_combo.blockSignals(True)
-        selected_pub = self.publisher_combo.currentText()
-        self.publisher_combo.clear()
-        self.publisher_combo.addItem(tr("ui.all_publishers"))
-        
-        publishers = sorted(list(set(b['publisher'] for b in self.db.get_all_books())))
-        for pub in publishers:
-            self.publisher_combo.addItem(pub)
-            
-        index = self.publisher_combo.findText(selected_pub)
-        if index >= 0:
-            self.publisher_combo.setCurrentIndex(index)
-        else:
-            self.publisher_combo.setCurrentIndex(0)
-        self.publisher_combo.blockSignals(False)
-        
-        # Localize category buttons
-        self.category_label.setText(tr("ui.category_label"))
-        self.cat_buttons["all"].setText(tr("categories.all"))
-        self.cat_buttons["primary"].setText(tr("categories.primary"))
-        self.cat_buttons["middle"].setText(tr("categories.middle"))
-        self.cat_buttons["high"].setText(tr("categories.high"))
-        self.cat_buttons["general"].setText(tr("categories.general"))
+        self.settings_btn.setText(tr("ui.preferences"))
+        self.about_btn.setText(tr("ui.about_menu"))
         
         self.offline_badge.setText(tr("ui.offline_mode"))
         self.statusBar.showMessage(tr("ui.ready"))
@@ -564,24 +508,7 @@ class MainWindow(QMainWindow):
         except Exception:
             self.is_offline = True
 
-    def on_category_changed(self):
-        btn = self.sender()
-        if btn and btn.isChecked():
-            self.active_category = btn.property("category_key")
-            self.refresh_grid()
 
-    def show_hamburger_menu(self):
-        """Displays hamburger menu dropdown."""
-        menu = QMenu(self)
-        menu.setStyleSheet(self.styleSheet())
-        
-        pref_action = menu.addAction(tr("ui.preferences_menu"))
-        pref_action.triggered.connect(self.open_preferences)
-        
-        about_action = menu.addAction(tr("ui.about_menu"))
-        about_action.triggered.connect(self.show_about_dialog)
-        
-        menu.exec(self.menu_btn.mapToGlobal(self.menu_btn.rect().bottomLeft()))
 
     def open_preferences(self):
         """Opens user Preferences modal dialog."""
@@ -745,15 +672,7 @@ class MainWindow(QMainWindow):
 
     def get_filtered_books(self):
         query = self.search_input.text()
-        pub_filter = self.publisher_combo.currentText()
-        
         books = self.db.search_books(query)
-        if pub_filter != tr("ui.all_publishers"):
-            books = [b for b in books if b['publisher'] == pub_filter]
-            
-        # Filter by active category
-        if hasattr(self, "active_category") and self.active_category != "all":
-            books = [b for b in books if b.get('category') == self.active_category]
             
         # Filter by switcher tab state
         if self.tab_library_btn.isChecked():
@@ -833,8 +752,7 @@ class MainWindow(QMainWindow):
     def on_search_changed(self, text):
         self.refresh_grid()
 
-    def on_filter_changed(self, text):
-        self.refresh_grid()
+
 
     # --- Actions / Core Operations ---
 
