@@ -62,8 +62,10 @@ def build_deb():
             "usr/share/raf/src/ui",
             "usr/share/raf/src/assets"
         ]
+        added_dirs = set()
         for d in dirs_to_create:
             add_dir(tar, d)
+            added_dirs.add(d)
             
         # Add launcher script
         launcher_content = """#!/bin/bash
@@ -129,6 +131,12 @@ License: GPL-3.0+
         for root, dirs, files in os.walk("src"):
             if "__pycache__" in root:
                 continue
+            
+            # Ensure the directory itself is added to the tar archive
+            tarpath_dir = os.path.normpath(os.path.join("usr/share/raf", root))
+            if tarpath_dir not in added_dirs:
+                add_dir(tar, tarpath_dir)
+                added_dirs.add(tarpath_dir)
             for file in files:
                 if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
                     continue
