@@ -1,8 +1,13 @@
 from setuptools import setup, find_packages
 
+# Load version dynamically
+version_vars = {}
+with open("src/core/version.py", "r", encoding="utf-8") as f:
+    exec(f.read(), version_vars)
+
 setup(
     name="raf",
-    version="1.0.0",
+    version=version_vars.get("__version__", "1.0.0"),
     description="Raf: Interactive Book Library for Pardus Smart Boards",
     author="Kaan Ferid Altundas",
     packages=find_packages(),

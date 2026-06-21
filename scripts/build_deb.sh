@@ -7,6 +7,9 @@ cd "$(dirname "$0")/.."
 
 echo "=== Raf Debian Paketi Hazırlanıyor ==="
 
+# Load version dynamically
+VERSION=$(python3 -c "exec(open('src/core/version.py').read()); print(__version__)")
+
 if command -v dpkg-deb >/dev/null 2>&1; then
     echo "Sistemde dpkg-deb bulundu, standart yöntemle paketleniyor..."
     
@@ -66,13 +69,13 @@ EOF
         
         # Append Version dynamically if not defined
         if ! grep -q "^Version:" "$PKG_DIR/DEBIAN/control"; then
-            echo "Version: 1.0.0" >> "$PKG_DIR/DEBIAN/control"
+            echo "Version: $VERSION" >> "$PKG_DIR/DEBIAN/control"
         fi
     else
         # Fallback default control
         cat << EOF > "$PKG_DIR/DEBIAN/control"
 Package: raf
-Version: 1.0.0
+Version: $VERSION
 Section: utils
 Priority: optional
 Architecture: all
@@ -97,8 +100,8 @@ EOF
 
     # Build the debian package
     echo "Paket derleniyor (dpkg-deb)..."
-    dpkg-deb --build "$PKG_DIR" "raf_1.0.0_all.deb"
-    echo "=== Başarılı! Paket raf_1.0.0_all.deb olarak oluşturuldu. ==="
+    dpkg-deb --build "$PKG_DIR" "raf_${VERSION}_all.deb"
+    echo "=== Başarılı! Paket raf_${VERSION}_all.deb olarak oluşturuldu. ==="
 
 else
     echo "Sistemde dpkg-deb bulunamadı, Python tabanlı paketleyici (build_deb.py) çalıştırılıyor..."

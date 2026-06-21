@@ -4,8 +4,8 @@ import requests
 import subprocess
 from src.qt_compat import QThread, Signal
 from src.core.translation import tr
+from src.core.version import __version__ as APP_VERSION
 
-APP_VERSION = "1.0.0"
 # Remote update metadata file
 UPDATE_URL = "https://raw.githubusercontent.com/kaan-gok/raf/main/update.json"
 

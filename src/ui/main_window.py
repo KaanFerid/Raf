@@ -15,6 +15,7 @@ from src.core.installer import InstallerWorker, is_book_installed, get_deb_packa
 from src.core.translation import tr, translation_manager
 from src.core.config import load_config, save_config
 from src.core.updater import UpdateChecker, UpdateInstaller
+from src.core.version import __version__ as APP_VERSION
 
 
 
@@ -621,7 +622,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             tr("ui.about_title"),
-            tr("ui.about_content")
+            tr("ui.about_content", version=APP_VERSION)
         )
 
     def eventFilter(self, obj, event):

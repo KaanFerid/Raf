@@ -45,7 +45,7 @@
     "preferences_menu": "Tercihler...",
     "about_menu": "Hakkında",
     "about_title": "Raf Hakkında",
-    "about_content": "<h3>Raf v1.0.0</h3><p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p><p>© 2026 Kaan Ferid Altundaş</p><p style=\"font-size:10px;color:#8a8a8a;\">Book shelf book Icon by Nick Frost and Greg Lapin on <a href=\"https://icon-icons.com/authors/237-nick-frost-and-greg-lapin\">Icon-Icons.com</a></p>",
+    "about_content": "<h3>Raf v{version}</h3><p>Pardus Akıllı Tahtalar için Kitap ve Uygulama Marketi.</p><p>© 2026 Kaan Ferid Altundaş</p><p style=\"font-size:10px;color:#8a8a8a;\">Book shelf book Icon by Nick Frost and Greg Lapin on <a href=\"https://icon-icons.com/authors/237-nick-frost-and-greg-lapin\">Icon-Icons.com</a></p>",
     "new_update_available": "Yeni Güncelleme Mevcut",
     "update_prompt": "<h3>Raf v{version} sürümü hazır!</h3><p><b>Yenilikler:</b><br/>{changelog}</p><p>Uygulamayı şimdi güncellemek ister misiniz?</p>",
     "downloading_update": "Güncelleme indiriliyor...",

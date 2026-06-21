@@ -43,12 +43,12 @@ def inspect_deb(filename):
             offset += 1
 
 if __name__ == "__main__":
-    filename = "raf_1.0.0_all.deb"
-    if not os.path.exists(filename):
-        # Check parent directory
-        parent_filename = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), filename)
-        if os.path.exists(parent_filename):
-            filename = parent_filename
+    import glob
+    debs = glob.glob("raf_*_all.deb") + glob.glob("../raf_*_all.deb")
+    if debs:
+        filename = debs[0]
+    else:
+        filename = "raf_1.0.0_all.deb" # Fallback
             
     print(f"Inspecting package: {filename}")
     inspect_deb(filename)

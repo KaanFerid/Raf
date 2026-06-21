@@ -1,4 +1,5 @@
 import os
+import sys
 import tarfile
 import io
 import time
@@ -28,7 +29,11 @@ def add_dir(tar, dir_path):
     tar.addfile(tarinfo)
 
 def build_deb():
-    print("=== Raf Pure-Python Debian Paketi Derleyici ===")
+    # Resolve project root and import version
+    sys.path.insert(0, os.getcwd())
+    from src.core.version import __version__
+    
+    print(f"=== Raf Pure-Python Debian Paketi Derleyici (v{__version__}) ===")
     
     # 1. Prepare debian-binary content
     debian_binary = b"2.0\n"
@@ -155,8 +160,8 @@ License: GPL-3.0+
     control_data = io.BytesIO()
     with tarfile.open(fileobj=control_data, mode="w:gz", format=tarfile.GNU_FORMAT) as tar:
         # Create control content
-        control_content = """Package: raf
-Version: 1.0.0
+        control_content = f"""Package: raf
+Version: {__version__}
 Section: utils
 Priority: optional
 Architecture: all
@@ -192,7 +197,7 @@ Description: Pardus Akilli Tahta Raf Uygulamasi
     control_tar_gz = control_data.getvalue()
 
     # 4. Write to ar archive (.deb file)
-    output_filename = "raf_1.0.0_all.deb"
+    output_filename = f"raf_{__version__}_all.deb"
     print(f"Bileşenler {output_filename} dosyasına birleştiriliyor...")
     
     with open(output_filename, "wb") as deb:
