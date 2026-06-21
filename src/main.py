@@ -26,6 +26,21 @@ def main():
     app.setOrganizationName("Kaan Ferid Altundas")
     app.setOrganizationDomain("etkilesimlikitapkutuphanesi.org")
     
+    # Set application window icon
+    import os
+    icon_path = os.path.join(os.path.dirname(__file__), "assets", "etkilesimli-kitap-kutuphanesi.png")
+    if os.path.exists(icon_path):
+        try:
+            if QT_API == "PySide6":
+                from PySide6.QtGui import QIcon
+            elif QT_API == "PyQt6":
+                from PyQt6.QtGui import QIcon
+            else:
+                from PyQt5.QtGui import QIcon
+            app.setWindowIcon(QIcon(icon_path))
+        except Exception as e:
+            print(f"Error setting window icon: {e}")
+    
     print("Creating main window...")
     # Create and show the main window
     window = MainWindow()

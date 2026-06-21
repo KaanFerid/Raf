@@ -1,1 +1,5 @@
 recursive-include src/assets/locales *.json
+include src/assets/books.json
+include src/assets/etkilesimli-kitap-kutuphanesi.png
+include src/assets/etkilesimli-kitap-kutuphanesi.ico
+include src/assets/etkilesimli-kitap-kutuphanesi.svg

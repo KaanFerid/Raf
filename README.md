@@ -76,3 +76,9 @@ The directory structure offers a modular and clean architecture:
 ## ℹ️ License
 
 This project is licensed under the **GPL-3.0** license. See the `debian/copyright` file for details.
+
+---
+
+## 👥 Credits
+
+* **Book shelf book Icon** by Nick Frost and Greg Lapin on [Icon-Icons.com](https://icon-icons.com/authors/237-nick-frost-and-greg-lapin).

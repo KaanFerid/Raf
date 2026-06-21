@@ -7,7 +7,13 @@ setup(
     author="Kaan Ferid Altundas",
     packages=find_packages(),
     package_data={
-        "src": ["assets/locales/*.json", "assets/books.json", "assets/etkilesimli-kitap-kutuphanesi.png"],
+        "src": [
+            "assets/locales/*.json",
+            "assets/books.json",
+            "assets/etkilesimli-kitap-kutuphanesi.png",
+            "assets/etkilesimli-kitap-kutuphanesi.ico",
+            "assets/etkilesimli-kitap-kutuphanesi.svg"
+        ],
     },
     install_requires=[
         "PySide6>=6.0.0",

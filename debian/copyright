@@ -4,3 +4,8 @@ Upstream-Name: etkilesimli-kitap-kutuphanesi
 Files: *
 Copyright: 2026 Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 License: GPL-3.0+
+
+Files: src/assets/etkilesimli-kitap-kutuphanesi.*
+Copyright: Nick Frost and Greg Lapin (https://icon-icons.com/authors/237-nick-frost-and-greg-lapin)
+License: Free/Attribution
+
