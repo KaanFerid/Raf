@@ -355,11 +355,14 @@ class MainWindow(QMainWindow):
         self.auto_update_scheduler.auto_install_requested.connect(self.on_update_available)
         self.auto_update_scheduler.start()
 
-        # Remote database sync (if URL configured)
+        # Remote database sync (auto-sync default to GitHub repo)
         config = load_config()
         db_url = config.get("database_url", "").strip()
+        if not db_url:
+            db_url = "https://raw.githubusercontent.com/KaanFerid/Raf/main/database/"
+            
         if db_url and not self.is_offline:
-            self.sync_worker = DatabaseSyncWorker(db_url, self.db.local_json_path, parent=self)
+            self.sync_worker = DatabaseSyncWorker(db_url, self.db.database_dir, parent=self)
             self.sync_worker.sync_finished.connect(self._on_sync_finished)
             self.sync_worker.sync_failed.connect(self._on_sync_failed)
             self.sync_worker.start()

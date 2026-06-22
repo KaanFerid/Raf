@@ -78,7 +78,11 @@ src/
 
 ## 4. Adding a New Book to the Database
 
-Edit `src/assets/books.json`. Each entry is a JSON object:
+Edit the files inside the `database/` directory. 
+- Use `database/fernus_drive.json` for books hosted on Google Drive.
+- Use `database/publishers.json` for direct HTTP download links from publishers.
+
+Each entry is a JSON object inside the main array:
 
 ### Minimum required fields
 

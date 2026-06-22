@@ -14,7 +14,6 @@ setup(
     package_data={
         "src": [
             "assets/locales/*.json",
-            "assets/books.json",
             "assets/raf.png",
             "assets/raf.ico",
             "assets/raf.svg"

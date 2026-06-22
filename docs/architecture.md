@@ -28,10 +28,11 @@ Raf has a layered, asynchronous architecture designed for stability on Pardus ET
 
 ### `database.py` — Book Database
 
-Loads the book catalogue from a local JSON file (`src/assets/books.json`). Supports optional remote URL loading: if a `remote_url` is provided, it fetches the remote JSON, validates it, and caches it locally.
+Loads the book catalogue from the `database/` directory. Reads both `fernus_drive.json` and `publishers.json`, merging them into a single list of available books.
+Supports remote synchronization handled by `sync.py`.
 
 **Key class: `Database`**
-- `load_books()` — loads from remote URL or local fallback
+- `load_books()` — reads from the local `database/` folder and merges all files
 - `get_all_books()` → `list[dict]` — returns all book entries
 - `search_books(query)` → `list[dict]` — full-text search on title, publisher, description
 
@@ -98,7 +99,7 @@ Constructor: `InstallerWorker(book, file_path, action="install")`
 | `file_type` | Install method | Uninstall method |
 |---|---|---|
 | `deb` | `pkexec apt-get install -y ./file.deb` | `pkexec apt-get remove -y <pkg>` |
-| `zip` / `fernus` | Extracts to `~/.local/share/raf/apps/<id>/` + creates `.desktop` | Deletes app dir + `.desktop` |
+| `zip` / `fernus` / `appimage` | Extracts/Copies to `/opt/raf/apps/<id>/` + creates global `.desktop` via `pkexec` | `pkexec` deletes app dir + `.desktop` |
 | `flatpak` | `flatpak install --user --noninteractive <ref>` | `flatpak uninstall --user --noninteractive <ref>` |
 | `snap` | `pkexec snap install <snap_name>` | `pkexec snap remove <snap_name>` |
 
@@ -144,7 +145,8 @@ Respects `last_update_check` timestamp to prevent redundant network calls.
 ### `sync.py` — Remote Database Sync
 
 **`DatabaseSyncWorker(QThread)`**
-Fetches a remote `books.json` URL on startup, validates the JSON structure (checks for required keys: `id`, `title`, `publisher`, `file_name`, `download_url`), and writes it to the local cache path.
+Synchronizes the local database directory with a remote server. If the configured `database_url` points to a base URL (default is the GitHub repository), it concurrently fetches `fernus_drive.json` and `publishers.json`, validates them (checks for required keys: `id`, `title`, `publisher`, `file_name`, `download_url`), and saves them to the local `database/` cache path. 
+It gracefully falls back to legacy mode (syncing a single file) if the URL ends with `.json`.
 
 Emits `sync_finished(count)` on success, `sync_failed(error_message)` on failure. Failures are silent — the local cache is always used as fallback.
 
@@ -399,8 +401,9 @@ AutoUpdateScheduler.start()
 |---|---|
 | `~/.config/raf/config.json` | User configuration |
 | `~/.cache/raf/downloads/` | Download cache |
-| `~/.local/share/raf/apps/<id>/` | Extracted `.zip`/`.fernus` books |
-| `~/.local/share/applications/raf-<id>.desktop` | Desktop launchers for `.zip` books |
+| `/opt/raf/apps/<id>/` | System-wide extracted `.zip`/`.fernus`/`.appimage` books |
+| `/usr/share/applications/raf-<id>.desktop` | Global desktop launchers for standalone books |
+| `/usr/share/raf/database/` | Master database files (`fernus_drive.json`, `publishers.json`) |
 | `mock_system/config.json` | Dev mode config |
 | `mock_system/cache/` | Dev mode downloads |
 | `mock_system/installed.json` | Dev mode install state |

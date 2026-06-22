@@ -1,5 +1,5 @@
 recursive-include src/assets/locales *.json
-include src/assets/books.json
+recursive-include database *.json
 include src/assets/raf.png
 include src/assets/raf.ico
 include src/assets/raf.svg

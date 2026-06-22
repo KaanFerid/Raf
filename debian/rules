@@ -13,3 +13,7 @@ override_dh_auto_install:
 	# Install application icon
 	mkdir -p $(CURDIR)/debian/raf/usr/share/pixmaps
 	cp src/assets/raf.png $(CURDIR)/debian/raf/usr/share/pixmaps/
+
+	# Install database
+	mkdir -p $(CURDIR)/debian/raf/usr/share/raf/database
+	cp database/*.json $(CURDIR)/debian/raf/usr/share/raf/database/

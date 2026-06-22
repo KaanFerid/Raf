@@ -50,6 +50,7 @@ When installed via `.deb`, Raf places its files at:
         assets/
 /usr/bin/raf                      # Shell launcher script
 /usr/share/applications/raf.desktop  # Desktop entry (for app launcher)
+/usr/share/raf/database/          # Master database files (fernus_drive.json, publishers.json)
 /usr/share/doc/raf/
     copyright                     # GPL-3.0 copyright declaration
     changelog.gz                  # Compressed changelog
@@ -274,9 +275,24 @@ The app compares version strings numerically (split on `.`). Any higher version 
 
 ---
 
-## 9. Flatpak & Snap Packaging (Future)
+## 9. Standalone Apps, Flatpak & Snap Packaging (Future)
 
-While Raf itself is distributed as a `.deb`, it can **install Flatpak and Snap packages** for managed books. To add a Flatpak or Snap book to the database:
+While Raf itself is distributed as a `.deb`, it can **install standalone Apps (AppImage, Fernus, ZIP), Flatpak, and Snap packages** for managed books.
+
+To add a standalone AppImage to the database:
+**AppImage entry in `publishers.json`:**
+```json
+{
+  "id": "my-appimage",
+  "title": "My AppImage Book",
+  "publisher": "Example Publisher",
+  "file_name": "myapp.AppImage",
+  "file_type": "appimage",
+  "download_url": "https://example.com/myapp.AppImage"
+}
+```
+
+To add a Flatpak or Snap book to the database:
 
 **Flatpak entry in `books.json`:**
 ```json

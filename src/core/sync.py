@@ -16,46 +16,61 @@ class DatabaseSyncWorker(QThread):
 
     REQUIRED_BOOK_KEYS = {'id', 'title', 'publisher', 'file_name', 'download_url'}
 
-    def __init__(self, remote_url, local_path, parent=None):
+    def __init__(self, remote_url, database_dir, parent=None):
         super().__init__(parent)
         self.remote_url = remote_url
-        self.local_path = local_path
+        self.database_dir = database_dir
 
     def run(self):
         try:
-            response = requests.get(self.remote_url, timeout=10)
-            response.raise_for_status()
+            # Determine if legacy (single json) or base URL
+            if self.remote_url.endswith('.json'):
+                files_to_sync = [
+                    (self.remote_url, "fernus_drive.json")
+                ]
+            else:
+                base = self.remote_url.rstrip('/')
+                files_to_sync = [
+                    (f"{base}/fernus_drive.json", "fernus_drive.json"),
+                    (f"{base}/publishers.json", "publishers.json")
+                ]
 
-            data = response.json()
+            total_books = 0
+            os.makedirs(self.database_dir, exist_ok=True)
 
-            # Validate: must be a non-empty list of dicts with required keys
-            if not isinstance(data, list) or not data:
-                self.sync_failed.emit("Remote database is empty or not a list.")
-                return
+            for url, filename in files_to_sync:
+                try:
+                    response = requests.get(url, timeout=10)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if not isinstance(data, list):
+                        continue # Skip invalid files instead of failing entire sync
 
-            for entry in data:
-                if not isinstance(entry, dict):
-                    self.sync_failed.emit("Remote database contains invalid entries.")
-                    return
-                missing = self.REQUIRED_BOOK_KEYS - entry.keys()
-                if missing:
-                    self.sync_failed.emit(f"Remote book entry missing keys: {missing}")
-                    return
+                    for entry in data:
+                        if not isinstance(entry, dict):
+                            continue
+                        missing = self.REQUIRED_BOOK_KEYS - entry.keys()
+                        if missing:
+                            continue # Skip bad entries
+                            
+                    # Write validated data to local cache
+                    local_file = os.path.join(self.database_dir, filename)
+                    with open(local_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+                        
+                    total_books += len(data)
+                except Exception as e:
+                    print(f"Warning: Failed to sync {filename} from {url}: {e}")
+                    # Don't fail the whole sync if one file is missing (e.g. publishers.json doesn't exist yet on some remotes)
+                    pass
 
-            # Write validated data to local cache
-            os.makedirs(os.path.dirname(self.local_path), exist_ok=True)
-            with open(self.local_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-
-            self.sync_finished.emit(len(data))
+            if total_books > 0:
+                self.sync_finished.emit(total_books)
+            else:
+                self.sync_failed.emit("No valid books could be synced from the provided URL.")
 
         except requests.exceptions.ConnectionError:
             self.sync_failed.emit("No network connection.")
-        except requests.exceptions.Timeout:
-            self.sync_failed.emit("Connection timed out.")
-        except requests.exceptions.HTTPError as e:
-            self.sync_failed.emit(f"HTTP error: {e}")
-        except json.JSONDecodeError:
-            self.sync_failed.emit("Remote database returned invalid JSON.")
         except Exception as e:
             self.sync_failed.emit(str(e))
