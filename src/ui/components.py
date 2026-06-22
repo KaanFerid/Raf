@@ -59,6 +59,7 @@ class BookCard(QFrame):
     uninstall_requested = Signal(dict)
     launch_requested = Signal(dict)
     cancel_requested = Signal(dict)
+    selection_changed = Signal(str, bool)  # book_id, is_selected
 
     def __init__(self, book, is_installed=False, parent=None):
         super().__init__(parent)
@@ -66,6 +67,9 @@ class BookCard(QFrame):
         self.book_id = book['id']
         self.is_installed = is_installed
         self.downloading = False
+        self.is_queued = False        # True when waiting in the download queue
+        self.is_selected = False      # True in batch selection mode
+        self._selection_mode = False  # Whether selection mode is globally active
         
         self.setObjectName("BookCardFrame")
         self.init_ui()
@@ -106,7 +110,7 @@ class BookCard(QFrame):
 
         # Download speed / state info text
         self.status_info_label = QLabel("")
-        self.status_info_label.setStyleSheet("color: #3584e4; font-size: 11px; font-weight: 500;")
+        self.status_info_label.setObjectName("StatusInfoLabel")
         self.status_info_label.setVisible(False)
         info_layout.addWidget(self.status_info_label)
 
@@ -135,15 +139,61 @@ class BookCard(QFrame):
         self.secondary_btn.setMinimumWidth(90)
         action_layout.addWidget(self.secondary_btn)
 
+        # Selection checkbox (shown in batch selection mode)
+        self.select_checkbox = QPushButton("☐")
+        self.select_checkbox.setObjectName("SelectCheckbox")
+        self.select_checkbox.setFixedSize(32, 32)
+        self.select_checkbox.setVisible(False)
+        self.select_checkbox.clicked.connect(self._toggle_selection)
+        action_layout.addWidget(self.select_checkbox)
+
         card_layout.addLayout(action_layout, 0)
         
         self.update_status(self.is_installed)
+
+    def set_selection_mode(self, active):
+        """Shows/hides the selection checkbox. Clears selection when exiting mode."""
+        self._selection_mode = active
+        self.select_checkbox.setVisible(active)
+        if not active:
+            self.is_selected = False
+            self.select_checkbox.setText("☐")
+            self.setProperty("selected", False)
+            self.style().unpolish(self)
+            self.style().polish(self)
+
+    def _toggle_selection(self):
+        """Toggles the selected state of this card."""
+        self.is_selected = not self.is_selected
+        self.select_checkbox.setText("☑" if self.is_selected else "☐")
+        self.selection_changed.emit(self.book_id, self.is_selected)
+
+    def set_queued(self, queued):
+        """Marks this card as waiting in the download queue."""
+        self.is_queued = queued
+        if queued:
+            self.status_label.setText(tr("ui.queued_btn"))
+            self.status_label.setObjectName("StatusQueuedLabel")
+            self.primary_btn.setText(tr("ui.cancel_btn"))
+            self.primary_btn.setProperty("class", "AdwSecondaryBtn")
+            self.primary_btn.setEnabled(True)
+            self.secondary_btn.setVisible(False)
+            self.progress_bar.setVisible(False)
+            self.status_info_label.setVisible(False)
+            self.status_label.style().unpolish(self.status_label)
+            self.status_label.style().polish(self.status_label)
 
     def update_status(self, is_installed, downloading=False, percent=0, speed_str="", is_offline=False):
         self.is_installed = is_installed
         self.downloading = downloading
 
+        # Queued state takes precedence over idle states (but not active downloads)
+        if self.is_queued and not downloading:
+            self.set_queued(True)
+            return
+
         if downloading:
+            self.is_queued = False
             self.status_label.setText(tr("ui.downloading_btn"))
             self.status_label.setObjectName("StatusDownloadingLabel")
             
@@ -208,7 +258,10 @@ class BookCard(QFrame):
         self.update_status(self.is_installed, self.downloading, self.progress_bar.value(), self.status_info_label.text(), is_offline=is_offline)
 
     def on_primary_btn_clicked(self):
-        if self.downloading:
+        if self.is_queued:
+            # Remove from queue
+            self.cancel_requested.emit(self.book)
+        elif self.downloading:
             self.cancel_requested.emit(self.book)
         elif self.is_installed:
             self.launch_requested.emit(self.book)

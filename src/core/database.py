@@ -39,34 +39,7 @@ class Database:
             print("Local books.json not found.")
             self.books = []
 
-        from src.core.translation import tr
-        
-        primary_kws = tr("categories.primary_keywords")
-        middle_kws = tr("categories.middle_keywords")
-        high_kws = tr("categories.high_keywords")
-        
-        if not isinstance(primary_kws, list):
-            primary_kws = []
-        if not isinstance(middle_kws, list):
-            middle_kws = []
-        if not isinstance(high_kws, list):
-            high_kws = []
 
-        # Dynamically assign category to each book
-        for book in self.books:
-            title = book.get('title', '').lower()
-            publisher = book.get('publisher', '').lower()
-            desc = book.get('description', '').lower()
-            
-            # Keywords matching
-            if any(k in title or k in publisher or k in desc for k in primary_kws):
-                book['category'] = "primary"
-            elif any(k in title or k in publisher or k in desc for k in middle_kws):
-                book['category'] = "middle"
-            elif any(k in title or k in publisher or k in desc for k in high_kws):
-                book['category'] = "high"
-            else:
-                book['category'] = "general"
 
     def get_all_books(self):
         return self.books

@@ -1,3 +1,24 @@
+raf (1.5.0-1) stable; urgency=medium
+
+  * feat: Download queue with configurable concurrency (max 2 concurrent)
+  * feat: Toast notification system for install, uninstall, update, and sync events
+  * feat: Title bar download progress — window title reflects active download %
+  * feat: Batch operations — select multiple books, install or uninstall in one action
+  * feat: Remote database sync — fetch updated books.json from a custom URL on startup
+  * feat: Flatpak and Snap package support (install, uninstall, detection)
+  * feat: Auto-update scheduler with manual/notify/auto-install policies
+  * fix: Dark theme now works correctly with PyQt5 fallback backend
+  * fix: Theme selection circles visible in both light and dark modes
+  * fix: PreferencesDialog buttons dynamically sized to fit translated text
+  * fix: Replaced deprecated locale.getdefaultlocale() with locale.getlocale()
+  * fix: All bare except: clauses replaced with except Exception:
+  * refactor: QObject exported from qt_compat for all three Qt backends
+  * docs: Comprehensive README with full GUI walkthrough and CLI reference
+  * docs: New docs/architecture.md, docs/packaging.md, docs/cli.md, docs/contributing.md
+  * build: GitHub remote set to https://github.com/KaanFerid/Raf
+
+ -- Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>  Sun, 22 Jun 2026 20:46:00 +0300
+
 raf (1.0.0-1) unstable; urgency=medium
 
   * Initial release.

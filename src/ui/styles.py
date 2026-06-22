@@ -109,9 +109,13 @@ QComboBox::drop-down {
     border: none;
     width: 20px;
 }
+QComboBox QFrame {
+    border: 1px solid #3a3a3a;
+    background-color: #242424;
+}
 QComboBox QAbstractItemView {
     background-color: #242424;
-    border: 1px solid #3a3a3a;
+    border: none;
     color: #ffffff;
     selection-background-color: #3584e4;
     selection-color: #ffffff;
@@ -243,33 +247,216 @@ QProgressBar::chunk {
     background-color: #1e1e1e;
 }
 
-/* Category Filter Bar */
-#CategoryFilterWidget {
+
+
+#CentralWidget {
     background-color: #1e1e1e;
-    border-bottom: 1px solid #2d2d2d;
-    padding-top: 5px;
-    padding-bottom: 5px;
 }
 
-QPushButton.CategoryFilterBtn {
-    background-color: #2d2d2d;
-    color: #c0c0c0;
-    border: 1px solid #353535;
-    border-radius: 14px;
-    padding: 4px 14px;
+QDialog {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QGroupBox {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #303030;
+    margin-top: 12px;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+    color: #ffffff;
+}
+
+QRadioButton {
+    color: #ffffff;
+    background-color: transparent;
+    spacing: 8px;
+}
+
+QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    border: 2px solid #a0a0a0;
+    background-color: transparent;
+}
+
+QRadioButton::indicator:hover {
+    border-color: #3584e4;
+}
+
+QRadioButton::indicator:checked {
+    border: 5px double #ffffff;
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
+QLabel {
+    color: #ffffff;
+}
+
+/* Info Labels */
+#DiskInfoLabel, #CacheInfoLabel {
+    color: #8a8a8a;
     font-size: 12px;
+}
+
+#PlaceholderLabel {
+    color: #8a8a8a;
+    font-size: 15px;
     font-weight: 500;
 }
 
-QPushButton.CategoryFilterBtn:hover {
+#OfflineBadge {
+    background-color: #c01c28;
     color: #ffffff;
-    background-color: #353535;
+    font-weight: bold;
+    border-radius: 4px;
+    font-size: 11px;
 }
 
-QPushButton.CategoryFilterBtn:checked {
-    color: #ffffff;
+#StatusInfoLabel {
+    color: #3584e4;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QStatusBar {
+    background-color: transparent;
+    color: #8a8a8a;
+    border-top: 1px solid transparent;
+}
+
+/* === Toast Notifications === */
+#ToastInfo {
     background-color: #3584e4;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastSuccess {
+    background-color: #26a269;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastWarning {
+    background-color: #cd9309;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastError {
+    background-color: #c01c28;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastLabel {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    background: transparent;
+}
+#ToastCloseBtn {
+    background: rgba(255,255,255,0.2);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+#ToastCloseBtn:hover {
+    background: rgba(255,255,255,0.35);
+}
+
+/* === Download Queue Badge === */
+#QueueBadge {
+    color: #3584e4;
+    font-size: 12px;
+    font-weight: 500;
+    background: transparent;
+}
+
+/* === Batch Selection Bar === */
+#BatchBar {
+    background-color: #3584e4;
+    border-radius: 12px;
+    padding: 4px 8px;
+}
+#BatchCountLabel {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 13px;
+    background: transparent;
+}
+QPushButton.BatchActionBtn {
+    background-color: rgba(255,255,255,0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: 13px;
+    font-weight: 500;
+}
+QPushButton.BatchActionBtn:hover {
+    background-color: rgba(255,255,255,0.32);
+}
+QPushButton.BatchActionBtn:disabled {
+    background-color: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+}
+QPushButton.BatchCancelBtn {
+    background-color: transparent;
+    color: rgba(255,255,255,0.8);
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 2px 6px;
+}
+QPushButton.BatchCancelBtn:hover {
+    color: #ffffff;
+}
+
+/* === Queued status label === */
+#StatusQueuedLabel {
+    color: #cd9309;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* === Select mode toggle button === */
+QPushButton#SelectModeBtn {
+    background-color: #2d2d2d;
+    color: #c0c0c0;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+}
+QPushButton#SelectModeBtn:checked {
+    background-color: #3584e4;
+    color: #ffffff;
     border: 1px solid #3584e4;
+}
+QPushButton#SelectModeBtn:hover {
+    background-color: #383838;
+}
+
+/* === Database URL field === */
+#DatabaseUrlField {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border: 1px solid #444444;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
 }
 """
 
@@ -348,9 +535,13 @@ QComboBox::drop-down {
     border: none;
     width: 20px;
 }
+QComboBox QFrame {
+    border: 1px solid #d0d0d0;
+    background-color: #ffffff;
+}
 QComboBox QAbstractItemView {
     background-color: #ffffff;
-    border: 1px solid #d0d0d0;
+    border: none;
     color: #242424;
     selection-background-color: #3584e4;
     selection-color: #ffffff;
@@ -482,34 +673,7 @@ QProgressBar::chunk {
     background-color: #f6f6f6;
 }
 
-/* Category Filter Bar */
-#CategoryFilterWidget {
-    background-color: #f6f6f6;
-    border-bottom: 1px solid #e5e5e5;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
 
-QPushButton.CategoryFilterBtn {
-    background-color: #ffffff;
-    color: #505050;
-    border: 1px solid #dcdcdc;
-    border-radius: 14px;
-    padding: 4px 14px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-QPushButton.CategoryFilterBtn:hover {
-    color: #242424;
-    background-color: #f5f5f5;
-}
-
-QPushButton.CategoryFilterBtn:checked {
-    color: #ffffff;
-    background-color: #3584e4;
-    border: 1px solid #3584e4;
-}
 
 QScrollArea, QScrollArea > QWidget {
     background-color: #f6f6f6;
@@ -517,5 +681,215 @@ QScrollArea, QScrollArea > QWidget {
 }
 #ScrollContent {
     background-color: #f6f6f6;
+}
+
+#CentralWidget {
+    background-color: #f6f6f6;
+}
+
+QDialog {
+    background-color: #f6f6f6;
+    color: #242424;
+}
+
+QGroupBox {
+    background-color: #f6f6f6;
+    color: #242424;
+    border: 1px solid #d5d5d5;
+    margin-top: 12px;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+    color: #242424;
+}
+
+QRadioButton {
+    color: #242424;
+    background-color: transparent;
+    spacing: 8px;
+}
+
+QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    border: 2px solid #8a8a8a;
+    background-color: transparent;
+}
+
+QRadioButton::indicator:hover {
+    border-color: #3584e4;
+}
+
+QRadioButton::indicator:checked {
+    border: 5px double #242424;
+    background-color: #242424;
+    border-radius: 8px;
+}
+
+QLabel {
+    color: #242424;
+}
+
+/* Info Labels */
+#DiskInfoLabel, #CacheInfoLabel {
+    color: #7e7e7e;
+    font-size: 12px;
+}
+
+#PlaceholderLabel {
+    color: #7e7e7e;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+#OfflineBadge {
+    background-color: #e01b24;
+    color: #ffffff;
+    font-weight: bold;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+#StatusInfoLabel {
+    color: #3584e4;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QStatusBar {
+    background-color: transparent;
+    color: #7e7e7e;
+    border-top: 1px solid transparent;
+}
+
+/* === Toast Notifications === */
+#ToastInfo {
+    background-color: #3584e4;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastSuccess {
+    background-color: #26a269;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastWarning {
+    background-color: #cd9309;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastError {
+    background-color: #c01c28;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px;
+}
+#ToastLabel {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    background: transparent;
+}
+#ToastCloseBtn {
+    background: rgba(255,255,255,0.2);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+#ToastCloseBtn:hover {
+    background: rgba(255,255,255,0.35);
+}
+
+/* === Download Queue Badge === */
+#QueueBadge {
+    color: #3584e4;
+    font-size: 12px;
+    font-weight: 500;
+    background: transparent;
+}
+
+/* === Batch Selection Bar === */
+#BatchBar {
+    background-color: #3584e4;
+    border-radius: 12px;
+    padding: 4px 8px;
+}
+#BatchCountLabel {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 13px;
+    background: transparent;
+}
+QPushButton.BatchActionBtn {
+    background-color: rgba(255,255,255,0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: 13px;
+    font-weight: 500;
+}
+QPushButton.BatchActionBtn:hover {
+    background-color: rgba(255,255,255,0.32);
+}
+QPushButton.BatchActionBtn:disabled {
+    background-color: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+}
+QPushButton.BatchCancelBtn {
+    background-color: transparent;
+    color: rgba(255,255,255,0.8);
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 2px 6px;
+}
+QPushButton.BatchCancelBtn:hover {
+    color: #ffffff;
+}
+
+/* === Queued status label === */
+#StatusQueuedLabel {
+    color: #a5810f;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* === Select mode toggle button === */
+QPushButton#SelectModeBtn {
+    background-color: #ffffff;
+    color: #505050;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+}
+QPushButton#SelectModeBtn:checked {
+    background-color: #3584e4;
+    color: #ffffff;
+    border: 1px solid #3584e4;
+}
+QPushButton#SelectModeBtn:hover {
+    background-color: #f0f0f0;
+}
+
+/* === Database URL field === */
+#DatabaseUrlField {
+    background-color: #ffffff;
+    color: #242424;
+    border: 1px solid #dcdcdc;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
 }
 """

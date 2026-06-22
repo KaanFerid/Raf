@@ -23,7 +23,7 @@ def load_mock_installed():
     try:
         with open(MOCK_DB_PATH, 'r', encoding='utf-8') as f:
             return set(json.load(f))
-    except:
+    except Exception:
         return set()
 
 def save_mock_installed(installed_set):
@@ -80,6 +80,10 @@ class InstallerWorker(QThread):
             self.install_deb()
         elif file_type in ['zip', 'fernus']:
             self.install_zip()
+        elif file_type == 'flatpak':
+            self.install_flatpak()
+        elif file_type == 'snap':
+            self.install_snap()
         else:
             self.status_changed.emit(self.book_id, tr("installer.unsupported_file_type"))
             self.finished.emit(self.book_id, False)
@@ -91,6 +95,10 @@ class InstallerWorker(QThread):
             self.uninstall_deb()
         elif file_type in ['zip', 'fernus']:
             self.uninstall_zip()
+        elif file_type == 'flatpak':
+            self.uninstall_flatpak()
+        elif file_type == 'snap':
+            self.uninstall_snap()
         else:
             self.status_changed.emit(self.book_id, tr("installer.unsupported_file_type"))
             self.finished.emit(self.book_id, False)
@@ -209,7 +217,7 @@ class InstallerWorker(QThread):
                     if f.endswith('.sh') or '.' not in f: # executable scripts or binaries
                         try:
                             os.chmod(fpath, 0o755)
-                        except:
+                        except Exception:
                             pass
 
             self.status_changed.emit(self.book_id, tr("installer.creating_desktop_launcher"))
@@ -242,6 +250,163 @@ class InstallerWorker(QThread):
             self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
 
+    def install_flatpak(self):
+        """Installs a Flatpak application for the current user."""
+        # Check flatpak is available
+        if not shutil.which("flatpak"):
+            self.status_changed.emit(self.book_id, tr("installer.flatpak_not_available"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        flatpak_ref = self.book.get('flatpak_ref', '')
+        if not flatpak_ref:
+            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        self.status_changed.emit(self.book_id, tr("installer.installing_flatpak"))
+        cmd = ["flatpak", "install", "--user", "--noninteractive", flatpak_ref]
+
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
+
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
+                self.finished.emit(self.book_id, True)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
+        except Exception as e:
+            self.output_received.emit(self.book_id, str(e))
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
+            self.finished.emit(self.book_id, False)
+
+    def uninstall_flatpak(self):
+        """Removes a Flatpak application for the current user."""
+        if not shutil.which("flatpak"):
+            self.status_changed.emit(self.book_id, tr("installer.flatpak_not_available"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        flatpak_ref = self.book.get('flatpak_ref', '')
+        if not flatpak_ref:
+            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        self.status_changed.emit(self.book_id, tr("installer.uninstalling_flatpak"))
+        cmd = ["flatpak", "uninstall", "--user", "--noninteractive", flatpak_ref]
+
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
+
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
+                self.finished.emit(self.book_id, True)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
+        except Exception as e:
+            self.output_received.emit(self.book_id, str(e))
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
+            self.finished.emit(self.book_id, False)
+
+    def install_snap(self):
+        """Installs a Snap package (requires elevated privileges via pkexec)."""
+        if not shutil.which("snap"):
+            self.status_changed.emit(self.book_id, tr("installer.snap_not_available"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        snap_name = self.book.get('snap_name', '')
+        if not snap_name:
+            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        self.status_changed.emit(self.book_id, tr("installer.installing_snap"))
+        cmd = ["pkexec", "snap", "install", snap_name]
+
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
+
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
+                self.finished.emit(self.book_id, True)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
+        except Exception as e:
+            self.output_received.emit(self.book_id, str(e))
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
+            self.finished.emit(self.book_id, False)
+
+    def uninstall_snap(self):
+        """Removes a Snap package (requires elevated privileges via pkexec)."""
+        if not shutil.which("snap"):
+            self.status_changed.emit(self.book_id, tr("installer.snap_not_available"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        snap_name = self.book.get('snap_name', '')
+        if not snap_name:
+            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
+            self.finished.emit(self.book_id, False)
+            return
+
+        self.status_changed.emit(self.book_id, tr("installer.uninstalling_snap"))
+        cmd = ["pkexec", "snap", "remove", snap_name]
+
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
+
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
+                self.finished.emit(self.book_id, True)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
+        except Exception as e:
+            self.output_received.emit(self.book_id, str(e))
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
+            self.finished.emit(self.book_id, False)
+
 
 def get_all_installed_packages():
     """Queries all installed debian packages on the system in a single subprocess run."""
@@ -263,6 +428,45 @@ def get_all_installed_packages():
                     installed.add(pkg_name)
     except Exception as e:
         print(f"Error querying installed packages: {e}")
+    return installed
+
+def get_all_installed_flatpaks():
+    """Returns a set of installed Flatpak application IDs."""
+    installed = set()
+    try:
+        res = subprocess.run(
+            ["flatpak", "list", "--app", "--columns=application"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if res.returncode == 0:
+            for line in res.stdout.splitlines():
+                app_id = line.strip()
+                if app_id:
+                    installed.add(app_id)
+    except Exception as e:
+        print(f"Error querying Flatpak packages: {e}")
+    return installed
+
+def get_all_installed_snaps():
+    """Returns a set of installed Snap package names."""
+    installed = set()
+    try:
+        res = subprocess.run(
+            ["snap", "list"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if res.returncode == 0:
+            lines = res.stdout.splitlines()
+            for line in lines[1:]:  # skip header row
+                parts = line.strip().split()
+                if parts:
+                    installed.add(parts[0])
+    except Exception as e:
+        print(f"Error querying Snap packages: {e}")
     return installed
 
 def turkish_to_ascii(text):
@@ -354,7 +558,7 @@ def get_deb_package_name(book):
                 # Cache it now for subsequent calls
                 set_cached_package_name(book['id'], pkg)
                 return pkg
-        except:
+        except Exception:
             pass
             
     # Default fallback
@@ -382,7 +586,7 @@ def is_book_installed(book, installed_set=None):
                     text=True
                 )
                 return "install ok installed" in res.stdout
-            except:
+            except Exception:
                 return False
                 
         # 2. Set-lookup path with smart guesses
@@ -406,7 +610,7 @@ def is_book_installed(book, installed_set=None):
                 if "install ok installed" in res.stdout:
                     set_cached_package_name(book['id'], pkg)
                     return True
-            except:
+            except Exception:
                 pass
         return False
             
@@ -414,6 +618,21 @@ def is_book_installed(book, installed_set=None):
         apps_dir = os.path.expanduser(f"~/.local/share/raf/apps/{book['id']}")
         desktop_file = os.path.expanduser(f"~/.local/share/applications/raf-{book['id']}.desktop")
         return os.path.exists(apps_dir) and os.path.exists(desktop_file)
+
+    elif file_type == 'flatpak':
+        flatpak_ref = book.get('flatpak_ref', '')
+        if not flatpak_ref:
+            return False
+        app_id = flatpak_ref.split('/')[0] if '/' in flatpak_ref else flatpak_ref
+        installed_flatpaks = get_all_installed_flatpaks()
+        return app_id in installed_flatpaks
+
+    elif file_type == 'snap':
+        snap_name = book.get('snap_name', '')
+        if not snap_name:
+            return False
+        installed_snaps = get_all_installed_snaps()
+        return snap_name in installed_snaps
         
     return False
 
@@ -506,5 +725,5 @@ StartupNotify=true
     # Make the .desktop file executable
     try:
         os.chmod(desktop_path, 0o755)
-    except:
+    except Exception:
         pass

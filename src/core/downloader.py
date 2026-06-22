@@ -17,6 +17,7 @@ class DownloadWorker(QThread):
         self.url = url
         self.dest_path = dest_path
         self._is_cancelled = False
+        self.last_percent = 0  # tracked for title bar progress display
 
     def cancel(self):
         self._is_cancelled = True
@@ -98,7 +99,7 @@ class DownloadWorker(QThread):
                         if content_range:
                             try:
                                 total_size = int(content_range.split('/')[-1])
-                            except:
+                            except Exception:
                                 total_size = int(response.headers.get('content-length', 0)) + downloaded
                         else:
                             total_size = int(response.headers.get('content-length', 0)) + downloaded
@@ -114,7 +115,7 @@ class DownloadWorker(QThread):
                                 if os.path.exists(temp_dest_path):
                                     try:
                                         os.remove(temp_dest_path)
-                                    except:
+                                    except Exception:
                                         pass
                                 self.error.emit(self.book_id, tr("downloader.download_cancelled"))
                                 return
@@ -133,6 +134,7 @@ class DownloadWorker(QThread):
                                     
                                     if total_size > 0:
                                         percent = int((downloaded / total_size) * 100)
+                                        self.last_percent = percent
                                         self.progress_changed.emit(self.book_id, percent, speed_str)
                                     else:
                                         downloaded_mb = downloaded / (1024 * 1024)
@@ -152,7 +154,7 @@ class DownloadWorker(QThread):
                         if os.path.exists(temp_dest_path):
                             try:
                                 os.remove(temp_dest_path)
-                            except:
+                            except Exception:
                                 pass
                         self.error.emit(self.book_id, tr("downloader.connection_error", error=str(e)))
                         return
@@ -172,6 +174,6 @@ class DownloadWorker(QThread):
             if os.path.exists(temp_dest_path):
                 try:
                     os.remove(temp_dest_path)
-                except:
+                except Exception:
                     pass
             self.error.emit(self.book_id, str(e))

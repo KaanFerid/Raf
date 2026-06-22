@@ -1,8 +1,5 @@
 import os
 import sys
-import time
-import requests
-import re
 
 # Set headless mode for Qt
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -44,12 +41,10 @@ def handle_cli():
     if cmd == "list":
         books = db.get_all_books()
         print(tr("cli.total_books", count=len(books)))
-        print(tr("cli.list_header", id=tr("cli.id"), title=tr("cli.title"), category=tr("cli.category")))
-        print("-" * 100)
+        print(tr("cli.list_header", id=tr("cli.id"), title=tr("cli.title"), publisher=tr("cli.publisher")))
+        print("-" * 110)
         for b in books:
-            cat_key = b.get('category', 'general')
-            localized_cat = tr(f"categories.{cat_key}")
-            print(f"{b['id']:<35} | {b['title'][:45]:<45} | {localized_cat:<12}")
+            print(f"{b['id']:<35} | {b['title'][:45]:<45} | {b['publisher'][:25]:<25}")
             
     elif cmd == "list-installed":
         books = db.get_all_books()
@@ -139,7 +134,7 @@ def handle_cli():
         worker.error.connect(on_error)
         
         worker.start()
-        loop.exec()
+        loop.exec() if hasattr(loop, 'exec') else loop.exec_()
         
         if not download_success[0]:
             print(tr("cli.install_failed_download"))
@@ -159,7 +154,7 @@ def handle_cli():
             
         inst_worker.finished.connect(on_inst_finished)
         inst_worker.start()
-        install_loop.exec()
+        install_loop.exec() if hasattr(install_loop, 'exec') else install_loop.exec_()
         
         if install_success[0]:
             print("\n" + tr("cli.install_completed_success", title=book['title']))
@@ -197,7 +192,7 @@ def handle_cli():
             
         inst_worker.finished.connect(on_uninst_finished)
         inst_worker.start()
-        uninstall_loop.exec()
+        uninstall_loop.exec() if hasattr(uninstall_loop, 'exec') else uninstall_loop.exec_()
         
         if uninstall_success[0]:
             print("\n" + tr("cli.uninstall_completed_success", title=book['title']))

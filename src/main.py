@@ -1,10 +1,9 @@
 import sys
-from src.qt_compat import QApplication, QT_API
+from src.qt_compat import QApplication, QIcon, QT_API
 from src.ui.main_window import MainWindow
 
 def main():
     # If command line arguments are provided, switch to CLI mode
-    import sys
     args = sys.argv[1:]
     if args and args[0] == "-c":
         args = args[1:]
@@ -31,12 +30,6 @@ def main():
     icon_path = os.path.join(os.path.dirname(__file__), "assets", "raf.png")
     if os.path.exists(icon_path):
         try:
-            if QT_API == "PySide6":
-                from PySide6.QtGui import QIcon
-            elif QT_API == "PyQt6":
-                from PyQt6.QtGui import QIcon
-            else:
-                from PyQt5.QtGui import QIcon
             app.setWindowIcon(QIcon(icon_path))
         except Exception as e:
             print(f"Error setting window icon: {e}")

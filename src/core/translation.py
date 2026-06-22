@@ -19,7 +19,7 @@ class TranslationManager:
         if not lang:
             # Detect system locale
             try:
-                sys_lang, _ = locale.getdefaultlocale()
+                sys_lang, _ = locale.getlocale()
                 if sys_lang and sys_lang.startswith("tr"):
                     lang = "tr"
                 else:

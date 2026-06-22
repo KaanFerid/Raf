@@ -16,8 +16,8 @@ def load_config():
     try:
         with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
             return json.load(f)
-    except:
-        return {"theme_mode": "system"}
+    except Exception:
+        return {"theme_mode": "system", "language": "tr"}
 
 def save_config(config):
     os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
@@ -38,4 +38,15 @@ def set_cached_package_name(book_id, package_name):
     if "package_names" not in config:
         config["package_names"] = {}
     config["package_names"][book_id] = package_name
+    save_config(config)
+
+def get_last_update_check():
+    """Returns the UNIX timestamp of the last update check (0.0 if never checked)."""
+    config = load_config()
+    return float(config.get("last_update_check", 0.0))
+
+def set_last_update_check(timestamp):
+    """Stores the UNIX timestamp of the most recent update check."""
+    config = load_config()
+    config["last_update_check"] = timestamp
     save_config(config)

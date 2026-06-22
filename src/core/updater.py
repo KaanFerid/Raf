@@ -1,15 +1,25 @@
 import os
+import time
 import json
 import requests
 import subprocess
-from src.qt_compat import QThread, Signal
+from src.qt_compat import QThread, QObject, QTimer, Signal
 from src.core.translation import tr
 from src.core.version import __version__ as APP_VERSION
+from src.core.config import load_config, get_last_update_check, set_last_update_check
 
 # Remote update metadata file
-UPDATE_URL = "https://raw.githubusercontent.com/kaan-gok/raf/main/update.json"
+UPDATE_URL = "https://raw.githubusercontent.com/KaanFerid/Raf/main/update.json"
+
+# 6 hours between automatic checks
+AUTO_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
+# Minimum time between checks (24 hours)
+MIN_CHECK_INTERVAL_SECONDS = 86400
+
 
 class UpdateChecker(QThread):
+    """Checks the remote update.json once and emits whether an update is available."""
+
     # Signals to notify the UI
     update_available = Signal(str, str, str)  # version, download_url, changelog
     no_update = Signal()
@@ -57,12 +67,14 @@ class UpdateChecker(QThread):
                     self.no_update.emit()
             else:
                 self.no_update.emit()
-        except:
+        except Exception:
             # Silent fallback if offline or failed
             self.no_update.emit()
 
 
 class UpdateInstaller(QThread):
+    """Installs a downloaded application update .deb file."""
+
     status_changed = Signal(str)
     finished = Signal(bool)
 
@@ -80,7 +92,6 @@ class UpdateInstaller(QThread):
 
         # 2. Production system installation path
         self.status_changed.emit(tr("updater.system_updating"))
-        # Run pkexec apt-get install --reinstall -y ./file.deb
         cmd = ["pkexec", "apt-get", "install", "--reinstall", "-y", self.file_path]
         try:
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120)
@@ -91,3 +102,62 @@ class UpdateInstaller(QThread):
         except Exception as e:
             print(f"Error installing update deb: {e}")
             self.finished.emit(False)
+
+
+class AutoUpdateScheduler(QObject):
+    """
+    Runs periodic background update checks based on the user's policy setting.
+    Policy values (stored in config as 'auto_update_policy'):
+      'off'    — Never check automatically (only on launch)
+      'check'  — Check daily, show a toast notification
+      'auto'   — Check daily, download and install automatically
+    """
+
+    # Emitted when an update is found (in 'check' policy mode)
+    update_toast_requested = Signal(str)          # formatted toast message
+    # Emitted when an update should be installed automatically ('auto' mode)
+    auto_install_requested = Signal(str, str, str) # version, url, changelog
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._checker = None
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._maybe_check)
+
+    def start(self):
+        """Starts the scheduler timer."""
+        self._timer.start(AUTO_CHECK_INTERVAL_MS)
+        # Also run once immediately on startup
+        self._maybe_check()
+
+    def stop(self):
+        self._timer.stop()
+
+    def _maybe_check(self):
+        """Runs an update check if the policy allows and enough time has passed."""
+        config = load_config()
+        policy = config.get("auto_update_policy", "check")
+
+        if policy == "off":
+            return
+
+        last_checked = get_last_update_check()
+        if time.time() - last_checked < MIN_CHECK_INTERVAL_SECONDS:
+            return
+
+        # Record that we are checking now
+        set_last_update_check(time.time())
+
+        self._checker = UpdateChecker()
+        self._checker.update_available.connect(self._on_update_found)
+        self._checker.start()
+
+    def _on_update_found(self, version, download_url, changelog):
+        """Handles a newly discovered update according to the current policy."""
+        config = load_config()
+        policy = config.get("auto_update_policy", "check")
+
+        if policy == "auto":
+            self.auto_install_requested.emit(version, download_url, changelog)
+        else:
+            self.update_toast_requested.emit(version)
