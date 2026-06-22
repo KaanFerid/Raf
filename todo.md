@@ -1,3 +1,0 @@
-bar of about page is not dark in dark mode fix it , download progress title does not shows the full name uf the library which is downloaded make sure it shows full name of the lib, add support for .appimage and .fernus libraries. if i am right .fernus libraries can be started as if they are an .appimage file. look at the structure of an .fernus file to understand how they can be started. make sure appimages and fernus and zips and other types of libraries which are not installable are stored in some folder of raf so we can create a .desktop file for them. make sure other users can start the libraries. 
-
-
