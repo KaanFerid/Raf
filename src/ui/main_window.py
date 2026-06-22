@@ -135,8 +135,6 @@ class PreferencesDialog(QDialog):
         button_layout.addWidget(self.cancel_btn)
         button_layout.addWidget(self.save_btn)
         
-        layout.addLayout(button_layout)
-
         # Database URL setting
         self.db_group = QGroupBox()
         db_layout = QVBoxLayout(self.db_group)
@@ -901,11 +899,21 @@ class MainWindow(QMainWindow):
 
     def show_about_dialog(self):
         """Displays the About application dialog."""
-        QMessageBox.about(
-            self,
-            tr("ui.about_title"),
-            tr("ui.about_content", version=APP_VERSION)
-        )
+        msg = QMessageBox(self)
+        msg.setWindowTitle(tr("ui.about_title"))
+        msg.setText(tr("ui.about_content", version=APP_VERSION))
+        
+        # Look for the app logo in assets
+        import os
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "raf.png")
+        if os.path.exists(icon_path):
+            msg.setIconPixmap(QPixmap(icon_path).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        else:
+            msg.setIcon(QMessageBox.Information)
+            
+        is_dark = self.current_theme == "dark"
+        set_linux_dark_titlebar(msg, is_dark)
+        msg.exec_()
 
     def eventFilter(self, obj, event):
         """Intercepts focus and click events on search input to automatically open OSK."""

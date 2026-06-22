@@ -117,6 +117,17 @@ class ToastManager(QWidget):
         parent_rect = parent.rect()
         bottom = parent_rect.bottom() - self.MARGIN - 30  # 30px above status bar
 
+        # Filter out deleted C++ objects
+        alive_toasts = []
+        for toast in self._toasts:
+            try:
+                _ = toast.isVisible()
+                alive_toasts.append(toast)
+            except RuntimeError:
+                pass
+                
+        self._toasts = alive_toasts
+
         # Stack toasts from bottom to top
         for toast in reversed(self._toasts):
             if not toast.isVisible():
