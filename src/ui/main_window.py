@@ -674,7 +674,7 @@ class MainWindow(QMainWindow):
         if len(active) == 1:
             book_id = next(iter(active))
             card = self.card_widgets.get(book_id)
-            title_str = card.book['title'][:22] if card else book_id
+            title_str = card.book['title'] if card else book_id
             self.setWindowTitle(f"[\u25bc {title_str} \u2014 {avg}%] {tr('ui.app_title')}")
         else:
             self.setWindowTitle(f"[\u25bc {len(active)} {tr('ui.downloads')} \u2014 {avg}%] {tr('ui.app_title')}")

@@ -253,8 +253,12 @@ QProgressBar::chunk {
     background-color: #1e1e1e;
 }
 
-QDialog {
+QDialog, QMessageBox {
     background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QMessageBox QLabel {
     color: #ffffff;
 }
 

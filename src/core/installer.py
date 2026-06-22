@@ -78,8 +78,10 @@ class InstallerWorker(QThread):
         
         if file_type == 'deb':
             self.install_deb()
-        elif file_type in ['zip', 'fernus']:
+        elif file_type == 'zip':
             self.install_zip()
+        elif file_type in ['appimage', 'fernus']:
+            self.install_standalone()
         elif file_type == 'flatpak':
             self.install_flatpak()
         elif file_type == 'snap':
@@ -93,8 +95,10 @@ class InstallerWorker(QThread):
         
         if file_type == 'deb':
             self.uninstall_deb()
-        elif file_type in ['zip', 'fernus']:
+        elif file_type == 'zip':
             self.uninstall_zip()
+        elif file_type in ['appimage', 'fernus']:
+            self.uninstall_standalone()
         elif file_type == 'flatpak':
             self.uninstall_flatpak()
         elif file_type == 'snap':
@@ -193,10 +197,8 @@ class InstallerWorker(QThread):
     def install_zip(self):
         self.status_changed.emit(self.book_id, tr("installer.extracting_files"))
         
-        apps_dir = os.path.expanduser(f"~/.local/share/raf/apps/{self.book_id}")
-        if os.path.exists(apps_dir):
-            shutil.rmtree(apps_dir)
-        os.makedirs(apps_dir, exist_ok=True)
+        import tempfile
+        tmp_dir = tempfile.mkdtemp(prefix=f"raf_{self.book_id}_")
 
         try:
             with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
@@ -205,13 +207,13 @@ class InstallerWorker(QThread):
                 total_files = len(file_list)
                 
                 for i, file in enumerate(file_list):
-                    zip_ref.extract(file, apps_dir)
+                    zip_ref.extract(file, tmp_dir)
                     if i % max(1, total_files // 10) == 0:
                         percent = int((i / total_files) * 100)
                         self.status_changed.emit(self.book_id, tr("installer.extracting_percent", percent=percent))
             
             # Make sure all files are executable if they are scripts/binaries
-            for root, dirs, files in os.walk(apps_dir):
+            for root, dirs, files in os.walk(tmp_dir):
                 for f in files:
                     fpath = os.path.join(root, f)
                     if f.endswith('.sh') or '.' not in f: # executable scripts or binaries
@@ -221,27 +223,57 @@ class InstallerWorker(QThread):
                             pass
 
             self.status_changed.emit(self.book_id, tr("installer.creating_desktop_launcher"))
-            create_desktop_launcher(self.book, apps_dir)
+            tmp_desktop_path = create_desktop_launcher(self.book, tmp_dir)
             
-            self.status_changed.emit(self.book_id, tr("installer.install_completed"))
-            self.finished.emit(self.book_id, True)
+            self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
+            
+            script = f"""
+            rm -rf "/opt/raf/apps/{self.book_id}"
+            mkdir -p "/opt/raf/apps/{self.book_id}"
+            cp -r "{tmp_dir}/"* "/opt/raf/apps/{self.book_id}/"
+            cp "{tmp_desktop_path}" "/usr/share/applications/raf-{self.book_id}.desktop"
+            chmod 644 "/usr/share/applications/raf-{self.book_id}.desktop"
+            rm -rf "{tmp_dir}"
+            rm -f "{tmp_desktop_path}"
+            """
+            
+            cmd = ["pkexec", "bash", "-c", script]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
+            
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
+                self.finished.emit(self.book_id, True)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
 
         except Exception as e:
             self.output_received.emit(self.book_id, str(e))
             self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
+            try: shutil.rmtree(tmp_dir)
+            except: pass
 
     def uninstall_zip(self):
         self.status_changed.emit(self.book_id, tr("installer.deleting_files"))
         
-        apps_dir = os.path.expanduser(f"~/.local/share/raf/apps/{self.book_id}")
-        desktop_file = os.path.expanduser(f"~/.local/share/applications/raf-{self.book_id}.desktop")
+        apps_dir = f"/opt/raf/apps/{self.book_id}"
+        desktop_file = f"/usr/share/applications/raf-{self.book_id}.desktop"
         
         try:
-            if os.path.exists(apps_dir):
-                shutil.rmtree(apps_dir)
-            if os.path.exists(desktop_file):
-                os.remove(desktop_file)
+            script = f"""
+            rm -rf "{apps_dir}"
+            rm -f "{desktop_file}"
+            """
+            
+            cmd = ["pkexec", "bash", "-c", script]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
                 
             self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
             self.finished.emit(self.book_id, True)
@@ -249,6 +281,58 @@ class InstallerWorker(QThread):
             self.output_received.emit(self.book_id, str(e))
             self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
             self.finished.emit(self.book_id, False)
+
+    def install_standalone(self):
+        self.status_changed.emit(self.book_id, tr("installer.extracting_files"))
+        
+        import tempfile
+        tmp_dir = tempfile.mkdtemp(prefix=f"raf_{self.book_id}_")
+        
+        try:
+            # Copy the file to temp dir
+            file_name = os.path.basename(self.file_path)
+            tmp_file_path = os.path.join(tmp_dir, file_name)
+            shutil.copy2(self.file_path, tmp_file_path)
+            os.chmod(tmp_file_path, 0o755)
+            
+            self.status_changed.emit(self.book_id, tr("installer.creating_desktop_launcher"))
+            tmp_desktop_path = create_desktop_launcher(self.book, tmp_dir, is_standalone=True, exec_name=file_name)
+            
+            self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
+            
+            script = f"""
+            rm -rf "/opt/raf/apps/{self.book_id}"
+            mkdir -p "/opt/raf/apps/{self.book_id}"
+            cp "{tmp_file_path}" "/opt/raf/apps/{self.book_id}/{file_name}"
+            cp "{tmp_desktop_path}" "/usr/share/applications/raf-{self.book_id}.desktop"
+            chmod 644 "/usr/share/applications/raf-{self.book_id}.desktop"
+            rm -rf "{tmp_dir}"
+            rm -f "{tmp_desktop_path}"
+            """
+            
+            cmd = ["pkexec", "bash", "-c", script]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            for line in process.stdout:
+                self.output_received.emit(self.book_id, line)
+            process.wait()
+            
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
+                self.finished.emit(self.book_id, True)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
+                
+        except Exception as e:
+            self.output_received.emit(self.book_id, str(e))
+            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
+            self.finished.emit(self.book_id, False)
+            try: shutil.rmtree(tmp_dir)
+            except: pass
+
+    def uninstall_standalone(self):
+        # Same logic as uninstall_zip since they share the same directory structure
+        self.uninstall_zip()
 
     def install_flatpak(self):
         """Installs a Flatpak application for the current user."""
@@ -614,9 +698,9 @@ def is_book_installed(book, installed_set=None):
                 pass
         return False
             
-    elif file_type in ['zip', 'fernus']:
-        apps_dir = os.path.expanduser(f"~/.local/share/raf/apps/{book['id']}")
-        desktop_file = os.path.expanduser(f"~/.local/share/applications/raf-{book['id']}.desktop")
+    elif file_type in ['zip', 'fernus', 'appimage']:
+        apps_dir = f"/opt/raf/apps/{book['id']}"
+        desktop_file = f"/usr/share/applications/raf-{book['id']}.desktop"
         return os.path.exists(apps_dir) and os.path.exists(desktop_file)
 
     elif file_type == 'flatpak':
@@ -636,72 +720,86 @@ def is_book_installed(book, installed_set=None):
         
     return False
 
-def create_desktop_launcher(book, apps_dir):
+def create_desktop_launcher(book, apps_dir, is_standalone=False, exec_name=""):
     """Detects the executable and creates a desktop entry launcher in applications menu."""
-    os.makedirs(os.path.expanduser("~/.local/share/applications"), exist_ok=True)
-    desktop_path = os.path.expanduser(f"~/.local/share/applications/raf-{book['id']}.desktop")
+    import tempfile
+    
+    # Target directory after pkexec copy will be:
+    target_apps_dir = f"/opt/raf/apps/{book['id']}"
     
     # 1. Detect executable path
     exec_cmd = None
     icon_path = None
     
-    # Search for files inside apps_dir
-    all_files = []
-    for root, dirs, files in os.walk(apps_dir):
-        for f in files:
-            all_files.append(os.path.join(root, f))
-            
-    # Sort files to find best matches first
-    # Heuristics:
-    # A. Search for .sh scripts (start.sh, run.sh, play.sh, etc.)
-    sh_files = [f for f in all_files if f.endswith('.sh')]
-    for sh in sh_files:
-        fname = os.path.basename(sh).lower()
-        if 'start' in fname or 'run' in fname or 'kutuphane' in fname or 'main' in fname:
-            exec_cmd = sh
-            break
-    if not exec_cmd and sh_files:
-        exec_cmd = sh_files[0]
-        
-    # B. Search for HTML index if no shell script (xdg-open index.html)
-    if not exec_cmd:
-        html_files = [f for f in all_files if f.endswith('.html')]
-        for html in html_files:
-            if 'index' in os.path.basename(html).lower() or 'main' in os.path.basename(html).lower():
-                exec_cmd = f"xdg-open '{html}'"
+    if is_standalone:
+        exec_cmd = f"'{target_apps_dir}/{exec_name}'"
+        icon_path = ""
+    else:
+        # Search for files inside apps_dir (the local temp directory)
+        all_files = []
+        for root, dirs, files in os.walk(apps_dir):
+            for f in files:
+                all_files.append(os.path.join(root, f))
+                
+        # Sort files to find best matches first
+        # Heuristics:
+        # A. Search for .sh scripts (start.sh, run.sh, play.sh, etc.)
+        sh_files = [f for f in all_files if f.endswith('.sh')]
+        for sh in sh_files:
+            fname = os.path.basename(sh).lower()
+            if 'start' in fname or 'run' in fname or 'kutuphane' in fname or 'main' in fname:
+                rel_path = os.path.relpath(sh, apps_dir)
+                exec_cmd = f"'{target_apps_dir}/{rel_path}'"
                 break
-        if not exec_cmd and html_files:
-            exec_cmd = f"xdg-open '{html_files[0]}'"
+        if not exec_cmd and sh_files:
+            rel_path = os.path.relpath(sh_files[0], apps_dir)
+            exec_cmd = f"'{target_apps_dir}/{rel_path}'"
             
-    # C. Search for windows .exe files (run with wine)
-    if not exec_cmd:
-        exe_files = [f for f in all_files if f.endswith('.exe')]
-        # Skip uninstaller exes
-        exe_files = [f for f in exe_files if 'unins' not in os.path.basename(f).lower()]
-        if exe_files:
-            exec_cmd = f"wine '{exe_files[0]}'"
-            
-    # D. Fallback: Search for binary files (executable files with no extension)
-    if not exec_cmd:
-        binaries = [f for f in all_files if '.' not in os.path.basename(f) and os.access(f, os.X_OK)]
-        if binaries:
-            exec_cmd = binaries[0]
-            
-    # E. Last resort: Just point to the directory
-    if not exec_cmd:
-        exec_cmd = f"xdg-open '{apps_dir}'"
+        # B. Search for HTML index if no shell script (xdg-open index.html)
+        if not exec_cmd:
+            html_files = [f for f in all_files if f.endswith('.html')]
+            for html in html_files:
+                if 'index' in os.path.basename(html).lower() or 'main' in os.path.basename(html).lower():
+                    rel_path = os.path.relpath(html, apps_dir)
+                    exec_cmd = f"xdg-open '{target_apps_dir}/{rel_path}'"
+                    break
+            if not exec_cmd and html_files:
+                rel_path = os.path.relpath(html_files[0], apps_dir)
+                exec_cmd = f"xdg-open '{target_apps_dir}/{rel_path}'"
+                
+        # C. Search for windows .exe files (run with wine)
+        if not exec_cmd:
+            exe_files = [f for f in all_files if f.endswith('.exe')]
+            # Skip uninstaller exes
+            exe_files = [f for f in exe_files if 'unins' not in os.path.basename(f).lower()]
+            if exe_files:
+                rel_path = os.path.relpath(exe_files[0], apps_dir)
+                exec_cmd = f"wine '{target_apps_dir}/{rel_path}'"
+                
+        # D. Fallback: Search for binary files (executable files with no extension)
+        if not exec_cmd:
+            binaries = [f for f in all_files if '.' not in os.path.basename(f) and os.access(f, os.X_OK)]
+            if binaries:
+                rel_path = os.path.relpath(binaries[0], apps_dir)
+                exec_cmd = f"'{target_apps_dir}/{rel_path}'"
+                
+        # E. Last resort: Just point to the directory
+        if not exec_cmd:
+            exec_cmd = f"xdg-open '{target_apps_dir}'"
 
-    # 2. Find Icon
-    # Search for icon/png/svg
-    img_files = [f for f in all_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.svg'))]
-    for img in img_files:
-        fname = os.path.basename(img).lower()
-        if 'icon' in fname or 'logo' in fname or 'avatar' in fname:
-            icon_path = img
-            break
-    if not icon_path and img_files:
-        icon_path = img_files[0]
-        
+        # 2. Find Icon
+        # Search for icon/png/svg
+        img_files = [f for f in all_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.svg'))]
+        for img in img_files:
+            fname = os.path.basename(img).lower()
+            if 'icon' in fname or 'logo' in fname or 'avatar' in fname:
+                rel_path = os.path.relpath(img, apps_dir)
+                icon_path = f"{target_apps_dir}/{rel_path}"
+                break
+        if not icon_path and img_files:
+            rel_path = os.path.relpath(img_files[0], apps_dir)
+            icon_path = f"{target_apps_dir}/{rel_path}"
+            
     # Default icon if none found
     if not icon_path:
         icon_path = "education"  # system icon name
@@ -711,7 +809,7 @@ def create_desktop_launcher(book, apps_dir):
 Version=1.0
 Type=Application
 Name={book['title']}
-Comment={tr("installer.desktop_comment", publisher=book['publisher'])}
+Comment={tr("installer.desktop_comment", publisher=book.get('publisher', ''))}
 Exec={exec_cmd}
 Icon={icon_path}
 Terminal=false
@@ -719,11 +817,8 @@ Categories=Education;Development;
 StartupNotify=true
 """
     
-    with open(desktop_path, 'w', encoding='utf-8') as f:
+    fd, tmp_desktop_path = tempfile.mkstemp(suffix=".desktop")
+    with os.fdopen(fd, 'w') as f:
         f.write(content)
         
-    # Make the .desktop file executable
-    try:
-        os.chmod(desktop_path, 0o755)
-    except Exception:
-        pass
+    return tmp_desktop_path
