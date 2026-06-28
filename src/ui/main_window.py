@@ -314,8 +314,8 @@ class PreferencesDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.resize(960, 650)
-        self.setMinimumSize(950, 550)
+        self.resize(1100, 700)
+        self.setMinimumSize(1080, 550)
         
         # Theme configuration variables
         self.current_theme = None
@@ -486,8 +486,7 @@ class MainWindow(QMainWindow):
         # App branding Title
         self.app_title_label = QLabel()
         self.app_title_label.setObjectName("AppTitleLabel")
-        self.app_title_label.setMinimumWidth(150)
-        self.app_title_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.app_title_label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         header_layout.addWidget(self.app_title_label)
 
         # Queue badge (shown when items are queued)
@@ -507,7 +506,8 @@ class MainWindow(QMainWindow):
 
         # Search Bar input field (Centered)
         self.search_input = QLineEdit()
-        self.search_input.setFixedWidth(200)
+        self.search_input.setMinimumWidth(150)
+        self.search_input.setMaximumWidth(250)
         self.search_input.textChanged.connect(self.on_search_changed)
         self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
         # Add custom drawn clean search icon to avoid Unicode rendering issues on Pardus
@@ -519,7 +519,7 @@ class MainWindow(QMainWindow):
         # Right segmented control (View Switcher - Adwaita style)
         switcher_container = QWidget()
         switcher_container.setObjectName("ViewSwitcherContainer")
-        switcher_container.setMinimumWidth(240)
+        switcher_container.setMinimumWidth(200)
         switcher_layout = QHBoxLayout(switcher_container)
         switcher_layout.setContentsMargins(0, 0, 0, 0)
         switcher_layout.setSpacing(0)
@@ -528,12 +528,12 @@ class MainWindow(QMainWindow):
         self.tab_market_btn.setCheckable(True)
         self.tab_market_btn.setChecked(True)
         self.tab_market_btn.setProperty("class", "ViewSwitcherBtn")
-        self.tab_market_btn.setMinimumWidth(100)
+        self.tab_market_btn.setMinimumWidth(80)
 
         self.tab_library_btn = QPushButton()
         self.tab_library_btn.setCheckable(True)
         self.tab_library_btn.setProperty("class", "ViewSwitcherBtn")
-        self.tab_library_btn.setMinimumWidth(130)
+        self.tab_library_btn.setMinimumWidth(110)
 
         self.tab_group = QButtonGroup(self)
         self.tab_group.addButton(self.tab_market_btn)
