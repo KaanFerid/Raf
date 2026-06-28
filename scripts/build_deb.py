@@ -132,35 +132,34 @@ License: GPL-3.0+
             for root, dirs, files in os.walk(base_dir):
                 if "__pycache__" in root:
                     continue
-            
-            # Ensure the directory itself is added to the tar archive
-            tarpath_dir = os.path.normpath(os.path.join("usr/share/raf", root))
-            if tarpath_dir not in added_dirs:
-                add_dir(tar, tarpath_dir)
-                added_dirs.add(tarpath_dir)
-            for file in files:
-                if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
-                    continue
-                filepath = os.path.join(root, file)
-                tarpath = os.path.join("usr/share/raf", filepath)
-                
-                tarinfo = tar.gettarinfo(filepath, arcname=tarpath)
-                tarinfo.uname = "root"
-                tarinfo.gname = "root"
-                tarinfo.uid = 0
-                tarinfo.gid = 0
-                
-                # Make sure directories and python files have proper execution/reading modes
-                if file.endswith('.py') or file.endswith('.sh') or '.' not in file:
-                    tarinfo.mode = 0o755 if file.endswith('.sh') else 0o644
-                else:
-                    tarinfo.mode = 0o644
-                
-                with open(filepath, "rb") as f:
-                    content = f.read()
-                md5_hash = hashlib.md5(content).hexdigest()
-                md5_list.append(f"{md5_hash}  {tarpath}\n")
-                tar.addfile(tarinfo, io.BytesIO(content))
+                # Ensure the directory itself is added to the tar archive
+                tarpath_dir = os.path.normpath(os.path.join("usr/share/raf", root))
+                if tarpath_dir not in added_dirs:
+                    add_dir(tar, tarpath_dir)
+                    added_dirs.add(tarpath_dir)
+                for file in files:
+                    if file.endswith('.pyc') or file.endswith('.pyo') or file.startswith('.'):
+                        continue
+                    filepath = os.path.join(root, file)
+                    tarpath = os.path.join("usr/share/raf", filepath)
+                    
+                    tarinfo = tar.gettarinfo(filepath, arcname=tarpath)
+                    tarinfo.uname = "root"
+                    tarinfo.gname = "root"
+                    tarinfo.uid = 0
+                    tarinfo.gid = 0
+                    
+                    # Make sure directories and python files have proper execution/reading modes
+                    if file.endswith('.py') or file.endswith('.sh') or '.' not in file:
+                        tarinfo.mode = 0o755 if file.endswith('.sh') else 0o644
+                    else:
+                        tarinfo.mode = 0o644
+                    
+                    with open(filepath, "rb") as f:
+                        content = f.read()
+                    md5_hash = hashlib.md5(content).hexdigest()
+                    md5_list.append(f"{md5_hash}  {tarpath}\n")
+                    tar.addfile(tarinfo, io.BytesIO(content))
 
     data_tar_gz = data_data.getvalue()
 
