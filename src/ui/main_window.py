@@ -19,6 +19,14 @@ from src.core.updater import UpdateChecker, UpdateInstaller, AutoUpdateScheduler
 from src.core.download_queue import DownloadQueue
 from src.core.sync import DatabaseSyncWorker
 from src.core.version import __version__ as APP_VERSION
+from src.ui.logs_dialog import InstallationLogsDialog
+from PyQt5.QtCore import QThread, pyqtSignal
+
+class PackageQueryWorker(QThread):
+    packages_loaded = pyqtSignal(set)
+    def run(self):
+        from src.core.installer import get_all_installed_packages
+        self.packages_loaded.emit(get_all_installed_packages())
 
 
 
@@ -322,6 +330,11 @@ class MainWindow(QMainWindow):
         self.theme_timer = QTimer(self)
         self.theme_timer.timeout.connect(self.check_system_theme_update)
         
+        # Search debouncing
+        self.search_timer = QTimer(self)
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.refresh_grid)
+        
         # Core components
         print(tr("log.loading_db"))
         self.db = Database()
@@ -330,6 +343,7 @@ class MainWindow(QMainWindow):
         # State tracking
         self.active_downloads = {}      # book_id -> DownloadWorker
         self.active_installations = {}  # book_id -> InstallerWorker
+        self.logs_dialog = InstallationLogsDialog(self)
         self.card_widgets = {}          # book_id -> BookCard
         self._selection_mode = False    # Batch selection mode active
         self._selected_books = set()    # book_ids selected in batch mode
@@ -337,6 +351,8 @@ class MainWindow(QMainWindow):
         # Network state
         self.is_offline = False
         self.check_network_status()
+        
+        self.installed_packages_cache = None
         
         self.init_ui()
         self.update_theme()
@@ -369,6 +385,9 @@ class MainWindow(QMainWindow):
             self.sync_worker.sync_finished.connect(self._on_sync_finished)
             self.sync_worker.sync_failed.connect(self._on_sync_failed)
             self.sync_worker.start()
+            
+        # Start async package query
+        self.refresh_packages_cache()
         
         # Periodically refresh installation status of displayed items
         self.refresh_timer = QTimer(self)
@@ -568,6 +587,11 @@ class MainWindow(QMainWindow):
         self.about_btn.clicked.connect(self.show_about_dialog)
         header_layout.addWidget(self.about_btn)
 
+        self.logs_btn = QPushButton()
+        self.logs_btn.setProperty("class", "AdwSecondaryBtn")
+        self.logs_btn.clicked.connect(self.logs_dialog.show)
+        header_layout.addWidget(self.logs_btn)
+
         main_layout.addWidget(header_widget)
 
         # 2. Count Label
@@ -657,6 +681,7 @@ class MainWindow(QMainWindow):
         self.search_input.setPlaceholderText(tr("ui.search_placeholder"))
         self.settings_btn.setText(tr("ui.preferences"))
         self.about_btn.setText(tr("ui.about_menu"))
+        self.logs_btn.setText(tr("ui.logs_menu", default="Logs"))
         self.select_mode_btn.setText(tr("ui.select_mode"))
         self.batch_install_btn.setText(tr("ui.install_selected"))
         self.batch_uninstall_btn.setText(tr("ui.uninstall_selected"))
@@ -1122,19 +1147,33 @@ class MainWindow(QMainWindow):
         """Handles switcher tab toggle between Market and Library views."""
         self.refresh_grid()
 
+    def refresh_packages_cache(self):
+        self.pkg_worker = PackageQueryWorker()
+        self.pkg_worker.packages_loaded.connect(self._on_packages_loaded)
+        self.pkg_worker.start()
+
+    def _on_packages_loaded(self, installed_set):
+        self.installed_packages_cache = installed_set
+        self.refresh_grid()
+
     def get_filtered_books(self):
+        if self.installed_packages_cache is None:
+            return []
+            
         query = self.search_input.text()
         books = self.db.search_books(query)
             
         # Filter by switcher tab state
         if self.tab_library_btn.isChecked():
-            installed_set = get_all_installed_packages()
-            books = [b for b in books if is_book_installed(b, installed_set)]
+            books = [b for b in books if is_book_installed(b, self.installed_packages_cache)]
             
         return books
 
     def refresh_grid(self):
         """Re-populates the vertical list layout container with filtered items."""
+        if self.installed_packages_cache is None:
+            return
+            
         # Hide and remove all card widgets from list layout
         for card in self.card_widgets.values():
             card.hide()
@@ -1144,13 +1183,10 @@ class MainWindow(QMainWindow):
         books = self.get_filtered_books()
         self.count_label.setText(tr("ui.books_listed", count=len(books)))
 
-        # Cache package status query
-        installed_set = get_all_installed_packages()
-
         for idx, book in enumerate(books):
             book_id = book['id']
             
-            installed = is_book_installed(book, installed_set)
+            installed = is_book_installed(book, self.installed_packages_cache)
             # Retrieve or create widget
             if book_id in self.card_widgets:
                 card = self.card_widgets[book_id]
@@ -1192,17 +1228,11 @@ class MainWindow(QMainWindow):
         self.check_network_status()
         self.offline_badge.setVisible(self.is_offline)
         
-        installed_set = get_all_installed_packages()
-        
-        for book_id, card in self.card_widgets.items():
-            if book_id in self.active_downloads or book_id in self.active_installations:
-                continue
-            
-            installed = is_book_installed(card.book, installed_set)
-            card.update_status(installed, is_offline=self.is_offline)
+        self.refresh_packages_cache()
 
     def on_search_changed(self, text):
-        self.refresh_grid()
+        # Restart the debounce timer (300ms) to prevent UI blocking while typing
+        self.search_timer.start(300)
 
 
 
@@ -1308,6 +1338,7 @@ class MainWindow(QMainWindow):
         worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
         worker.finished.connect(self.on_installation_finished)
         worker.output_received.connect(self.on_install_output)
+        worker.auth_failed.connect(lambda bid: self.on_auth_failed(bid, worker))
         
         self.active_installations[book_id] = worker
         self.statusBar.showMessage(tr("ui.installing_status", title=book['title']))
@@ -1315,6 +1346,7 @@ class MainWindow(QMainWindow):
 
     def on_install_output(self, book_id, text):
         print(f"[{book_id} install stdout]: {text.strip()}")
+        self.logs_dialog.append_log(f"[{book_id}] {text.strip()}")
 
     def on_installation_finished(self, book_id, success):
         worker = self.active_installations.pop(book_id, None)
@@ -1358,7 +1390,9 @@ class MainWindow(QMainWindow):
                 except Exception:
                     pass
             # Trigger refresh to update list layout view
-            self.refresh_grid()
+            self.refresh_packages_cache()
+        elif getattr(worker, '_auth_failed', False):
+            pass # Already handled by on_auth_failed
         else:
             self.statusBar.showMessage(tr("ui.install_error_status", title=book['title']), 5000)
             self.toast_manager.show_toast(tr("ui.toast_install_error", title=book['title']), "error")
@@ -1389,6 +1423,7 @@ class MainWindow(QMainWindow):
         worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
         worker.finished.connect(self.on_uninstallation_finished)
         worker.output_received.connect(self.on_install_output)
+        worker.auth_failed.connect(lambda bid: self.on_auth_failed(bid, worker))
         
         self.active_installations[book_id] = worker
         self.statusBar.showMessage(tr("ui.uninstalling_status", title=book['title']))
@@ -1420,10 +1455,19 @@ class MainWindow(QMainWindow):
                 from src.core.database import Database
                 self.db.remove_sideloaded_book(book['id'])
                 
-            self.refresh_grid()
+            self.refresh_packages_cache()
+        elif getattr(worker, '_auth_failed', False):
+            pass # Already handled by on_auth_failed
         else:
             self.statusBar.showMessage(tr("ui.uninstall_error_status", title=book['title']), 5000)
             self.toast_manager.show_toast(tr("ui.toast_install_error", title=book['title']), "error")
+
+    def on_auth_failed(self, book_id, worker):
+        worker._auth_failed = True
+        book = worker.book
+        title = book['title'] if book else ""
+        self.statusBar.showMessage(tr("ui.auth_failed_status", title=title), 5000)
+        self.toast_manager.show_toast(tr("ui.toast_auth_failed", title=title), "warning")
 
     def launch_book(self, book):
         if os.environ.get("RAF_DEV") == "1":

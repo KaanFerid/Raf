@@ -83,8 +83,8 @@ class DownloadQueue(QObject):
         while self._pending and len(self._active_ids) < self.max_concurrent:
             book, local_path = self._pending.pop(0)
             self.queue_changed.emit(len(self._pending))
-            self.job_started.emit(book['id'])
-            # The actual download is triggered by whoever is connected to job_started.
-            # MainWindow connects: job_started -> _start_download_job(book_id, local_path)
-            # We store the args so MainWindow can retrieve them.
+            
+            # Store the args so MainWindow can retrieve them before emitting the signal
             self._last_started = (book, local_path)
+            
+            self.job_started.emit(book['id'])

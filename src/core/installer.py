@@ -36,6 +36,7 @@ class InstallerWorker(QThread):
     status_changed = Signal(str, str)  # book_id, status_message
     finished = Signal(str, bool)       # book_id, success
     output_received = Signal(str, str) # book_id, console_output
+    auth_failed = Signal(str)          # book_id
 
     def __init__(self, book, file_path, action="install"):
         super().__init__()
@@ -150,6 +151,10 @@ class InstallerWorker(QThread):
             if process.returncode == 0:
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
+                self.auth_failed.emit(self.book_id)
+                self.finished.emit(self.book_id, False)
             else:
                 self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
@@ -186,6 +191,10 @@ class InstallerWorker(QThread):
             if process.returncode == 0:
                 self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
                 self.finished.emit(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
+                self.auth_failed.emit(self.book_id)
+                self.finished.emit(self.book_id, False)
             else:
                 self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
@@ -227,17 +236,24 @@ class InstallerWorker(QThread):
             
             self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
             
-            script = f"""
-            rm -rf "/opt/raf/apps/{self.book_id}"
-            mkdir -p "/opt/raf/apps/{self.book_id}"
-            cp -r "{tmp_dir}/"* "/opt/raf/apps/{self.book_id}/"
-            cp "{tmp_desktop_path}" "/usr/share/applications/raf-{self.book_id}.desktop"
-            chmod 644 "/usr/share/applications/raf-{self.book_id}.desktop"
-            rm -rf "{tmp_dir}"
-            rm -f "{tmp_desktop_path}"
+            script = """
+            set -e
+            rm -rf "$1"
+            mkdir -p "$1"
+            cp -r "$2/"* "$1/"
+            cp "$3" "$4"
+            chmod 644 "$4"
+            rm -rf "$2"
+            rm -f "$3"
             """
             
-            cmd = ["pkexec", "bash", "-c", script]
+            cmd = [
+                "pkexec", "bash", "-c", script, "_",
+                f"/opt/raf/apps/{self.book_id}",
+                tmp_dir,
+                tmp_desktop_path,
+                f"/usr/share/applications/raf-{self.book_id}.desktop"
+            ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             for line in process.stdout:
                 self.output_received.emit(self.book_id, line)
@@ -246,6 +262,10 @@ class InstallerWorker(QThread):
             if process.returncode == 0:
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
+                self.auth_failed.emit(self.book_id)
+                self.finished.emit(self.book_id, False)
             else:
                 self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
@@ -264,19 +284,32 @@ class InstallerWorker(QThread):
         desktop_file = f"/usr/share/applications/raf-{self.book_id}.desktop"
         
         try:
-            script = f"""
-            rm -rf "{apps_dir}"
-            rm -f "{desktop_file}"
+            script = """
+            set -e
+            rm -rf "$1"
+            rm -f "$2"
             """
             
-            cmd = ["pkexec", "bash", "-c", script]
+            cmd = [
+                "pkexec", "bash", "-c", script, "_",
+                apps_dir,
+                desktop_file
+            ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             for line in process.stdout:
                 self.output_received.emit(self.book_id, line)
             process.wait()
                 
-            self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
-            self.finished.emit(self.book_id, True)
+            if process.returncode == 0:
+                self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
+                self.finished.emit(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
+                self.auth_failed.emit(self.book_id)
+                self.finished.emit(self.book_id, False)
+            else:
+                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self.finished.emit(self.book_id, False)
         except Exception as e:
             self.output_received.emit(self.book_id, str(e))
             self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
@@ -300,17 +333,26 @@ class InstallerWorker(QThread):
             
             self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
             
-            script = f"""
-            rm -rf "/opt/raf/apps/{self.book_id}"
-            mkdir -p "/opt/raf/apps/{self.book_id}"
-            cp "{tmp_file_path}" "/opt/raf/apps/{self.book_id}/{file_name}"
-            cp "{tmp_desktop_path}" "/usr/share/applications/raf-{self.book_id}.desktop"
-            chmod 644 "/usr/share/applications/raf-{self.book_id}.desktop"
-            rm -rf "{tmp_dir}"
-            rm -f "{tmp_desktop_path}"
+            script = """
+            set -e
+            rm -rf "$1"
+            mkdir -p "$1"
+            cp "$2" "$1/$3"
+            cp "$4" "$5"
+            chmod 644 "$5"
+            rm -rf "$6"
+            rm -f "$4"
             """
             
-            cmd = ["pkexec", "bash", "-c", script]
+            cmd = [
+                "pkexec", "bash", "-c", script, "_",
+                f"/opt/raf/apps/{self.book_id}",
+                tmp_file_path,
+                file_name,
+                tmp_desktop_path,
+                f"/usr/share/applications/raf-{self.book_id}.desktop",
+                tmp_dir
+            ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             for line in process.stdout:
                 self.output_received.emit(self.book_id, line)
@@ -444,6 +486,10 @@ class InstallerWorker(QThread):
             if process.returncode == 0:
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
+                self.auth_failed.emit(self.book_id)
+                self.finished.emit(self.book_id, False)
             else:
                 self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
@@ -483,6 +529,10 @@ class InstallerWorker(QThread):
             if process.returncode == 0:
                 self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
                 self.finished.emit(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
+                self.auth_failed.emit(self.book_id)
+                self.finished.emit(self.book_id, False)
             else:
                 self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
                 self.finished.emit(self.book_id, False)
@@ -565,7 +615,24 @@ def turkish_to_ascii(text):
     return text
 
 def generate_package_guesses(book):
-    """Generates a list of likely package names based on the book file name."""
+    """
+    Generates a list of likely Debian package names based on the book's file name.
+
+    Because upstream digital library `.deb` files often deviate from the exact download
+    filename (e.g. by dropping suffixes, removing publisher keywords, or appending 
+    '-kutuphane'), this function employs heuristics to guess the actual installed 
+    package name as reported by `dpkg`.
+
+    Examples:
+        - "UcDortBesDijitalKutuphane.deb" -> ["ucdortbesdijitalkutuphane", "ucdortbesdijital-kutuphane", ...]
+        - "ToprakYayinlari.fernus" -> ["toprakyayinlari", "toprak", "toprak-kutuphane", ...]
+
+    Process:
+        1. Strips extensions (.deb, .fernus, .zip) and version strings (-v2-23).
+        2. Normalizes Turkish characters to ASCII.
+        3. Generates a 'shortened' base name by stripping publisher keywords ('yayinlari').
+        4. Appends standard permutations of library suffixes ('-kutuphane', 'kutuphanesi').
+    """
     file_name = book['file_name']
     base_name = file_name
     if base_name.endswith('.deb'):
@@ -620,7 +687,19 @@ def generate_package_guesses(book):
     return cleaned_guesses
 
 def get_deb_package_name(book):
-    """Retrieves or queries the debian package name of the book."""
+    """
+    Retrieves or queries the underlying Debian package name of the book.
+
+    This is necessary because the app needs to track installed `.deb` packages using
+    `dpkg-query`, but the remote API often provides filenames that do not exactly match 
+    the internal Debian package name defined in the `.deb` control file.
+
+    Process:
+        1. Checks if the package name has already been resolved and cached (O(1)).
+        2. If not, generates heuristic guesses via `generate_package_guesses(book)`.
+        3. Queries the system (`dpkg-query`) for each guess.
+        4. Caches and returns the first successful match. Returns None if no matches found.
+    """
     # 1. Try config cache first
     cached_name = get_cached_package_name(book['id'])
     if cached_name:

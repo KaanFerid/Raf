@@ -104,6 +104,8 @@
     "toast_uninstall_success": "'{title}' sistemden kaldırıldı.",
     "toast_download_error": "İndirme başarısız: {error}",
     "toast_install_error": "'{title}' için yükleme başarısız oldu.",
+    "toast_auth_failed": "'{title}' için yetkilendirme iptal edildi.",
+    "auth_failed_status": "{title} için yetkilendirme iptal edildi.",
     "toast_update_available": "v{version} güncellemesi hazır! Yüklemek için Ayarlar'ı açın.",
     "install_local_files": "Yerel Dosya Yükle...",
     "edit_launcher": "Kısayolu Düzenle",
@@ -113,7 +115,11 @@
     "desktop_editor_save_failed": "Masaüstü kısayolu kaydedilemedi: {error}",
     "check_updates": "Güncellemeleri Kontrol Et",
     "no_update_title": "Güncel",
-    "no_update_message": "Zaten en son sürümü kullanıyorsunuz."
+    "no_update_message": "Zaten en son sürümü kullanıyorsunuz.",
+    "logs_menu": "Kayıtlar",
+    "installation_logs_title": "Kurulum Kayıtları",
+    "clear_logs_btn": "Temizle",
+    "close_btn": "Kapat"
   },
   "installer": {
     "sim_installing": "Simülasyon: '{title}' kuruluyor...",
@@ -125,6 +131,7 @@
     "installing_system_package": "Sistem paketi kuruluyor (Yetki istenebilir)...",
     "install_completed": "Kurulum tamamlandı!",
     "install_failed": "Kurulum başarısız oldu (Hata Kodu: {code})",
+    "auth_failed": "Yetkilendirme iptal edildi veya başarısız oldu.",
     "uninstalling_system_package": "Sistem paketi kaldırılıyor (Yetki istenebilir)...",
     "package_name_not_found": "Hata: Paket adı bulunamadı.",
     "uninstall_completed": "Paket başarıyla kaldırıldı!",

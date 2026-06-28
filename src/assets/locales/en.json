@@ -104,6 +104,8 @@
     "toast_uninstall_success": "'{title}' removed from system.",
     "toast_download_error": "Download failed: {error}",
     "toast_install_error": "Installation failed for '{title}'.",
+    "toast_auth_failed": "Authorization cancelled for '{title}'.",
+    "auth_failed_status": "Authorization cancelled for {title}.",
     "toast_update_available": "Update v{version} is available! Open Preferences to install.",
     "install_local_files": "Install Local File(s)...",
     "edit_launcher": "Edit Launcher",
@@ -113,7 +115,11 @@
     "desktop_editor_save_failed": "Failed to save desktop file: {error}",
     "check_updates": "Check for Updates",
     "no_update_title": "Up to Date",
-    "no_update_message": "You are already using the latest version."
+    "no_update_message": "You are already using the latest version.",
+    "logs_menu": "Logs",
+    "installation_logs_title": "Installation Logs",
+    "clear_logs_btn": "Clear",
+    "close_btn": "Close"
   },
   "installer": {
     "sim_installing": "Simulation: Installing '{title}'...",
@@ -125,6 +131,7 @@
     "installing_system_package": "Installing system package (authorization may be requested)...",
     "install_completed": "Installation completed!",
     "install_failed": "Installation failed (Error Code: {code})",
+    "auth_failed": "Authorization cancelled or failed.",
     "uninstalling_system_package": "Uninstalling system package (authorization may be requested)...",
     "package_name_not_found": "Error: Package name not found.",
     "uninstall_completed": "Package successfully uninstalled!",

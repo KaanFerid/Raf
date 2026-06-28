@@ -145,6 +145,18 @@ class DownloadWorker(QThread):
                         break
                     elif total_size == 0:
                         break
+                    else:
+                        print(tr("log.conn_error", id=self.book_id, retry=retry_count, max=max_retries, error="Connection truncated"))
+                        retry_count += 1
+                        if retry_count >= max_retries:
+                            if os.path.exists(temp_dest_path):
+                                try: os.remove(temp_dest_path)
+                                except Exception: pass
+                            self.error.emit(self.book_id, tr("downloader.connection_error", error="Connection truncated"))
+                            return
+                        self.msleep(3000)
+                        file_mode = "ab"
+                        continue
 
                 except (requests.exceptions.RequestException, IOError) as e:
                     retry_count += 1
