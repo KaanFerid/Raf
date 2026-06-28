@@ -28,6 +28,7 @@ class ToastNotification(QWidget):
         self.duration = duration
         self.setObjectName(TOAST_OBJECT_NAMES.get(toast_type, "ToastInfo"))
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.setFixedWidth(320)
 
         layout = QHBoxLayout(self)
@@ -99,8 +100,8 @@ class ToastManager(QWidget):
         toast = ToastNotification(message, toast_type, duration, parent=self.parent())
         toast.raise_()
         self._toasts.append(toast)
-        self._reposition_all()
         toast.show_animated()
+        self._reposition_all()
 
     def _on_toast_dismissed(self, toast):
         """Called when a toast finishes its dismiss animation."""
@@ -130,8 +131,6 @@ class ToastManager(QWidget):
 
         # Stack toasts from bottom to top
         for toast in reversed(self._toasts):
-            if not toast.isVisible():
-                continue
             toast.adjustSize()
             x = parent_rect.right() - toast.width() - self.MARGIN
             y = bottom - toast.height()
