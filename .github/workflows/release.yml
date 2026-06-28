@@ -2,11 +2,6 @@ name: Publish Release
 
 on:
   workflow_dispatch:
-    inputs:
-      version_tag:
-        description: 'Version Tag (e.g., v1.5.6)'
-        required: true
-        type: string
 
 permissions:
   contents: write
@@ -29,7 +24,12 @@ jobs:
           
       - name: Build .deb package
         run: python3 scripts/build_deb.py
-        
+
+      - name: Extract Version
+        run: |
+          VERSION=$(python3 -c "import sys, os; sys.path.insert(0, os.getcwd()); from src.core.version import __version__; print(__version__)")
+          echo "VERSION=v$VERSION" >> $GITHUB_ENV
+          
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,6 +38,6 @@ jobs:
           DEB_FILE=$(ls raf_*.deb | head -n 1)
           
           # Use GitHub CLI to create a release
-          gh release create "${{ inputs.version_tag }}" "$DEB_FILE" \
-            --title "Release ${{ inputs.version_tag }}" \
+          gh release create "${{ env.VERSION }}" "$DEB_FILE" \
+            --title "Release ${{ env.VERSION }}" \
             --generate-notes
