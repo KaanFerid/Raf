@@ -2,6 +2,11 @@ name: Publish Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Optional: Manually override version (e.g., 1.6.0). Leave empty to use current version.'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -15,6 +20,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+      - name: Apply Manual Version (If Provided)
+        if: "${{ github.event.inputs.version_tag != '' }}"
+        run: |
+          sed -i 's/__version__ = ".*"/__version__ = "${{ github.event.inputs.version_tag }}"/' src/core/version.py
         
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -56,3 +71,9 @@ jobs:
           gh release create "${{ env.VERSION }}" "$DEB_FILE" \
             --title "Release ${{ env.VERSION }}" \
             --notes-file release_notes.txt
+
+      - name: Bump Version for Next Cycle
+        run: |
+          python3 scripts/bump_version.py
+          git commit -m "chore: bump version for next development cycle [skip ci]"
+          git push origin main
