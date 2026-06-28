@@ -110,6 +110,24 @@ class Database:
             with open(self.sideload_path, 'w', encoding='utf-8') as f:
                 json.dump(sideloaded, f, indent=2)
 
+    def remove_sideloaded_book(self, book_id):
+        """Removes a sideloaded book from the local sideloaded.json file and current session."""
+        self.books = [b for b in self.books if b['id'] != book_id]
+        
+        sideloaded = []
+        if hasattr(self, 'sideload_path') and os.path.exists(self.sideload_path):
+            try:
+                with open(self.sideload_path, 'r', encoding='utf-8') as f:
+                    sideloaded = json.load(f)
+            except Exception:
+                pass
+                
+        new_sideloaded = [b for b in sideloaded if b['id'] != book_id]
+        
+        if hasattr(self, 'sideload_path'):
+            with open(self.sideload_path, 'w', encoding='utf-8') as f:
+                json.dump(new_sideloaded, f, indent=2)
+
     def get_all_books(self):
         return self.books
 

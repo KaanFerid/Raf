@@ -1336,6 +1336,12 @@ class MainWindow(QMainWindow):
         if success and installed:
             self.statusBar.showMessage(tr("ui.install_success_status", title=book['title']), 5000)
             self.toast_manager.show_toast(tr("ui.toast_install_success", title=book['title']), "success")
+            
+            # Save to database if it was sideloaded
+            if book and book.get('is_local'):
+                from src.core.database import Database
+                self.db.add_sideloaded_book(book)
+
             if book.get('file_type') == 'deb':
                 try:
                     if os.environ.get("RAF_DEV") == "1":
@@ -1409,6 +1415,11 @@ class MainWindow(QMainWindow):
         if success and not installed:
             self.statusBar.showMessage(tr("ui.uninstall_success_status", title=book['title']), 5000)
             self.toast_manager.show_toast(tr("ui.toast_uninstall_success", title=book['title']), "success")
+            
+            if book and book.get('is_local'):
+                from src.core.database import Database
+                self.db.remove_sideloaded_book(book['id'])
+                
             self.refresh_grid()
         else:
             self.statusBar.showMessage(tr("ui.uninstall_error_status", title=book['title']), 5000)
