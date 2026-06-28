@@ -685,6 +685,7 @@ class MainWindow(QMainWindow):
         self.select_mode_btn.setText(tr("ui.select_mode"))
         self.batch_install_btn.setText(tr("ui.install_selected"))
         self.batch_uninstall_btn.setText(tr("ui.uninstall_selected"))
+        self.install_local_btn.setText(tr("ui.install_local_files"))
         
         self.offline_badge.setText(tr("ui.offline_mode"))
         self.statusBar.showMessage(tr("ui.ready"))
