@@ -18,12 +18,21 @@ class Database:
         self.database_dir = os.path.expanduser("~/.local/share/raf/database")
         os.makedirs(self.database_dir, exist_ok=True)
         
-        # Copy default databases to user directory if they don't exist yet
+        # Copy default databases to user directory if they don't exist yet, or if the packaged system database is newer
         import shutil
         for file_name in ["fernus_drive.json", "publishers.json"]:
             user_file = os.path.join(self.database_dir, file_name)
             system_file = os.path.join(system_db_dir, file_name)
+            
+            should_copy = False
             if not os.path.exists(user_file) and os.path.exists(system_file):
+                should_copy = True
+            elif os.path.exists(user_file) and os.path.exists(system_file):
+                # If system file is newer than the user's local synced copy, overwrite it
+                if os.path.getmtime(system_file) > os.path.getmtime(user_file):
+                    should_copy = True
+                    
+            if should_copy:
                 try:
                     shutil.copy2(system_file, user_file)
                 except Exception as e:
@@ -40,7 +49,11 @@ class Database:
         if os.path.exists(fernus_path):
             try:
                 with open(fernus_path, 'r', encoding='utf-8') as f:
-                    self.books.extend(json.load(f))
+                    data = json.load(f)
+                    if isinstance(data, dict) and "books" in data:
+                        self.books.extend(data["books"])
+                    elif isinstance(data, list):
+                        self.books.extend(data)
             except Exception as e:
                 print(tr("log.error_fernus", error=e))
                 
@@ -49,7 +62,11 @@ class Database:
         if os.path.exists(pubs_path):
             try:
                 with open(pubs_path, 'r', encoding='utf-8') as f:
-                    self.books.extend(json.load(f))
+                    data = json.load(f)
+                    if isinstance(data, dict) and "books" in data:
+                        self.books.extend(data["books"])
+                    elif isinstance(data, list):
+                        self.books.extend(data)
             except Exception as e:
                 print(tr("log.error_publishers", error=e))
 

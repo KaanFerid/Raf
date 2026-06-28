@@ -45,10 +45,14 @@ class DatabaseSyncWorker(QThread):
                     response.raise_for_status()
                     data = response.json()
                     
-                    if not isinstance(data, list):
+                    if isinstance(data, dict) and "books" in data:
+                        book_list = data["books"]
+                    elif isinstance(data, list):
+                        book_list = data
+                    else:
                         continue # Skip invalid files instead of failing entire sync
 
-                    for entry in data:
+                    for entry in book_list:
                         if not isinstance(entry, dict):
                             continue
                         missing = self.REQUIRED_BOOK_KEYS - entry.keys()
@@ -60,7 +64,7 @@ class DatabaseSyncWorker(QThread):
                     with open(local_file, 'w', encoding='utf-8') as f:
                         json.dump(data, f, ensure_ascii=False, indent=2)
                         
-                    total_books += len(data)
+                    total_books += len(book_list)
                 except Exception as e:
                     print(tr("log.sync_failed", file=filename, url=url, error=e))
                     # Don't fail the whole sync if one file is missing (e.g. publishers.json doesn't exist yet on some remotes)

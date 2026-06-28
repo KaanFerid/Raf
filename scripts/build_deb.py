@@ -127,10 +127,11 @@ License: GPL-3.0+
         tar.addfile(tarinfo, io.BytesIO(copyright_content))
         md5_list.append(f"{get_md5(copyright_content)}  usr/share/doc/raf/copyright\n")
 
-        # Recursively add src directory contents
-        for root, dirs, files in os.walk("src"):
-            if "__pycache__" in root:
-                continue
+        # Recursively add src and database directory contents
+        for base_dir in ["src", "database"]:
+            for root, dirs, files in os.walk(base_dir):
+                if "__pycache__" in root:
+                    continue
             
             # Ensure the directory itself is added to the tar archive
             tarpath_dir = os.path.normpath(os.path.join("usr/share/raf", root))

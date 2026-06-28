@@ -340,6 +340,9 @@ class MainWindow(QMainWindow):
         
         self.init_ui()
         self.update_theme()
+        
+        # Enable drag and drop for sideloading apps
+        self.setAcceptDrops(True)
 
         # Toast notification manager (must be after init_ui so parent window exists)
         self.toast_manager = ToastManager(self)
@@ -922,6 +925,42 @@ class MainWindow(QMainWindow):
                 # Bypass the queue and start installation immediately
                 # Create a temporary mock book for the installer
                 import os
+                filename = os.path.basename(path)
+                mock_book = {
+                    "id": f"local_{filename}",
+                    "title": os.path.splitext(filename)[0],
+                    "publisher": tr("cli.local_publisher"),
+                    "file_name": filename,
+                    "file_type": os.path.splitext(filename)[1].lstrip('.'),
+                    "is_local": True,
+                    "absolute_path": path
+                }
+                self.start_installation(mock_book, path)
+
+    def dragEnterEvent(self, event):
+        """Accept file drops if they contain URLs."""
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        """Handle dropped files for sideloading."""
+        from src.core.translation import tr
+        import os
+        
+        valid_extensions = ('.deb', '.zip', '.appimage', '.fernus')
+        dropped_files = []
+        
+        for url in event.mimeData().urls():
+            if url.isLocalFile():
+                path = url.toLocalFile()
+                if path.lower().endswith(valid_extensions):
+                    dropped_files.append(path)
+                elif os.path.isdir(path):
+                    # Also accept directories like install-local does
+                    dropped_files.append(path)
+
+        if dropped_files:
+            for path in dropped_files:
                 filename = os.path.basename(path)
                 mock_book = {
                     "id": f"local_{filename}",
