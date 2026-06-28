@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
         
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,10 +27,23 @@ jobs:
       - name: Build .deb package
         run: python3 scripts/build_deb.py
 
-      - name: Extract Version
+      - name: Extract Version & Generate Notes
         run: |
           VERSION=$(python3 -c "import sys, os; sys.path.insert(0, os.getcwd()); from src.core.version import __version__; print(__version__)")
           echo "VERSION=v$VERSION" >> $GITHUB_ENV
+          
+          # Find the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          echo "Release notes for v$VERSION" > release_notes.txt
+          echo "" >> release_notes.txt
+          echo "### Changelog" >> release_notes.txt
+          
+          if [ -z "$PREV_TAG" ]; then
+              git log --pretty=format:"* %s (%h)" >> release_notes.txt
+          else
+              git log ${PREV_TAG}..HEAD --pretty=format:"* %s (%h)" >> release_notes.txt
+          fi
           
       - name: Create GitHub Release
         env:
@@ -37,7 +52,7 @@ jobs:
           # The script produces a file like raf_1.5.6_all.deb
           DEB_FILE=$(ls raf_*.deb | head -n 1)
           
-          # Use GitHub CLI to create a release
+          # Use GitHub CLI to create a release with our custom notes
           gh release create "${{ env.VERSION }}" "$DEB_FILE" \
             --title "Release ${{ env.VERSION }}" \
-            --generate-notes
+            --notes-file release_notes.txt
