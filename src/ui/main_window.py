@@ -1295,13 +1295,14 @@ class MainWindow(QMainWindow):
         if book_id in self.active_installations:
             return
 
-        card = self.card_widgets[book_id]
-        card.status_label.setText(tr("ui.installing_btn"))
-        card.status_label.setObjectName("StatusDownloadingLabel")
-        card.status_label.style().unpolish(card.status_label)
-        card.status_label.style().polish(card.status_label)
-        card.primary_btn.setEnabled(False)
-        card.primary_btn.setText(tr("ui.installing_btn"))
+        card = self.card_widgets.get(book_id)
+        if card:
+            card.status_label.setText(tr("ui.installing_btn"))
+            card.status_label.setObjectName("StatusDownloadingLabel")
+            card.status_label.style().unpolish(card.status_label)
+            card.status_label.style().polish(card.status_label)
+            card.primary_btn.setEnabled(False)
+            card.primary_btn.setText(tr("ui.installing_btn"))
         
         worker = InstallerWorker(book, local_file_path, action="install")
         worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
@@ -1317,15 +1318,20 @@ class MainWindow(QMainWindow):
 
     def on_installation_finished(self, book_id, success):
         worker = self.active_installations.pop(book_id, None)
+        book = worker.book if worker else None
         if worker:
             worker.deleteLater()
 
-        book = self.card_widgets[book_id].book
-        card = self.card_widgets[book_id]
-        card.primary_btn.setEnabled(True)
-        
-        installed = is_book_installed(book)
-        card.update_status(installed, is_offline=self.is_offline)
+        card = self.card_widgets.get(book_id)
+        if not book and card:
+            book = card.book
+
+        if card:
+            card.primary_btn.setEnabled(True)
+            installed = is_book_installed(book)
+            card.update_status(installed, is_offline=self.is_offline)
+        else:
+            installed = is_book_installed(book) if book else success
         
         if success and installed:
             self.statusBar.showMessage(tr("ui.install_success_status", title=book['title']), 5000)
@@ -1367,10 +1373,11 @@ class MainWindow(QMainWindow):
         if reply == QMessageBox.No:
             return
 
-        card = self.card_widgets[book_id]
-        card.primary_btn.setEnabled(False)
-        card.secondary_btn.setEnabled(False)
-        card.primary_btn.setText(tr("ui.uninstalling_btn"))
+        card = self.card_widgets.get(book_id)
+        if card:
+            card.primary_btn.setEnabled(False)
+            card.secondary_btn.setEnabled(False)
+            card.primary_btn.setText(tr("ui.uninstalling_btn"))
         
         worker = InstallerWorker(book, None, action="uninstall")
         worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
@@ -1383,16 +1390,21 @@ class MainWindow(QMainWindow):
 
     def on_uninstallation_finished(self, book_id, success):
         worker = self.active_installations.pop(book_id, None)
+        book = worker.book if worker else None
         if worker:
             worker.deleteLater()
 
-        book = self.card_widgets[book_id].book
-        card = self.card_widgets[book_id]
-        card.primary_btn.setEnabled(True)
-        card.secondary_btn.setEnabled(True)
-        
-        installed = is_book_installed(book)
-        card.update_status(installed, is_offline=self.is_offline)
+        card = self.card_widgets.get(book_id)
+        if not book and card:
+            book = card.book
+
+        if card:
+            card.primary_btn.setEnabled(True)
+            card.secondary_btn.setEnabled(True)
+            installed = is_book_installed(book)
+            card.update_status(installed, is_offline=self.is_offline)
+        else:
+            installed = is_book_installed(book) if book else not success
         
         if success and not installed:
             self.statusBar.showMessage(tr("ui.uninstall_success_status", title=book['title']), 5000)
