@@ -75,5 +75,9 @@ jobs:
       - name: Bump Version for Next Cycle
         run: |
           python3 scripts/bump_version.py
-          git commit -m "chore: bump version for next development cycle [skip ci]"
-          git push origin main
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: bump version for next development cycle [skip ci]"
+            git push origin main
+          else
+            echo "No changes to commit. Version is already up to date."
+          fi
