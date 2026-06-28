@@ -8,11 +8,26 @@ class Database:
         # We don't take remote_url in init anymore, sync is handled by sync worker
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
-        # Check if installed system-wide or running from dev directory
+        # Determine where the initial default databases are located
         if os.path.exists('/usr/share/raf/database'):
-            self.database_dir = '/usr/share/raf/database'
+            system_db_dir = '/usr/share/raf/database'
         else:
-            self.database_dir = os.path.join(base_dir, 'database')
+            system_db_dir = os.path.join(base_dir, 'database')
+            
+        # Always use a user-writable directory for dynamic database syncs
+        self.database_dir = os.path.expanduser("~/.local/share/raf/database")
+        os.makedirs(self.database_dir, exist_ok=True)
+        
+        # Copy default databases to user directory if they don't exist yet
+        import shutil
+        for file_name in ["fernus_drive.json", "publishers.json"]:
+            user_file = os.path.join(self.database_dir, file_name)
+            system_file = os.path.join(system_db_dir, file_name)
+            if not os.path.exists(user_file) and os.path.exists(system_file):
+                try:
+                    shutil.copy2(system_file, user_file)
+                except Exception as e:
+                    print(f"Failed to copy {file_name}: {e}")
             
         self.books = []
         self.load_books()

@@ -217,6 +217,8 @@
     "sync_failed": "Warning: Failed to sync {file} from {url}: {error}",
     "error_loading_translation": "Error loading translation file: {error}",
     "error_reading_update": "Error reading update mock: {error}",
-    "error_installing_update": "Error installing update deb: {error}"
+    "error_installing_update": "Error installing update deb: {error}",
+    "loading_db": "Loading book database...",
+    "db_loaded": "Database loaded. Total {count} books available."
   }
 }

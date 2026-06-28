@@ -217,6 +217,8 @@
     "sync_failed": "Uyarı: {file} {url} adresinden senkronize edilemedi: {error}",
     "error_loading_translation": "Çeviri dosyası yükleme hatası: {error}",
     "error_reading_update": "Güncelleme mock okuma hatası: {error}",
-    "error_installing_update": "Güncelleme deb yükleme hatası: {error}"
+    "error_installing_update": "Güncelleme deb yükleme hatası: {error}",
+    "loading_db": "Kitap veritabanı yükleniyor...",
+    "db_loaded": "Veritabanı yüklendi. Toplam {count} kitap mevcut."
   }
 }

@@ -323,9 +323,9 @@ class MainWindow(QMainWindow):
         self.theme_timer.timeout.connect(self.check_system_theme_update)
         
         # Core components
-        print("Loading book database...")
+        print(tr("log.loading_db"))
         self.db = Database()
-        print(f"Database loaded. Total {len(self.db.get_all_books())} books available.")
+        print(tr("log.db_loaded", count=len(self.db.get_all_books())))
         
         # State tracking
         self.active_downloads = {}      # book_id -> DownloadWorker
