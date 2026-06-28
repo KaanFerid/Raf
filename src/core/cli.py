@@ -32,6 +32,7 @@ def handle_cli():
         print(tr("cli.cmd_list_installed"))
         print(tr("cli.cmd_search"))
         print(tr("cli.cmd_install"))
+        print(tr("cli.cmd_install_local"))
         print(tr("cli.cmd_uninstall"))
         print(tr("cli.cmd_clean"))
         sys.exit(0)
@@ -162,7 +163,45 @@ def handle_cli():
         else:
             print("\n" + tr("cli.install_completed_failed", title=book['title']))
             sys.exit(1)
+
+    elif cmd == "install-local":
+        if len(args) < 2:
+            print(tr("cli.install_local_missing_path"))
+            sys.exit(1)
             
+        target_path = os.path.abspath(" ".join(args[1:]))
+        from src.core.sideload import process_local_path
+        
+        valid_books, unsupported = process_local_path(target_path)
+        
+        if unsupported:
+            print(tr("cli.unsupported_files_found"))
+            for uf in unsupported:
+                print(f" - {uf}")
+                
+        if not valid_books:
+            print(tr("cli.no_valid_files_found"))
+            sys.exit(1)
+            
+        # Add all to db
+        for b in valid_books:
+            db.add_sideloaded_book(b)
+            
+        # Install sequentially
+        for book in valid_books:
+            print(f"\n{tr('cli.installing_book', title=book['title'])}")
+            install_loop = QEventLoop()
+            
+            inst_worker = InstallerWorker(book, book['absolute_path'], action="install")
+            inst_worker.status_changed.connect(lambda bid, msg: print(tr("cli.status_prefix", status=msg)))
+            
+            def on_inst_finished(bid, success):
+                install_loop.quit()
+                
+            inst_worker.finished.connect(on_inst_finished)
+            inst_worker.start()
+            install_loop.exec() if hasattr(install_loop, 'exec') else install_loop.exec_()
+
     elif cmd == "uninstall":
         if len(args) < 2:
             print(tr("cli.uninstall_missing_id"))

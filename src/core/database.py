@@ -37,8 +37,45 @@ class Database:
             except Exception as e:
                 print(f"Error loading publishers.json: {e}")
 
+        # 3. Load user sideloaded apps
+        from src.core.config import CONFIG_PATH
+        self.sideload_path = os.path.join(os.path.dirname(CONFIG_PATH), 'sideloaded.json')
+        if os.path.exists(self.sideload_path):
+            try:
+                with open(self.sideload_path, 'r', encoding='utf-8') as f:
+                    sideloaded = json.load(f)
+                    self.books.extend(sideloaded)
+            except Exception as e:
+                print(f"Error loading sideloaded.json: {e}")
+
         if not self.books:
             print("No books could be loaded from the database.")
+
+    def add_sideloaded_book(self, book):
+        """Appends a new sideloaded book to the local sideloaded.json file and current session."""
+        self.books.append(book)
+        
+        # Load existing
+        sideloaded = []
+        if hasattr(self, 'sideload_path') and os.path.exists(self.sideload_path):
+            try:
+                with open(self.sideload_path, 'r', encoding='utf-8') as f:
+                    sideloaded = json.load(f)
+            except Exception:
+                pass
+                
+        # Update or append
+        existing = next((b for b in sideloaded if b['id'] == book['id']), None)
+        if existing:
+            existing.update(book)
+        else:
+            sideloaded.append(book)
+            
+        # Save
+        if hasattr(self, 'sideload_path'):
+            os.makedirs(os.path.dirname(self.sideload_path), exist_ok=True)
+            with open(self.sideload_path, 'w', encoding='utf-8') as f:
+                json.dump(sideloaded, f, indent=2)
 
     def get_all_books(self):
         return self.books

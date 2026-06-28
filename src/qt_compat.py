@@ -8,7 +8,7 @@ try:
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QComboBox, QScrollArea,
         QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
-        QDialog, QButtonGroup, QRadioButton, QGroupBox
+        QDialog, QButtonGroup, QRadioButton, QGroupBox, QFileDialog, QPlainTextEdit
     )
     from PySide6.QtGui import QPainter, QColor, QFont, QIcon, QPixmap, QPen
     QT_API = "PySide6"
@@ -21,7 +21,7 @@ except ImportError:
             QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
             QLabel, QLineEdit, QComboBox, QScrollArea,
             QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
-            QDialog, QButtonGroup, QRadioButton, QGroupBox
+            QDialog, QButtonGroup, QRadioButton, QGroupBox, QFileDialog, QPlainTextEdit
         )
         from PyQt6.QtGui import QPainter, QColor, QFont, QIcon, QPixmap, QPen
         QT_API = "PyQt6"
@@ -72,7 +72,7 @@ except ImportError:
                 QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                 QLabel, QLineEdit, QComboBox, QScrollArea,
                 QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame,
-                QDialog, QButtonGroup, QRadioButton, QGroupBox
+                QDialog, QButtonGroup, QRadioButton, QGroupBox, QFileDialog, QPlainTextEdit
             )
             from PyQt5.QtGui import QPainter, QColor, QFont, QIcon, QPixmap, QPen
             QT_API = "PyQt5"

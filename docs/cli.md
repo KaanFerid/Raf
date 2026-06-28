@@ -151,6 +151,41 @@ raf install akademikbasariyayinlarikutuphane
 
 ---
 
+### `install-local <path>` — Install local file or directory
+
+**Synopsis:**
+```bash
+raf install-local <file_or_directory_path>
+```
+
+**Description:**
+Installs local application files (.deb, .appimage, .zip, .fernus) without downloading. If a directory is provided, it attempts to install all supported files in that directory. Unrecognized files are skipped with a warning.
+
+**Arguments:**
+| Argument | Required | Description |
+|---|---|---|
+| `path` | Yes | Absolute or relative path to a file or directory |
+
+**Example:**
+```bash
+raf install-local ~/Downloads/myapp.deb
+raf install-local /media/usb/apps/
+```
+
+**Output:**
+```
+Warning: The following unsupported files were skipped:
+- notes.txt
+Installing: myapp
+ Status: Extracting files...
+ Status: Installing system package (authorization may be requested)...
+Success: 'myapp' successfully installed.
+```
+
+**Exit code:** `0` on success, `1` on error.
+
+---
+
 ### `uninstall <book_id>` — Uninstall a book
 
 **Synopsis:**

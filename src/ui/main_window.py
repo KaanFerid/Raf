@@ -6,7 +6,7 @@ from src.qt_compat import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QMessageBox, QStatusBar, QSizePolicy, QPushButton, 
                             QProgressBar, QFrame, Qt, QTimer, QDialog, 
                             QButtonGroup, QRadioButton, QGroupBox, QEvent, QApplication,
-                            QIcon, QPixmap, QPen, QColor, QPainter)
+                            QIcon, QPixmap, QPen, QColor, QPainter, QFileDialog)
 from src.ui.styles import LIGHT_STYLE, DARK_STYLE
 from src.ui.components import BookCard
 from src.ui.toast import ToastManager
@@ -546,6 +546,12 @@ class MainWindow(QMainWindow):
         switcher_layout.addWidget(self.tab_market_btn)
         switcher_layout.addWidget(self.tab_library_btn)
         header_layout.addWidget(switcher_container)
+
+        # Install Local File Button
+        self.install_local_btn = QPushButton(tr("ui.install_local_files"))
+        self.install_local_btn.setProperty("class", "AdwSecondaryBtn")
+        self.install_local_btn.clicked.connect(self.on_install_local_clicked)
+        header_layout.addWidget(self.install_local_btn)
 
         # Settings/Preferences Button
         self.settings_btn = QPushButton()

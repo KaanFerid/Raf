@@ -104,7 +104,13 @@
     "toast_uninstall_success": "'{title}' removed from system.",
     "toast_download_error": "Download failed: {error}",
     "toast_install_error": "Installation failed for '{title}'.",
-    "toast_update_available": "Update v{version} is available! Open Preferences to install."
+    "toast_update_available": "Update v{version} is available! Open Preferences to install.",
+    "install_local_files": "Install Local File(s)...",
+    "edit_launcher": "Edit Launcher",
+    "desktop_editor_title": "Edit Launcher: {title}",
+    "desktop_editor_info": "Modify the .desktop configuration below. Changes are saved locally and do not require administrator privileges.",
+    "desktop_editor_saved": "Desktop shortcut saved successfully! It may take a moment for your system menu to reflect the changes.",
+    "desktop_editor_save_failed": "Failed to save desktop file: {error}"
   },
   "installer": {
     "sim_installing": "Simulation: Installing '{title}'...",
@@ -154,6 +160,7 @@
     "cmd_list_installed": "  list-installed     Lists installed books on the system.",
     "cmd_search": "  search <term>     Searches books.",
     "cmd_install": "  install <id>       Downloads and installs the book with the specified ID.",
+    "cmd_install_local": "  install-local <p>  Installs a local file or folder of apps (.deb, .appimage, etc).",
     "cmd_uninstall": "  uninstall <id>     Uninstalls the book with the specified ID.",
     "cmd_clean": "  clean              Cleans the download cache.",
     "total_books": "Total {count} books available:",
@@ -166,6 +173,10 @@
     "clean_success": "Success: Download cache cleared. {count} files deleted.",
     "clean_empty": "Cache folder is empty or does not exist.",
     "install_missing_id": "Error: Book ID to install not specified. Example: raf install akademikbasariyayinlarikutuphane",
+    "install_local_missing_path": "Error: Path not specified. Example: raf install-local /path/to/folder",
+    "unsupported_files_found": "Warning: The following unsupported files were skipped:",
+    "no_valid_files_found": "Error: No supported files were found to install.",
+    "local_publisher": "Local File",
     "book_not_found": "Error: Book with ID '{id}' not found. Run 'raf list' to list all books.",
     "already_installed": "Info: '{title}' is already installed on the system.",
     "installing_book": "Installing: {title}",

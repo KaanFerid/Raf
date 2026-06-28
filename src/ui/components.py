@@ -139,6 +139,14 @@ class BookCard(QFrame):
         self.secondary_btn.setMinimumWidth(90)
         action_layout.addWidget(self.secondary_btn)
 
+        # Tertiary Action Button (Edit Launcher)
+        self.edit_launcher_btn = QPushButton(tr("ui.edit_launcher"))
+        self.edit_launcher_btn.setProperty("class", "AdwSecondaryBtn")
+        self.edit_launcher_btn.clicked.connect(self.on_edit_launcher_clicked)
+        self.edit_launcher_btn.setVisible(False)
+        self.edit_launcher_btn.setMinimumWidth(100)
+        action_layout.addWidget(self.edit_launcher_btn)
+
         # Selection checkbox (shown in batch selection mode)
         self.select_checkbox = QPushButton("☐")
         self.select_checkbox.setObjectName("SelectCheckbox")
@@ -178,6 +186,7 @@ class BookCard(QFrame):
             self.primary_btn.setProperty("class", "AdwSecondaryBtn")
             self.primary_btn.setEnabled(True)
             self.secondary_btn.setVisible(False)
+            self.edit_launcher_btn.setVisible(False)
             self.progress_bar.setVisible(False)
             self.status_info_label.setVisible(False)
             self.status_label.style().unpolish(self.status_label)
@@ -208,6 +217,7 @@ class BookCard(QFrame):
             self.primary_btn.setEnabled(True)
             self.primary_btn.setToolTip("")
             self.secondary_btn.setVisible(False)
+            self.edit_launcher_btn.setVisible(False)
             
         elif is_installed:
             self.status_label.setText(tr("ui.installed_btn"))
@@ -225,6 +235,9 @@ class BookCard(QFrame):
             self.secondary_btn.setVisible(True)
             self.secondary_btn.setProperty("class", "AdwDangerBtn")
             
+            # Show tertiary edit launcher button if it's a local app or we just want to allow editing for all installed apps
+            self.edit_launcher_btn.setVisible(True)
+            
         else:
             self.status_label.setText(tr("ui.not_installed_btn"))
             self.status_label.setObjectName("StatusNotInstalledLabel")
@@ -240,8 +253,9 @@ class BookCard(QFrame):
             else:
                 self.primary_btn.setEnabled(True)
                 self.primary_btn.setToolTip("")
-            
+                
             self.secondary_btn.setVisible(False)
+            self.edit_launcher_btn.setVisible(False)
 
         # Refresh style repainting dynamically
         self.status_label.style().unpolish(self.status_label)
@@ -258,16 +272,18 @@ class BookCard(QFrame):
         self.update_status(self.is_installed, self.downloading, self.progress_bar.value(), self.status_info_label.text(), is_offline=is_offline)
 
     def on_primary_btn_clicked(self):
-        if self.is_queued:
-            # Remove from queue
-            self.cancel_requested.emit(self.book)
-        elif self.downloading:
-            self.cancel_requested.emit(self.book)
-        elif self.is_installed:
+        if self.is_installed:
             self.launch_requested.emit(self.book)
+        elif self.downloading or self.is_queued:
+            self.cancel_requested.emit(self.book)
         else:
             self.install_requested.emit(self.book)
 
     def on_secondary_btn_clicked(self):
         if self.is_installed and not self.downloading:
             self.uninstall_requested.emit(self.book)
+
+    def on_edit_launcher_clicked(self):
+        from src.ui.desktop_editor import DesktopEditorDialog
+        dialog = DesktopEditorDialog(self.book, self.window())
+        dialog.exec_()

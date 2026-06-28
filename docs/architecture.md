@@ -408,3 +408,26 @@ AutoUpdateScheduler.start()
 | `mock_system/cache/` | Dev mode downloads |
 | `mock_system/installed.json` | Dev mode install state |
 | `mock_system/update_mock.json` | Dev mode update metadata |
+| `~/.config/raf/sideloaded.json` | Database for user-added local apps |
+| `~/.local/share/applications/raf-<id>.desktop` | User-edited desktop launchers for local apps |
+
+---
+
+## 6. Sideloading & Local Launcher Editor
+
+Raf supports the installation of local standalone application files (`.deb`, `.zip`, `.appimage`, `.fernus`) outside of the central remote database. 
+
+### Sideload Workflow
+
+1. **Discovery:** User selects local files or a directory via `MainWindow.on_install_local_clicked()` or the `install-local` CLI command.
+2. **Parsing:** `src/core/sideload.py` validates the files against `SUPPORTED_EXTENSIONS`. Unrecognized files are skipped.
+3. **Database Injection:** Valid local applications are given a unique ID (`local_<safe_filename>`) and added to the user's `~/.config/raf/sideloaded.json` database. The `Database` class automatically merges these sideloaded apps with the main `fernus_drive.json` list so they appear seamlessly in the Library tab.
+4. **Execution:** The file path is handed off to `InstallerWorker`, which processes it identically to a downloaded remote application.
+
+### Launcher Customization
+
+Since sideloaded applications lack centralized metadata (publisher, proper titles, icons), Raf provides a built-in Desktop Launcher Editor (`src/ui/desktop_editor.py`).
+
+- Accessible from the "Edit Launcher" button on installed local apps in the Library.
+- By saving to `~/.local/share/applications/`, the editor safely overrides global `/usr/share/applications/` launchers without requiring `sudo` privileges.
+- Uses `QPlainTextEdit` wrapped in a dialog to directly modify the `.desktop` INI specification.
