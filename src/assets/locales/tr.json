@@ -110,7 +110,10 @@
     "desktop_editor_title": "Kısayol Düzenle: {title}",
     "desktop_editor_info": "Aşağıdaki .desktop yapılandırmasını değiştirebilirsiniz. Değişiklikler yerel olarak kaydedilir ve yönetici izni gerektirmez.",
     "desktop_editor_saved": "Masaüstü kısayolu başarıyla kaydedildi! Sistem menünüze yansıması kısa bir süre alabilir.",
-    "desktop_editor_save_failed": "Masaüstü kısayolu kaydedilemedi: {error}"
+    "desktop_editor_save_failed": "Masaüstü kısayolu kaydedilemedi: {error}",
+    "check_updates": "Güncellemeleri Kontrol Et",
+    "no_update_title": "Güncel",
+    "no_update_message": "Zaten en son sürümü kullanıyorsunuz."
   },
   "installer": {
     "sim_installing": "Simülasyon: '{title}' kuruluyor...",

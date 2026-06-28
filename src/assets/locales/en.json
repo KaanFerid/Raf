@@ -110,7 +110,10 @@
     "desktop_editor_title": "Edit Launcher: {title}",
     "desktop_editor_info": "Modify the .desktop configuration below. Changes are saved locally and do not require administrator privileges.",
     "desktop_editor_saved": "Desktop shortcut saved successfully! It may take a moment for your system menu to reflect the changes.",
-    "desktop_editor_save_failed": "Failed to save desktop file: {error}"
+    "desktop_editor_save_failed": "Failed to save desktop file: {error}",
+    "check_updates": "Check for Updates",
+    "no_update_title": "Up to Date",
+    "no_update_message": "You are already using the latest version."
   },
   "installer": {
     "sim_installing": "Simulation: Installing '{title}'...",

@@ -950,7 +950,25 @@ class MainWindow(QMainWindow):
             
         is_dark = self.current_theme == "dark"
         set_linux_dark_titlebar(msg, is_dark)
-        msg.exec_()
+        
+        check_btn = msg.addButton(tr("ui.check_updates"), QMessageBox.ActionRole)
+        msg.addButton(QMessageBox.Ok)
+        
+        if hasattr(msg, 'exec'):
+            msg.exec()
+        else:
+            msg.exec_()
+            
+        if msg.clickedButton() == check_btn:
+            from src.core.updater import UpdateChecker
+            self.updater = UpdateChecker()
+            self.updater.update_available.connect(self.on_update_available)
+            
+            def on_no_update():
+                QMessageBox.information(self, tr("ui.no_update_title"), tr("ui.no_update_message"))
+                
+            self.updater.no_update.connect(on_no_update)
+            self.updater.start()
 
     def eventFilter(self, obj, event):
         """Intercepts focus and click events on search input to automatically open OSK."""
