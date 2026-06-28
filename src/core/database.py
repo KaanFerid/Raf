@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from src.core.translation import tr
 
 class Database:
     def __init__(self):
@@ -26,7 +27,7 @@ class Database:
                 with open(fernus_path, 'r', encoding='utf-8') as f:
                     self.books.extend(json.load(f))
             except Exception as e:
-                print(f"Error loading fernus_drive.json: {e}")
+                print(tr("log.error_fernus", error=e))
                 
         # 2. Load publishers.json
         pubs_path = os.path.join(self.database_dir, 'publishers.json')
@@ -35,7 +36,7 @@ class Database:
                 with open(pubs_path, 'r', encoding='utf-8') as f:
                     self.books.extend(json.load(f))
             except Exception as e:
-                print(f"Error loading publishers.json: {e}")
+                print(tr("log.error_publishers", error=e))
 
         # 3. Load user sideloaded apps
         from src.core.config import CONFIG_PATH
@@ -46,10 +47,10 @@ class Database:
                     sideloaded = json.load(f)
                     self.books.extend(sideloaded)
             except Exception as e:
-                print(f"Error loading sideloaded.json: {e}")
+                print(tr("log.error_sideloaded", error=e))
 
         if not self.books:
-            print("No books could be loaded from the database.")
+            print(tr("log.no_books_loaded"))
 
     def add_sideloaded_book(self, book):
         """Appends a new sideloaded book to the local sideloaded.json file and current session."""

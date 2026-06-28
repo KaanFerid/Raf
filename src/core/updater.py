@@ -38,7 +38,7 @@ class UpdateChecker(QThread):
                     with open(mock_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                 except Exception as e:
-                    print(f"Error reading update mock: {e}")
+                    print(tr("log.error_reading_update", error=e))
         else:
             try:
                 headers = {"Accept": "application/vnd.github.v3+json"}
@@ -106,7 +106,7 @@ class UpdateInstaller(QThread):
             else:
                 self.finished.emit(False)
         except Exception as e:
-            print(f"Error installing update deb: {e}")
+            print(tr("log.error_installing_update", error=e))
             self.finished.emit(False)
 
 

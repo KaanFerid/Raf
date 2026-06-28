@@ -194,5 +194,29 @@
     "uninstall_completed_success": "Success: '{title}' successfully uninstalled from the system.",
     "uninstall_completed_failed": "Error: '{title}' uninstallation failed.",
     "unknown_command": "Error: Unknown command '{cmd}'. Type 'raf --help' for help."
+  },
+  "log": {
+    "qt_api": "Qt API: {api}",
+    "error_icon": "Error setting window icon: {error}",
+    "creating_main_window": "Creating main window...",
+    "showing_main_window": "Showing main window...",
+    "app_ready": "Event loop started. Application ready.",
+    "error_saving_config": "Error saving config: {error}",
+    "error_fernus": "Error loading fernus_drive.json: {error}",
+    "error_publishers": "Error loading publishers.json: {error}",
+    "error_sideloaded": "Error loading sideloaded.json: {error}",
+    "no_books_loaded": "No books could be loaded from the database.",
+    "resume_download": "[{id}] Resuming download from byte: {byte}",
+    "range_ignored": "[{id}] Range request ignored (status {code}), starting from scratch.",
+    "conn_error": "[{id}] Connection error (retry {retry}/{max}): {error}",
+    "resolved_pkg": "[{id}] Resolved package name from deb file: {pkg}",
+    "error_reading_pkg": "[{id}] Error reading package name from deb file: {error}",
+    "error_query_installed": "Error querying installed packages: {error}",
+    "error_query_flatpak": "Error querying Flatpak packages: {error}",
+    "error_query_snap": "Error querying Snap packages: {error}",
+    "sync_failed": "Warning: Failed to sync {file} from {url}: {error}",
+    "error_loading_translation": "Error loading translation file: {error}",
+    "error_reading_update": "Error reading update mock: {error}",
+    "error_installing_update": "Error installing update deb: {error}"
   }
 }

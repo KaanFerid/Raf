@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from src.qt_compat import QThread, Signal
+from src.core.translation import tr
 
 
 class DatabaseSyncWorker(QThread):
@@ -61,7 +62,7 @@ class DatabaseSyncWorker(QThread):
                         
                     total_books += len(data)
                 except Exception as e:
-                    print(f"Warning: Failed to sync {filename} from {url}: {e}")
+                    print(tr("log.sync_failed", file=filename, url=url, error=e))
                     # Don't fail the whole sync if one file is missing (e.g. publishers.json doesn't exist yet on some remotes)
                     pass
 

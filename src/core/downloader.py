@@ -69,7 +69,7 @@ class DownloadWorker(QThread):
             downloaded = 0
             if os.path.exists(temp_dest_path):
                 downloaded = os.path.getsize(temp_dest_path)
-                print(f"[{self.book_id}] Resuming download from byte: {downloaded}")
+                print(tr("log.resume_download", id=self.book_id, byte=downloaded))
 
             max_retries = 5
             retry_count = 0
@@ -89,7 +89,7 @@ class DownloadWorker(QThread):
                     status_code = response.status_code
                     # If Range request is ignored and server returns 200, we must reset
                     if downloaded > 0 and status_code != 206:
-                        print(f"[{self.book_id}] Range request ignored (status {status_code}), starting from scratch.")
+                        print(tr("log.range_ignored", id=self.book_id, code=status_code))
                         downloaded = 0
                         file_mode = "wb"
 
@@ -148,7 +148,7 @@ class DownloadWorker(QThread):
 
                 except (requests.exceptions.RequestException, IOError) as e:
                     retry_count += 1
-                    print(f"[{self.book_id}] Connection error (retry {retry_count}/{max_retries}): {e}")
+                    print(tr("log.conn_error", id=self.book_id, retry=retry_count, max=max_retries, error=e))
                     if retry_count >= max_retries:
                         # Clean up temp file on permanent failure to prevent corrupted files
                         if os.path.exists(temp_dest_path):

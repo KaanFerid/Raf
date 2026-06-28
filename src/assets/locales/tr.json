@@ -194,5 +194,29 @@
     "uninstall_completed_success": "Başarılı: '{title}' başarıyla sistemden kaldırıldı.",
     "uninstall_completed_failed": "Hata: '{title}' kaldırma işlemi başarısız oldu.",
     "unknown_command": "Hata: Bilinmeyen komut '{cmd}'. Yardım için 'raf --help' yazın."
+  },
+  "log": {
+    "qt_api": "Qt API: {api}",
+    "error_icon": "Pencere ikonu ayarlama hatası: {error}",
+    "creating_main_window": "Ana pencere oluşturuluyor...",
+    "showing_main_window": "Ana pencere gösteriliyor...",
+    "app_ready": "Olay döngüsü başlatıldı. Uygulama hazır.",
+    "error_saving_config": "Yapılandırma kaydetme hatası: {error}",
+    "error_fernus": "fernus_drive.json yükleme hatası: {error}",
+    "error_publishers": "publishers.json yükleme hatası: {error}",
+    "error_sideloaded": "sideloaded.json yükleme hatası: {error}",
+    "no_books_loaded": "Veritabanından hiçbir kitap yüklenemedi.",
+    "resume_download": "[{id}] İndirmeye {byte}. bayttan devam ediliyor",
+    "range_ignored": "[{id}] Range isteği reddedildi (durum {code}), baştan başlanıyor.",
+    "conn_error": "[{id}] Bağlantı hatası (deneme {retry}/{max}): {error}",
+    "resolved_pkg": "[{id}] deb dosyasından paket adı çözümlendi: {pkg}",
+    "error_reading_pkg": "[{id}] deb dosyasından paket adı okuma hatası: {error}",
+    "error_query_installed": "Yüklü paketleri sorgulama hatası: {error}",
+    "error_query_flatpak": "Flatpak paketlerini sorgulama hatası: {error}",
+    "error_query_snap": "Snap paketlerini sorgulama hatası: {error}",
+    "sync_failed": "Uyarı: {file} {url} adresinden senkronize edilemedi: {error}",
+    "error_loading_translation": "Çeviri dosyası yükleme hatası: {error}",
+    "error_reading_update": "Güncelleme mock okuma hatası: {error}",
+    "error_installing_update": "Güncelleme deb yükleme hatası: {error}"
   }
 }

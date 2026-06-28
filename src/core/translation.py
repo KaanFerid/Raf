@@ -102,7 +102,7 @@ class TranslationManager:
                 with open(filepath, "r", encoding="utf-8") as f:
                     self._translations = json.load(f)
             except Exception as e:
-                print(f"Error loading translation file: {e}")
+                print(tr("log.error_loading_translation", error=e))
                 self._translations = {}
         else:
             self._translations = {}

@@ -123,9 +123,9 @@ class InstallerWorker(QThread):
                 package_name = res.stdout.strip()
                 if package_name:
                     set_cached_package_name(self.book_id, package_name)
-                    print(f"[{self.book_id}] Resolved package name from deb file: {package_name}")
+                    print(tr("log.resolved_pkg", id=self.book_id, pkg=package_name))
         except Exception as e:
-            print(f"[{self.book_id}] Error reading package name from deb file: {e}")
+            print(tr("log.error_reading_pkg", id=self.book_id, error=e))
 
         self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
         
@@ -511,7 +511,7 @@ def get_all_installed_packages():
                     pkg_name = parts[0].split(':')[0]
                     installed.add(pkg_name)
     except Exception as e:
-        print(f"Error querying installed packages: {e}")
+        print(tr("log.error_query_installed", error=e))
     return installed
 
 def get_all_installed_flatpaks():
@@ -530,7 +530,7 @@ def get_all_installed_flatpaks():
                 if app_id:
                     installed.add(app_id)
     except Exception as e:
-        print(f"Error querying Flatpak packages: {e}")
+        print(tr("log.error_query_flatpak", error=e))
     return installed
 
 def get_all_installed_snaps():
@@ -550,7 +550,7 @@ def get_all_installed_snaps():
                 if parts:
                     installed.add(parts[0])
     except Exception as e:
-        print(f"Error querying Snap packages: {e}")
+        print(tr("log.error_query_snap", error=e))
     return installed
 
 def turkish_to_ascii(text):

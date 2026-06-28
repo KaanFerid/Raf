@@ -25,7 +25,8 @@ def save_config(config):
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
     except Exception as e:
-        print(f"Error saving config: {e}")
+        from src.core.translation import tr
+        print(tr("log.error_saving_config", error=e))
 
 def get_cached_package_name(book_id):
     """Retrieves the exact package name mapped to a book ID from configuration."""

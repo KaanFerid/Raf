@@ -906,6 +906,34 @@ class MainWindow(QMainWindow):
         painter.end()
         return QIcon(pixmap)
 
+    def on_install_local_clicked(self):
+        from src.qt_compat import QFileDialog
+        from src.core.translation import tr
+        
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            tr("ui.select_local_files"),
+            "",
+            tr("ui.supported_files") + " (*.deb *.zip *.appimage *.fernus)"
+        )
+        
+        if file_paths:
+            for path in file_paths:
+                # Bypass the queue and start installation immediately
+                # Create a temporary mock book for the installer
+                import os
+                filename = os.path.basename(path)
+                mock_book = {
+                    "id": f"local_{filename}",
+                    "title": os.path.splitext(filename)[0],
+                    "publisher": tr("cli.local_publisher"),
+                    "file_name": filename,
+                    "file_type": os.path.splitext(filename)[1].lstrip('.'),
+                    "is_local": True,
+                    "absolute_path": path
+                }
+                self.start_installation(mock_book, path)
+
     def show_about_dialog(self):
         """Displays the About application dialog."""
         msg = QMessageBox(self)

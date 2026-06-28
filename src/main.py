@@ -16,7 +16,7 @@ def main():
     from src.core.translation import tr
 
     print(f"=== {tr('ui.app_title')} ===")
-    print(f"Qt API: {QT_API}")
+    print(tr("log.qt_api", api=QT_API))
     
     # Create the Qt Application
     app = QApplication(sys.argv)
@@ -32,14 +32,14 @@ def main():
         try:
             app.setWindowIcon(QIcon(icon_path))
         except Exception as e:
-            print(f"Error setting window icon: {e}")
+            print(tr("log.error_icon", error=e))
     
-    print("Creating main window...")
+    print(tr("log.creating_main_window"))
     # Create and show the main window
     window = MainWindow()
-    print("Showing main window...")
+    print(tr("log.showing_main_window"))
     window.show()
-    print("Event loop started. Application ready.")
+    print(tr("log.app_ready"))
     
     # Execute the application loop (exec() in PySide6, exec_() in PyQt5)
     if hasattr(app, 'exec'):
