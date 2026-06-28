@@ -9,7 +9,7 @@ from src.core.version import __version__ as APP_VERSION
 from src.core.config import load_config, get_last_update_check, set_last_update_check
 
 # Remote update metadata file
-UPDATE_URL = "https://raw.githubusercontent.com/KaanFerid/Raf/main/update.json"
+UPDATE_URL = "https://api.github.com/repos/KaanFerid/Raf/releases/latest"
 
 # 6 hours between automatic checks
 AUTO_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
@@ -18,14 +18,15 @@ MIN_CHECK_INTERVAL_SECONDS = 86400
 
 
 class UpdateChecker(QThread):
-    """Checks the remote update.json once and emits whether an update is available."""
+    """Checks the remote GitHub Releases API once and emits whether an update is available."""
 
     # Signals to notify the UI
     update_available = Signal(str, str, str)  # version, download_url, changelog
     no_update = Signal()
 
     def run(self):
-        # 1. Developer simulation path
+        # Determine data source
+        data = None
         if os.environ.get("RAF_DEV") == "1":
             mock_path = os.path.abspath(os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -36,39 +37,44 @@ class UpdateChecker(QThread):
                 try:
                     with open(mock_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                    latest_version = data.get("version", "1.0.0")
-                    download_url = data.get("download_url", "")
-                    changelog = data.get("changelog", "")
-                    
-                    if latest_version != APP_VERSION:
-                        self.update_available.emit(latest_version, download_url, changelog)
-                        return
                 except Exception as e:
                     print(f"Error reading update mock: {e}")
+        else:
+            try:
+                headers = {"Accept": "application/vnd.github.v3+json"}
+                response = requests.get(UPDATE_URL, headers=headers, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+            except Exception:
+                pass
+                
+        if not data:
             self.no_update.emit()
             return
-
-        # 2. Production network check path
-        try:
-            response = requests.get(UPDATE_URL, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                latest_version = data.get("version", "1.0.0")
-                download_url = data.get("download_url", "")
-                changelog = data.get("changelog", "")
+            
+        # Parse GitHub Release format
+        tag_name = data.get("tag_name", "")
+        latest_version = tag_name.lstrip("v") if tag_name else "1.0.0"
+        changelog = data.get("body", "")
+        
+        # Find the .deb asset download URL
+        download_url = ""
+        for asset in data.get("assets", []):
+            if asset.get("name", "").endswith(".deb"):
+                download_url = asset.get("browser_download_url", "")
+                break
                 
-                # Numeric comparison
-                local_parts = [int(x) for x in APP_VERSION.split('.')]
-                latest_parts = [int(x) for x in latest_version.split('.')]
-                
-                if latest_parts > local_parts:
-                    self.update_available.emit(latest_version, download_url, changelog)
-                else:
-                    self.no_update.emit()
-            else:
-                self.no_update.emit()
-        except Exception:
-            # Silent fallback if offline or failed
+        if not download_url:
+            self.no_update.emit()
+            return
+        
+        # Numeric comparison
+        local_parts = [int(x) for x in APP_VERSION.split('.')]
+        latest_parts = [int(x) for x in latest_version.split('.')]
+        
+        if latest_parts > local_parts:
+            self.update_available.emit(latest_version, download_url, changelog)
+        else:
             self.no_update.emit()
 
 

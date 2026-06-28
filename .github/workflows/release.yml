@@ -1,0 +1,43 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version Tag (e.g., v1.5.6)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: pip install setuptools requests PySide6
+          
+      - name: Build .deb package
+        run: python3 scripts/build_deb.py
+        
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The script produces a file like raf_1.5.6_all.deb
+          DEB_FILE=$(ls raf_*.deb | head -n 1)
+          
+          # Use GitHub CLI to create a release
+          gh release create "${{ inputs.version_tag }}" "$DEB_FILE" \
+            --title "Release ${{ inputs.version_tag }}" \
+            --generate-notes

@@ -242,36 +242,26 @@ The version number is defined in:
 
 When releasing a new version:
 1. Update `src/core/version.py`
-2. Add a new entry to `debian/changelog` following the standard format:
-   ```
-   raf (1.0.4) stable; urgency=medium
-
-     * Description of changes.
-
-    -- Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>  Sun, 22 Jun 2026 16:00:00 +0300
-   ```
-3. Update `update.json` on GitHub with the new version and download URL
-4. Build and distribute the new `.deb`
+2. Add a new entry to `debian/changelog` following the standard format.
+3. Commit and push the changes to GitHub. (This will automatically trigger the `Build Debian Package` GitHub Action).
+4. Go to the **Actions** tab on GitHub, select the **Publish Release** workflow, and click **Run workflow**. Enter the new version tag (e.g., `v1.0.4`).
+5. The Action will automatically build the `.deb`, create an official GitHub Release, and attach the `.deb` asset.
 
 ---
 
-## 8. Updating `update.json` on GitHub
+## 8. GitHub Releases & Auto-Updater
 
-The auto-updater fetches:
+The auto-updater fetches the latest release metadata directly from the GitHub API:
 ```
-https://raw.githubusercontent.com/KaanFerid/Raf/main/update.json
-```
-
-Format:
-```json
-{
-  "version": "1.0.4",
-  "download_url": "https://github.com/KaanFerid/Raf/releases/download/v1.0.4/raf_1.0.4_all.deb",
-  "changelog": "- Fixed theme toggle bug\n- Added Flatpak support"
-}
+https://api.github.com/repos/KaanFerid/Raf/releases/latest
 ```
 
-The app compares version strings numerically (split on `.`). Any higher version triggers the update notification or auto-install depending on user policy.
+The app parses the GitHub API response:
+- **Version:** Extracted from the `tag_name` (e.g., `"v1.0.4"` becomes `"1.0.4"`).
+- **Changelog:** Extracted from the `body` of the release notes.
+- **Download URL:** The updater automatically scans the release `assets` array to find the `.deb` file and uses its `browser_download_url`.
+
+The app compares this version string numerically (split on `.`) against the local `APP_VERSION`. Any higher version triggers the update notification or auto-install depending on the user's policy. No manual `update.json` maintenance is required!
 
 ---
 

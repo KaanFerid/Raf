@@ -1,0 +1,35 @@
+name: Build Debian Package
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: pip install setuptools requests PySide6
+          
+      - name: Build .deb package
+        run: python3 scripts/build_deb.py
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: raf-package
+          path: raf_*.deb
+          retention-days: 14

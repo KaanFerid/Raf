@@ -12,13 +12,20 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 from src.qt_compat import QApplication, QMessageBox
-from src.ui.main_window import MainWindow
+from src.core.config import load_config, save_config
 
 def test_updater_flow():
+    print("Resetting mock config...")
+    config = load_config()
+    config["last_update_check"] = 0
+    config["auto_update_policy"] = "auto"
+    save_config(config)
+
     print("Initializing QApplication...")
     app = QApplication.instance() or QApplication(sys.argv)
     
     print("Creating MainWindow...")
+    from src.ui.main_window import MainWindow
     window = MainWindow()
     
     # Track actions
