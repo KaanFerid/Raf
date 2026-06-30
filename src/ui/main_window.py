@@ -1,12 +1,9 @@
 import os
 import subprocess
 import re
-from src.qt_compat import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QLineEdit, QComboBox, QScrollArea, 
-                            QMessageBox, QStatusBar, QSizePolicy, QPushButton, 
-                            QProgressBar, QFrame, Qt, QTimer, QDialog, 
-                            QButtonGroup, QRadioButton, QGroupBox, QEvent, QApplication,
-                            QIcon, QPixmap, QPen, QColor, QPainter, QFileDialog)
+from PyQt5.QtCore import Qt, QTimer, QEvent
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QScrollArea, QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame, QDialog, QButtonGroup, QRadioButton, QGroupBox, QApplication, QFileDialog
+from PyQt5.QtGui import QIcon, QPixmap, QPen, QColor, QPainter
 from src.ui.styles import LIGHT_STYLE, DARK_STYLE
 from src.ui.components import BookCard
 from src.ui.toast import ToastManager
@@ -188,9 +185,7 @@ class PreferencesDialog(QDialog):
         # Localize strings
         self.retranslate_ui()
         
-        # Synchronize dialog styling with main window style
         if self.parent():
-            self.setStyleSheet(self.parent().styleSheet())
             is_dark = getattr(self.parent(), "current_theme", "light") == "dark"
             set_linux_dark_titlebar(self, is_dark)
             
@@ -470,11 +465,11 @@ class MainWindow(QMainWindow):
             self.theme_timer.stop()
             
         if theme == "dark":
-            self.setStyleSheet(DARK_STYLE)
+            QApplication.instance().setStyleSheet(DARK_STYLE)
             self.current_theme = "dark"
             set_linux_dark_titlebar(self, True)
         else:
-            self.setStyleSheet(LIGHT_STYLE)
+            QApplication.instance().setStyleSheet(LIGHT_STYLE)
             self.current_theme = "light"
             set_linux_dark_titlebar(self, False)
             
@@ -969,7 +964,7 @@ class MainWindow(QMainWindow):
             
         from src.core.translation import tr
         import os
-        from src.qt_compat import QMessageBox
+        from PyQt5.QtWidgets import QMessageBox
         
         mock_books = []
         file_list_str = ""
@@ -1001,7 +996,7 @@ class MainWindow(QMainWindow):
                 self.start_installation(mock_book, path)
 
     def on_install_local_clicked(self):
-        from src.qt_compat import QFileDialog
+        from PyQt5.QtWidgets import QFileDialog
         from src.core.translation import tr
         
         file_paths, _ = QFileDialog.getOpenFileNames(

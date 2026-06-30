@@ -4,7 +4,7 @@ import shutil
 import zipfile
 import json
 import re
-from src.qt_compat import QThread, Signal
+from PyQt5.QtCore import QThread, pyqtSignal as Signal
 from src.core.config import get_cached_package_name, set_cached_package_name
 from src.core.translation import tr
 

@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-from src.qt_compat import QThread, Signal
+from PyQt5.QtCore import QThread, pyqtSignal as Signal
 from src.core.translation import tr
 
 

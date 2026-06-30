@@ -1,4 +1,4 @@
-from src.qt_compat import QObject, Signal
+from PyQt5.QtCore import QObject, pyqtSignal as Signal
 
 
 class DownloadQueue(QObject):

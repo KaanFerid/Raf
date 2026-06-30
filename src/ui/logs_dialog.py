@@ -12,7 +12,7 @@ class InstallationLogsDialog(QDialog):
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
         # Use a monospace font for logs
-        self.log_output.setStyleSheet("font-family: monospace; background-color: #1e1e1e; color: #d4d4d4;")
+        self.log_output.setStyleSheet("font-family: monospace;")
         layout.addWidget(self.log_output)
         
         btn_layout = QHBoxLayout()

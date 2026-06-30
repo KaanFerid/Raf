@@ -1,5 +1,6 @@
 import sys
-from src.qt_compat import QApplication, QIcon, QT_API
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QIcon
 from src.ui.main_window import MainWindow
 
 def main():
@@ -26,7 +27,7 @@ def main():
     from src.core.translation import tr
 
     print(f"=== {tr('ui.app_title')} ===")
-    print(tr("log.qt_api", api=QT_API))
+    print(tr("log.qt_api", api="PyQt5"))
     
     # Create the Qt Application
     app = QApplication(sys.argv)

@@ -1,5 +1,5 @@
 import os
-from src.qt_compat import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QPlainTextEdit, QMessageBox, QLabel
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QPlainTextEdit, QMessageBox, QLabel
 from src.core.translation import tr
 
 class DesktopEditorDialog(QDialog):

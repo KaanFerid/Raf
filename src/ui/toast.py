@@ -1,5 +1,5 @@
-from src.qt_compat import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                             QPushButton, QApplication, Qt, QTimer)
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QApplication
 try:
     from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QPoint, QRect
     from PySide6.QtWidgets import QGraphicsOpacityEffect

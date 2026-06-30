@@ -4,7 +4,8 @@ import sys
 # Set headless mode for Qt
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from src.qt_compat import QApplication, QEventLoop
+from PyQt5.QtCore import QEventLoop
+from PyQt5.QtWidgets import QApplication
 from src.core.database import Database
 from src.core.installer import InstallerWorker, is_book_installed, get_all_installed_packages
 from src.core.downloader import DownloadWorker

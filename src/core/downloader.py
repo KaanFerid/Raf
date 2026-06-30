@@ -2,7 +2,7 @@ import os
 import time
 import re
 import requests
-from src.qt_compat import QThread, Signal
+from PyQt5.QtCore import QThread, pyqtSignal as Signal
 from src.core.translation import tr
 
 class DownloadWorker(QThread):

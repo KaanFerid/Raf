@@ -1,6 +1,6 @@
-from src.qt_compat import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QProgressBar, QFrame, QSizePolicy,
-                             Signal, Qt, QPainter, QColor, QFont)
+from PyQt5.QtCore import pyqtSignal as Signal, Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QProgressBar, QFrame, QSizePolicy
+from PyQt5.QtGui import QPainter, QColor, QFont
 from src.core.translation import tr
 
 class PublisherBadge(QWidget):

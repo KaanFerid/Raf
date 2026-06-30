@@ -3,7 +3,7 @@ import time
 import json
 import requests
 import subprocess
-from src.qt_compat import QThread, QObject, QTimer, Signal
+from PyQt5.QtCore import QThread, QObject, QTimer, pyqtSignal as Signal
 from src.core.translation import tr
 from src.core.version import __version__ as APP_VERSION
 from src.core.config import load_config, get_last_update_check, set_last_update_check
