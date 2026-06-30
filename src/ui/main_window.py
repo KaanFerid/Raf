@@ -969,7 +969,10 @@ class MainWindow(QMainWindow):
             
         from src.core.translation import tr
         import os
+        from src.qt_compat import QMessageBox
         
+        mock_books = []
+        file_list_str = ""
         for path in file_paths:
             filename = os.path.basename(path)
             mock_book = {
@@ -981,7 +984,21 @@ class MainWindow(QMainWindow):
                 "is_local": True,
                 "absolute_path": path
             }
-            self.start_installation(mock_book, path)
+            mock_books.append((mock_book, path))
+            file_list_str += f"• {filename}\n"
+            
+        prompt_text = tr("ui.confirm_sideload_prompt", count=len(mock_books), files=file_list_str.strip())
+        
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle(tr("ui.confirm_sideload_title"))
+        msg_box.setText(prompt_text)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+        
+        if msg_box.exec_() == QMessageBox.Yes:
+            for mock_book, path in mock_books:
+                self.start_installation(mock_book, path)
 
     def on_install_local_clicked(self):
         from src.qt_compat import QFileDialog

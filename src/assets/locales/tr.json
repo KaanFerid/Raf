@@ -120,7 +120,9 @@
     "installation_logs_title": "Kurulum Kayıtları",
     "clear_logs_btn": "Temizle",
     "close_btn": "Kapat",
-    "drop_files_here": "Yüklemek için dosyaları buraya sürükleyin..."
+    "drop_files_here": "Yüklemek için dosyaları buraya sürükleyin...",
+    "confirm_sideload_title": "Kurulumu Onayla",
+    "confirm_sideload_prompt": "Aşağıdaki {count} paketi kurmak istediğinize emin misiniz?\n\n{files}"
   },
   "installer": {
     "sim_installing": "Simülasyon: '{title}' kuruluyor...",
