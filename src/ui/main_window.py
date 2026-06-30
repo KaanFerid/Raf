@@ -382,7 +382,10 @@ class AboutDialog(QDialog):
         layout.addLayout(btn_layout)
         
     def show_logs(self):
+        self.accept()
         self.main_window.logs_dialog.show()
+        self.main_window.logs_dialog.raise_()
+        self.main_window.logs_dialog.activateWindow()
         
     def check_updates(self):
         from src.core.updater import UpdateChecker
