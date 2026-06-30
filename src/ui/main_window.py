@@ -13,7 +13,7 @@ from src.ui.toast import ToastManager
 from src.core.database import Database
 from src.core.downloader import DownloadWorker
 from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name, get_all_installed_packages
-from src.core.translation import tr, translation_manager
+from src.core.translation import tr, set_language, available_languages, on_language_change, remove_language_listener
 from src.core.config import load_config, save_config
 from src.core.updater import UpdateChecker, UpdateInstaller, AutoUpdateScheduler
 from src.core.download_queue import DownloadQueue
@@ -93,7 +93,7 @@ class PreferencesDialog(QDialog):
         lang_layout.setSpacing(8)
         
         self.lang_combo = QComboBox()
-        available_langs = translation_manager.get_available_languages()
+        available_langs = available_languages()
         
         selected_index = 0
         for idx, (lang_code, display_name) in enumerate(available_langs.items()):
@@ -307,7 +307,7 @@ class PreferencesDialog(QDialog):
         save_config(self.config)
         
         # Notify dynamic language switch
-        translation_manager.set_language(selected_lang)
+        set_language(selected_lang)
         
         self.accept()
 
@@ -396,7 +396,7 @@ class MainWindow(QMainWindow):
         self.refresh_timer.start(15000)
         
         # Register translation change listener
-        translation_manager.register_listener(self.retranslate_ui)
+        on_language_change(self.retranslate_ui)
         
         # Process any files passed from CLI (Open With)
         if self.startup_files:
@@ -404,7 +404,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         # Unregister translation listener to prevent memory leaks
-        translation_manager.unregister_listener(self.retranslate_ui)
+        remove_language_listener(self.retranslate_ui)
         super().closeEvent(event)
 
     def showEvent(self, event):
