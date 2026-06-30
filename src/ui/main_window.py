@@ -381,7 +381,7 @@ class AboutDialog(QDialog):
         layout.addLayout(btn_layout)
         
     def show_logs(self):
-        self.main_window.show_logs_dialog()
+        self.main_window.logs_dialog.show()
         
     def check_updates(self):
         from src.core.updater import UpdateChecker
