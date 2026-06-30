@@ -362,7 +362,7 @@ class AboutDialog(QDialog):
         # Buttons
         btn_layout = QHBoxLayout()
         
-        self.logs_btn = QPushButton("Logs")
+        self.logs_btn = QPushButton(tr("ui.logs_menu", default="Logs"))
         self.logs_btn.setProperty("class", "AdwSecondaryBtn")
         self.logs_btn.clicked.connect(self.show_logs)
         btn_layout.addWidget(self.logs_btn)
@@ -1434,7 +1434,7 @@ class MainWindow(QMainWindow):
         worker.start()
 
     def on_install_output(self, book_id, text):
-        print(f"[{book_id} install stdout]: {text.strip()}")
+        print(tr("log.install_stdout", id=book_id, text=text.strip()))
         self.logs_dialog.append_log(f"[{book_id}] {text.strip()}")
 
     def on_installation_finished(self, book_id, success):
@@ -1559,7 +1559,7 @@ class MainWindow(QMainWindow):
 
     def launch_book(self, book):
         if os.environ.get("RAF_DEV") == "1":
-            print(f"[DEVELOPER MODE] Book launched: {book['title']} (File: {book['file_name']})")
+            print(tr("log.dev_book_launched", title=book['title'], file=book['file_name']))
             RafMessageBox.information(
                 self,
                 tr("ui.book_launched_sim_title"),

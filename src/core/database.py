@@ -36,7 +36,7 @@ class Database:
                 try:
                     shutil.copy2(system_file, user_file)
                 except Exception as e:
-                    print(f"Failed to copy {file_name}: {e}")
+                    print(tr("log.failed_to_copy", file=file_name, error=e))
             
         self.books = []
         self.load_books()

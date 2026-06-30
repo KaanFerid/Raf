@@ -134,8 +134,8 @@ class InstallerWorker(QThread):
         # This will pop up a PolicyKit password prompt for security.
         cmd = ["pkexec", "apt-get", "install", "-y", self.file_path]
         
-        self.output_received.emit(self.book_id, f"--- Starting DEB installation of {self.book.get('title')} ---")
-        self.output_received.emit(self.book_id, f"Executing: {' '.join(cmd)}")
+        self.output_received.emit(self.book_id, tr("log.start_deb_install", title=self.book.get('title'), default=f"--- Starting DEB installation of {self.book.get('title')} ---"))
+        self.output_received.emit(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
         
         try:
             process = subprocess.Popen(
@@ -152,7 +152,7 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, "--- Installation completed successfully ---")
+                self.output_received.emit(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             elif process.returncode in (126, 127):
@@ -178,8 +178,8 @@ class InstallerWorker(QThread):
 
         cmd = ["pkexec", "apt-get", "remove", "-y", package_name]
         
-        self.output_received.emit(self.book_id, f"--- Starting DEB uninstallation of {self.book.get('title')} ---")
-        self.output_received.emit(self.book_id, f"Executing: {' '.join(cmd)}")
+        self.output_received.emit(self.book_id, tr("log.start_deb_uninstall", title=self.book.get('title'), default=f"--- Starting DEB uninstallation of {self.book.get('title')} ---"))
+        self.output_received.emit(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
         
         try:
             process = subprocess.Popen(
@@ -242,7 +242,7 @@ class InstallerWorker(QThread):
             tmp_desktop_path = create_desktop_launcher(self.book, tmp_dir)
             
             self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
-            self.output_received.emit(self.book_id, f"--- Starting ZIP installation of {self.book.get('title')} ---")
+            self.output_received.emit(self.book_id, tr("log.start_zip_install", title=self.book.get('title'), default=f"--- Starting ZIP installation of {self.book.get('title')} ---"))
             
             script = """
             set -ex
@@ -268,7 +268,7 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, "--- Installation completed successfully ---")
+                self.output_received.emit(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             elif process.returncode in (126, 127):
@@ -293,7 +293,7 @@ class InstallerWorker(QThread):
         desktop_file = f"/usr/share/applications/raf-{self.book_id}.desktop"
         
         try:
-            self.output_received.emit(self.book_id, f"--- Starting ZIP uninstallation of {self.book.get('title')} ---")
+            self.output_received.emit(self.book_id, tr("log.start_zip_uninstall", title=self.book.get('title'), default=f"--- Starting ZIP uninstallation of {self.book.get('title')} ---"))
             script = """
             set -ex
             rm -rfv "$1"
@@ -311,7 +311,7 @@ class InstallerWorker(QThread):
             process.wait()
                 
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, "--- Uninstallation completed successfully ---")
+                self.output_received.emit(self.book_id, tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---"))
                 self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
                 self.finished.emit(self.book_id, True)
             elif process.returncode in (126, 127):
@@ -344,7 +344,7 @@ class InstallerWorker(QThread):
             
             self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
             
-            self.output_received.emit(self.book_id, f"--- Starting AppImage/Standalone installation of {self.book.get('title')} ---")
+            self.output_received.emit(self.book_id, tr("log.start_standalone_install", title=self.book.get('title'), default=f"--- Starting AppImage/Standalone installation of {self.book.get('title')} ---"))
             script = """
             set -ex
             rm -rfv "$1"
@@ -371,7 +371,7 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, "--- Installation completed successfully ---")
+                self.output_received.emit(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             else:

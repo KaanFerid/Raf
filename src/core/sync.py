@@ -73,9 +73,8 @@ class DatabaseSyncWorker(QThread):
             if total_books > 0:
                 self.sync_finished.emit(total_books)
             else:
-                self.sync_failed.emit("No valid books could be synced from the provided URL.")
-
+                self.sync_failed.emit(tr("sync.no_valid_books"))
         except requests.exceptions.ConnectionError:
-            self.sync_failed.emit("No network connection.")
+            self.sync_failed.emit(tr("sync.no_network"))
         except Exception as e:
             self.sync_failed.emit(str(e))

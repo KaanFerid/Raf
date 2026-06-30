@@ -34,7 +34,7 @@ def _load(lang_code: str) -> dict:
     
     # Fallback if file doesn't exist
     if not path.exists():
-        print(f"[i18n] '{lang_code}' language file not found: {path}")
+        print(tr("log.lang_not_found", lang=lang_code, path=path, default=f"[i18n] '{lang_code}' language file not found: {path}"))
         return _cache.get("en", {})
 
     # Read language file
@@ -42,7 +42,7 @@ def _load(lang_code: str) -> dict:
         with open(path, "r", encoding="utf-8") as f:
             raw = json.load(f)
     except Exception as e:
-        print(f"[i18n] Error loading {path}: {e}")
+        print(tr("log.lang_load_error", path=path, error=e, default=f"[i18n] Error loading {path}: {e}"))
         return _cache.get("en", {})
 
     # Flatten nested dicts to dot notation (e.g. section.key)
@@ -109,7 +109,7 @@ def set_language(lang_code: str, save: bool = True) -> bool:
         try:
             cb()
         except Exception as e:
-            print(f"[i18n] Listener update error: {e}")
+            print(tr("log.lang_listener_error", error=e, default=f"[i18n] Listener update error: {e}"))
 
     return True
 

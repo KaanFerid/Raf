@@ -130,7 +130,7 @@ class DownloadWorker(QThread):
                                     elapsed = current_time - start_time
                                     speed = downloaded / (elapsed if elapsed > 0 else 0.001)  # bytes per sec
                                     speed_mb = speed / (1024 * 1024)
-                                    speed_str = f"{speed_mb:.2f} MB/s"
+                                    speed_str = tr("ui.speed_mb_s", speed=f"{speed_mb:.2f}")
                                     
                                     if total_size > 0:
                                         percent = int((downloaded / total_size) * 100)
@@ -138,7 +138,7 @@ class DownloadWorker(QThread):
                                         self.progress_changed.emit(self.book_id, percent, speed_str)
                                     else:
                                         downloaded_mb = downloaded / (1024 * 1024)
-                                        self.progress_changed.emit(self.book_id, -1, f"{downloaded_mb:.1f} MB ({speed_str})")
+                                        self.progress_changed.emit(self.book_id, -1, tr("ui.downloaded_mb_speed", downloaded=f"{downloaded_mb:.1f}", speed=speed_str))
 
                     # Successfully finished download loop
                     if total_size > 0 and downloaded >= total_size:
