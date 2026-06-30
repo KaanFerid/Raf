@@ -11,7 +11,8 @@ os.environ["RAF_DEV"] = "1"
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from src.qt_compat import QApplication, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import QTimer
 from src.core.config import load_config, save_config
 
 def test_updater_flow():

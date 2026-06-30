@@ -43,6 +43,19 @@ def set_linux_dark_titlebar(window, dark=True):
     except Exception:
         pass
 
+from PyQt5.QtCore import QObject
+
+class TitleBarThemeFilter(QObject):
+    def __init__(self, main_window):
+        super().__init__()
+        self.main_window = main_window
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Show and hasattr(obj, "isWindow") and obj.isWindow():
+            is_dark = getattr(self.main_window, "current_theme", "light") == "dark"
+            set_linux_dark_titlebar(obj, is_dark)
+        return False
+
 
 class PreferencesDialog(QDialog):
     """Preferences window styled in Adwaita format for theme configuration."""
@@ -313,6 +326,73 @@ class PreferencesDialog(QDialog):
             is_dark = self.parent().current_theme == "dark"
         set_linux_dark_titlebar(self, is_dark)
 
+class AboutDialog(QDialog):
+    """Custom About Dialog with themed buttons and logs viewer link."""
+    def __init__(self, main_window):
+        super().__init__(main_window)
+        self.main_window = main_window
+        self.setWindowTitle(tr("ui.about_title"))
+        self.setMinimumSize(400, 200)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
+        
+        # Logo and text
+        top_layout = QHBoxLayout()
+        logo_label = QLabel()
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "raf.png")
+        if os.path.exists(icon_path):
+            logo_label.setPixmap(QPixmap(icon_path).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        else:
+            logo_label.setText("ℹ")
+            logo_label.setStyleSheet("font-size: 48px;")
+        
+        text_label = QLabel(tr("ui.about_content", version=APP_VERSION))
+        text_label.setWordWrap(True)
+        text_label.setTextFormat(Qt.RichText)
+        text_label.setOpenExternalLinks(True)
+        
+        top_layout.addWidget(logo_label)
+        top_layout.addSpacing(15)
+        top_layout.addWidget(text_label, 1)
+        layout.addLayout(top_layout)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        
+        self.logs_btn = QPushButton("Logs")
+        self.logs_btn.setProperty("class", "AdwSecondaryBtn")
+        self.logs_btn.clicked.connect(self.show_logs)
+        btn_layout.addWidget(self.logs_btn)
+        
+        btn_layout.addStretch(1)
+        
+        self.update_btn = QPushButton(tr("ui.check_updates"))
+        self.update_btn.setProperty("class", "AdwSecondaryBtn")
+        self.update_btn.clicked.connect(self.check_updates)
+        btn_layout.addWidget(self.update_btn)
+        
+        self.close_btn = QPushButton(tr("ui.close_btn", default="Close"))
+        self.close_btn.setProperty("class", "AdwPrimaryBtn")
+        self.close_btn.clicked.connect(self.accept)
+        btn_layout.addWidget(self.close_btn)
+        
+        layout.addLayout(btn_layout)
+        
+    def show_logs(self):
+        self.main_window.show_logs_dialog()
+        
+    def check_updates(self):
+        from src.core.updater import UpdateChecker
+        self.updater = UpdateChecker()
+        self.updater.update_available.connect(self.main_window.on_update_available)
+        
+        def on_no_update():
+            QMessageBox.information(self, tr("ui.no_update_title"), tr("ui.no_update_message"))
+            
+        self.updater.no_update.connect(on_no_update)
+        self.updater.start()
 
 class MainWindow(QMainWindow):
     def __init__(self, startup_files=None):
@@ -355,6 +435,10 @@ class MainWindow(QMainWindow):
         
         # Enable drag and drop for sideloading apps
         self.setAcceptDrops(True)
+        
+        # Install global title bar event filter
+        self.titlebar_filter = TitleBarThemeFilter(self)
+        QApplication.instance().installEventFilter(self.titlebar_filter)
 
         # Toast notification manager (must be after init_ui so parent window exists)
         self.toast_manager = ToastManager(self)
@@ -581,21 +665,16 @@ class MainWindow(QMainWindow):
         header_layout.addWidget(self.install_local_btn)
 
         # Settings/Preferences Button
-        self.settings_btn = QPushButton()
+        self.settings_btn = QPushButton("⚙")
         self.settings_btn.setProperty("class", "AdwSecondaryBtn")
         self.settings_btn.clicked.connect(self.open_preferences)
         header_layout.addWidget(self.settings_btn)
 
         # About Button
-        self.about_btn = QPushButton()
+        self.about_btn = QPushButton("ℹ")
         self.about_btn.setProperty("class", "AdwSecondaryBtn")
         self.about_btn.clicked.connect(self.show_about_dialog)
         header_layout.addWidget(self.about_btn)
-
-        self.logs_btn = QPushButton()
-        self.logs_btn.setProperty("class", "AdwSecondaryBtn")
-        self.logs_btn.clicked.connect(self.logs_dialog.show)
-        header_layout.addWidget(self.logs_btn)
 
         main_layout.addWidget(header_widget)
 
@@ -700,9 +779,6 @@ class MainWindow(QMainWindow):
         self.tab_market_btn.setText(tr("ui.market"))
         self.tab_library_btn.setText(tr("ui.my_library"))
         self.search_input.setPlaceholderText(tr("ui.search_placeholder"))
-        self.settings_btn.setText(tr("ui.preferences"))
-        self.about_btn.setText(tr("ui.about_menu"))
-        self.logs_btn.setText(tr("ui.logs_menu", default="Logs"))
         self.select_mode_btn.setText(tr("ui.select_mode"))
         self.batch_install_btn.setText(tr("ui.install_selected"))
         self.batch_uninstall_btn.setText(tr("ui.uninstall_selected"))
@@ -1044,39 +1120,8 @@ class MainWindow(QMainWindow):
 
     def show_about_dialog(self):
         """Displays the About application dialog."""
-        msg = QMessageBox(self)
-        msg.setWindowTitle(tr("ui.about_title"))
-        msg.setText(tr("ui.about_content", version=APP_VERSION))
-        
-        # Look for the app logo in assets
-        import os
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "raf.png")
-        if os.path.exists(icon_path):
-            msg.setIconPixmap(QPixmap(icon_path).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        else:
-            msg.setIcon(QMessageBox.Information)
-            
-        is_dark = self.current_theme == "dark"
-        set_linux_dark_titlebar(msg, is_dark)
-        
-        check_btn = msg.addButton(tr("ui.check_updates"), QMessageBox.ActionRole)
-        msg.addButton(QMessageBox.Ok)
-        
-        if hasattr(msg, 'exec'):
-            msg.exec()
-        else:
-            msg.exec_()
-            
-        if msg.clickedButton() == check_btn:
-            from src.core.updater import UpdateChecker
-            self.updater = UpdateChecker()
-            self.updater.update_available.connect(self.on_update_available)
-            
-            def on_no_update():
-                QMessageBox.information(self, tr("ui.no_update_title"), tr("ui.no_update_message"))
-                
-            self.updater.no_update.connect(on_no_update)
-            self.updater.start()
+        dialog = AboutDialog(self)
+        dialog.exec_()
 
     def eventFilter(self, obj, event):
         """Intercepts focus and click events on search input to automatically open OSK."""

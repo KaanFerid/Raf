@@ -258,6 +258,29 @@ QDialog, QMessageBox {
     color: #ffffff;
 }
 
+QDialog QPushButton, QMessageBox QPushButton {
+    background-color: #3a3a3a;
+    color: #ffffff;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 500;
+}
+QDialog QPushButton:hover, QMessageBox QPushButton:hover {
+    background-color: #444444;
+}
+
+QTextEdit, QPlainTextEdit {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 6px;
+}
+QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #3584e4;
+}
+
 QMessageBox QLabel {
     color: #ffffff;
 }
@@ -691,8 +714,35 @@ QScrollArea, QScrollArea > QWidget {
     background-color: #f6f6f6;
 }
 
-QDialog {
+QDialog, QMessageBox {
     background-color: #f6f6f6;
+    color: #242424;
+}
+
+QDialog QPushButton, QMessageBox QPushButton {
+    background-color: #e5e5e5;
+    color: #242424;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 500;
+}
+QDialog QPushButton:hover, QMessageBox QPushButton:hover {
+    background-color: #dcdcdc;
+}
+
+QTextEdit, QPlainTextEdit {
+    background-color: #ffffff;
+    color: #242424;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px;
+}
+QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #3584e4;
+}
+
+QMessageBox QLabel {
     color: #242424;
 }
 

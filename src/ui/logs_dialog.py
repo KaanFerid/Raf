@@ -19,10 +19,12 @@ class InstallationLogsDialog(QDialog):
         btn_layout.addStretch(1)
         
         self.clear_btn = QPushButton(tr("ui.clear_logs_btn", default="Clear"))
+        self.clear_btn.setProperty("class", "AdwSecondaryBtn")
         self.clear_btn.clicked.connect(self.log_output.clear)
         btn_layout.addWidget(self.clear_btn)
         
         self.close_btn = QPushButton(tr("ui.close_btn", default="Close"))
+        self.close_btn.setProperty("class", "AdwPrimaryBtn")
         self.close_btn.clicked.connect(self.accept)
         btn_layout.addWidget(self.close_btn)
         
