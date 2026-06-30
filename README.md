@@ -83,7 +83,7 @@ Install with:
 pip install -r requirements.txt
 ```
 
-> **Note:** `run_arch.py` handles venv creation and dependency installation automatically.
+> **Note:** `run_dev.py` handles venv creation and dependency installation automatically.
 
 ---
 
@@ -133,14 +133,14 @@ raf
 
 ### Developer / Simulator Mode
 
-The `run_arch.py` script launches the app in a fully sandboxed simulation environment. It makes **zero permanent changes** to your system:
+The `run_dev.py` script launches the app in a fully sandboxed simulation environment. It makes **zero permanent changes** to your system:
 
 - Downloads are saved to `mock_system/cache/`
 - Installs are tracked in `mock_system/installed.json`
 - PolicyKit popups are skipped (simulated)
 
 ```bash
-./run_arch.py
+./run_dev.py
 ```
 
 If `PyQt5` or `requests` are missing, the script automatically creates a `.venv` virtual environment and installs them before launching.
@@ -156,7 +156,7 @@ Raf includes a full-featured CLI for headless/terminal use. All commands work in
 ```bash
 raf <command> [arguments]
 # or in developer/source mode:
-./run_arch.py <command> [arguments]
+./run_dev.py <command> [arguments]
 # or directly:
 python3 -m src.main <command> [arguments]
 ```
@@ -256,7 +256,7 @@ Open **Preferences** from the header bar. Changes take effect immediately after 
 | **Light Theme** | Forces the light Libadwaita palette |
 | **Dark Theme** | Forces the dark Libadwaita palette |
 
-Due to the new centralized engine, `QApplication.instance().setStyleSheet(...)` is heavily utilized, meaning every modal, window, and toast notification instantly changes color accurately.
+Due to the new centralized engine, `QApplication.instance().setStyleSheet(...)` and `RafMessageBox` are heavily utilized, meaning every modal, window, and toast notification instantly changes color accurately.
 
 ### Language
 Choose between **Turkish** and **English**. The UI updates instantly without restarting, powered by the custom JSON-based `_meta` i18n observer engine.
@@ -288,7 +288,7 @@ Output: `raf_<version>_all.deb` in the project root.
 
 ```bash
 # GUI mode
-./run_arch.py
+./run_dev.py
 ```
 
 ### Simulating an Update
@@ -345,7 +345,7 @@ raf/
 ├── tests/                        # Comprehensive unit and integration testing suite
 ├── mock_system/                  # Developer mode sandbox
 ├── docs/                         # Architecture and API documentation
-├── run_arch.py                   # Developer runner (auto-venv + simulation)
+├── run_dev.py                   # Developer runner (auto-venv + simulation)
 ├── requirements.txt              # Python dependencies (PyQt5)
 └── README.md                     # This file
 ```

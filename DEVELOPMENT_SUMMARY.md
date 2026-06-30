@@ -184,6 +184,18 @@ Seven new features were designed, implemented, and integrated:
 
 ---
 
+### Stage 8 — Full Localization & UX Polish
+
+**Goal:** Ensure 100% translatability of all user-facing strings and fix lingering modal bugs.
+
+- Completed a comprehensive sweep of all source files to replace hardcoded strings with `tr(...)`.
+- Fully localized installation log traces (`installer.py`) so background bash script steps report properly in the active UI language.
+- Wrapped standalone icons and formatting placeholders in localizable blocks where appropriate.
+- Fixed an interaction blocker bug where clicking "Logs" inside the modal `AboutDialog` spawned a non-clickable `LogsDialog` in the background (About window is now dismissed first).
+- Combined `run_arch.py` and `run_dev.py` into a unified `run_dev.py` that automatically provisions a PyQt5 virtual environment if dependencies are missing.
+
+---
+
 ## 📁 Complete File Inventory
 
 ### Source Files
@@ -231,8 +243,7 @@ Seven new features were designed, implemented, and integrated:
 
 | File | Role |
 |---|---|
-| `run_arch.py` | Dev runner: auto-venv + simulation mode |
-| `run_dev.py` | Alternative dev launcher |
+| `run_dev.py` | Dev runner: auto-venv + simulation mode |
 | `mock_system/` | Sandboxed install/download environment |
 
 ### Tests
@@ -249,7 +260,7 @@ Seven new features were designed, implemented, and integrated:
 
 ### Start GUI (Developer Mode)
 ```bash
-./run_arch.py
+./run_dev.py
 ```
 
 ### Start GUI (Production)
