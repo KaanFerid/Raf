@@ -1,5 +1,6 @@
 import os
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QMessageBox, QLabel, QFormLayout
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QFormLayout
+from src.ui.dialogs import RafMessageBox
 from src.core.translation import tr
 
 class DesktopEditorDialog(QDialog):
@@ -74,7 +75,7 @@ class DesktopEditorDialog(QDialog):
         """Saves changes to ~/.local/share/applications/"""
         new_name = self.name_input.text().strip()
         if not new_name:
-            QMessageBox.warning(self, tr("ui.error"), tr("ui.name_empty_error", default="Name cannot be empty."))
+            RafMessageBox.warning(self, tr("ui.error"), tr("ui.name_empty_error", default="Name cannot be empty."))
             return
             
         try:
@@ -92,7 +93,7 @@ class DesktopEditorDialog(QDialog):
                 if not name_replaced:
                     f.write(f"Name={new_name}\n")
             
-            QMessageBox.information(self, tr("ui.success"), tr("ui.desktop_editor_saved"))
+            RafMessageBox.information(self, tr("ui.success"), tr("ui.desktop_editor_saved"))
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, tr("ui.error"), tr("ui.desktop_editor_save_failed", error=str(e)))
+            RafMessageBox.critical(self, tr("ui.error"), tr("ui.desktop_editor_save_failed", error=str(e)))

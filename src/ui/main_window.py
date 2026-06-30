@@ -2,7 +2,8 @@ import os
 import subprocess
 import re
 from PyQt5.QtCore import Qt, QTimer, QEvent
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QScrollArea, QMessageBox, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame, QDialog, QButtonGroup, QRadioButton, QGroupBox, QApplication, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QScrollArea, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame, QDialog, QButtonGroup, QRadioButton, QGroupBox, QApplication, QFileDialog
+from src.ui.dialogs import RafMessageBox
 from PyQt5.QtGui import QIcon, QPixmap, QPen, QColor, QPainter
 from src.ui.styles import LIGHT_STYLE, DARK_STYLE
 from src.ui.components import BookCard
@@ -281,11 +282,11 @@ class PreferencesDialog(QDialog):
                     file_path = os.path.join(cache_dir, f)
                     if os.path.isfile(file_path):
                         os.remove(file_path)
-                QMessageBox.information(self, tr("ui.success"), tr("ui.cache_clear_success"))
+                RafMessageBox.information(self, tr("ui.success"), tr("ui.cache_clear_success"))
                 self.cache_label.setText(self.get_cache_size())
                 self.disk_label.setText(self.get_disk_info())
             except Exception as e:
-                QMessageBox.warning(self, tr("ui.error"), tr("ui.cache_clear_error", error=str(e)))
+                RafMessageBox.warning(self, tr("ui.error"), tr("ui.cache_clear_error", error=str(e)))
 
     def save_preferences(self):
         if self.radio_system.isChecked():
@@ -389,7 +390,7 @@ class AboutDialog(QDialog):
         self.updater.update_available.connect(self.main_window.on_update_available)
         
         def on_no_update():
-            QMessageBox.information(self, tr("ui.no_update_title"), tr("ui.no_update_message"))
+            RafMessageBox.information(self, tr("ui.no_update_title"), tr("ui.no_update_message"))
             
         self.updater.no_update.connect(on_no_update)
         self.updater.start()
@@ -943,13 +944,13 @@ class MainWindow(QMainWindow):
         if not installed_ids:
             return
         count = len(installed_ids)
-        reply = QMessageBox.question(
+        reply = RafMessageBox.question(
             self,
             tr("ui.uninstall_library_title"),
             tr("ui.batch_confirm_uninstall", count=count),
-            QMessageBox.Yes | QMessageBox.No
+            default_no=True
         )
-        if reply == QMessageBox.Yes:
+        if reply:
             books = self.db.get_all_books()
             book_map = {b['id']: b for b in books}
             for book_id in installed_ids:
@@ -1060,14 +1061,14 @@ class MainWindow(QMainWindow):
             
         prompt_text = tr("ui.confirm_sideload_prompt", count=len(mock_books), files=file_list_str.strip())
         
-        msg_box = QMessageBox(self)
-        msg_box.setIcon(QMessageBox.Question)
-        msg_box.setWindowTitle(tr("ui.confirm_sideload_title"))
-        msg_box.setText(prompt_text)
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg_box.setDefaultButton(QMessageBox.No)
+        reply = RafMessageBox.question(
+            self,
+            tr("ui.confirm_sideload_title"),
+            prompt_text,
+            default_no=True
+        )
         
-        if msg_box.exec_() == QMessageBox.Yes:
+        if reply:
             for mock_book, path in mock_books:
                 self.start_installation(mock_book, path)
 
@@ -1166,15 +1167,14 @@ class MainWindow(QMainWindow):
 
     def on_update_available(self, version, download_url, changelog):
         """Callback triggered when the UpdateChecker thread detects a newer version."""
-        reply = QMessageBox.question(
+        reply = RafMessageBox.question(
             self,
             tr("ui.new_update_available"),
             tr("ui.update_prompt", version=version, changelog=changelog),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes
+            default_no=False
         )
         
-        if reply == QMessageBox.Yes:
+        if reply:
             self.start_app_update(version, download_url)
 
     def start_app_update(self, version, download_url):
@@ -1213,12 +1213,12 @@ class MainWindow(QMainWindow):
         
     def on_update_download_error(self, bid, err_msg):
         self.statusBar.showMessage(tr("ui.update_download_error_status"), 5000)
-        QMessageBox.warning(self, tr("ui.update_download_error_status"), tr("ui.update_download_failed", error=err_msg))
+        RafMessageBox.warning(self, tr("ui.update_download_error_status"), tr("ui.update_download_failed", error=err_msg))
         
     def on_update_install_finished(self, success):
         if success:
             self.statusBar.showMessage(tr("ui.update_completed_status"), 5000)
-            QMessageBox.information(
+            RafMessageBox.information(
                 self,
                 tr("ui.update_successful_title"),
                 tr("ui.update_successful_message")
@@ -1226,7 +1226,7 @@ class MainWindow(QMainWindow):
             self.close()
         else:
             self.statusBar.showMessage(tr("ui.update_error_status"), 5000)
-            QMessageBox.critical(
+            RafMessageBox.critical(
                 self,
                 tr("ui.update_error_title"),
                 tr("ui.update_error_message")
@@ -1491,15 +1491,14 @@ class MainWindow(QMainWindow):
         if book_id in self.active_installations:
             return
 
-        reply = QMessageBox.question(
+        reply = RafMessageBox.question(
             self,
             tr("ui.uninstall_library_title"),
             tr("ui.uninstall_library_prompt", title=book['title']),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            default_no=True
         )
         
-        if reply == QMessageBox.No:
+        if not reply:
             return
 
         card = self.card_widgets.get(book_id)
@@ -1561,7 +1560,7 @@ class MainWindow(QMainWindow):
     def launch_book(self, book):
         if os.environ.get("RAF_DEV") == "1":
             print(f"[DEVELOPER MODE] Book launched: {book['title']} (File: {book['file_name']})")
-            QMessageBox.information(
+            RafMessageBox.information(
                 self,
                 tr("ui.book_launched_sim_title"),
                 tr("ui.book_launched_sim_message", title=book['title'], publisher=book['publisher'], filename=book['file_name'])
@@ -1583,7 +1582,7 @@ class MainWindow(QMainWindow):
                     self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
                 except Exception as e2:
                     self.statusBar.showMessage(tr("ui.launch_error_status"), 5000)
-                    QMessageBox.warning(
+                    RafMessageBox.warning(
                         self, 
                         tr("ui.app_launch_failed_title"), 
                         tr("ui.app_launch_failed_message", error=str(e2))
@@ -1598,4 +1597,4 @@ class MainWindow(QMainWindow):
                 self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
             except Exception as e:
                 self.statusBar.showMessage(tr("ui.launch_error_status"), 5000)
-                QMessageBox.warning(self, tr("ui.app_launch_failed_title"), tr("ui.book_launch_failed_message", error=str(e)))
+                RafMessageBox.warning(self, tr("ui.app_launch_failed_title"), tr("ui.book_launch_failed_message", error=str(e)))
