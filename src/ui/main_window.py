@@ -414,8 +414,8 @@ class MainWindow(QMainWindow):
         
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if hasattr(self, 'drop_overlay'):
-            self.drop_overlay.setGeometry(0, 0, self.width(), self.height())
+        if hasattr(self, 'drop_overlay') and self.centralWidget():
+            self.drop_overlay.setGeometry(0, 0, self.centralWidget().width(), self.centralWidget().height())
 
     def get_system_theme(self):
         """Checks the system preferred theme using standard D-Bus / desktop portal interface."""
@@ -672,7 +672,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.batch_bar)
 
         # Drop overlay
-        self.drop_overlay = QLabel(self)
+        self.drop_overlay = QLabel(central_widget)
         self.drop_overlay.setObjectName("DropOverlay")
         self.drop_overlay.setAlignment(Qt.AlignCenter)
         self.drop_overlay.setStyleSheet("""
@@ -1001,8 +1001,9 @@ class MainWindow(QMainWindow):
         """Accept file drops if they contain URLs and show overlay."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
-            self.drop_overlay.show()
+            self.drop_overlay.setGeometry(0, 0, self.centralWidget().width(), self.centralWidget().height())
             self.drop_overlay.raise_()
+            self.drop_overlay.show()
 
     def dragLeaveEvent(self, event):
         """Hide overlay when mouse leaves."""
