@@ -119,7 +119,8 @@
     "logs_menu": "Kayıtlar",
     "installation_logs_title": "Kurulum Kayıtları",
     "clear_logs_btn": "Temizle",
-    "close_btn": "Kapat"
+    "close_btn": "Kapat",
+    "drop_files_here": "Yüklemek için dosyaları buraya sürükleyin..."
   },
   "installer": {
     "sim_installing": "Simülasyon: '{title}' kuruluyor...",

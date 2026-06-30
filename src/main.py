@@ -5,13 +5,23 @@ from src.ui.main_window import MainWindow
 def main():
     # If command line arguments are provided, switch to CLI mode
     args = sys.argv[1:]
-    if args and args[0] == "-c":
-        args = args[1:]
-        
+    
+    import os
+    startup_files = []
+    gui_mode = False
+    
     if args:
-        from src.core.cli import handle_cli
-        handle_cli()
-        return
+        if args[0] == "-c":
+            args = args[1:]
+        elif all(os.path.exists(a) for a in args):
+            # Arguments are existing file paths (OS "Open With" context)
+            startup_files = [os.path.abspath(a) for a in args]
+            gui_mode = True
+            
+        if not gui_mode and args:
+            from src.core.cli import handle_cli
+            handle_cli()
+            return
 
     from src.core.translation import tr
 
@@ -36,7 +46,7 @@ def main():
     
     print(tr("log.creating_main_window"))
     # Create and show the main window
-    window = MainWindow()
+    window = MainWindow(startup_files)
     print(tr("log.showing_main_window"))
     window.show()
     print(tr("log.app_ready"))

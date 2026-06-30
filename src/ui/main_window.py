@@ -320,8 +320,9 @@ class PreferencesDialog(QDialog):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, startup_files=None):
         super().__init__()
+        self.startup_files = startup_files or []
         self.resize(1100, 700)
         self.setMinimumSize(1080, 550)
         
@@ -396,6 +397,10 @@ class MainWindow(QMainWindow):
         
         # Register translation change listener
         translation_manager.register_listener(self.retranslate_ui)
+        
+        # Process any files passed from CLI (Open With)
+        if self.startup_files:
+            QTimer.singleShot(500, lambda: self.process_local_files(self.startup_files))
 
     def closeEvent(self, event):
         # Unregister translation listener to prevent memory leaks
@@ -406,6 +411,11 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         is_dark = self.current_theme == "dark"
         set_linux_dark_titlebar(self, is_dark)
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'drop_overlay'):
+            self.drop_overlay.setGeometry(0, 0, self.width(), self.height())
 
     def get_system_theme(self):
         """Checks the system preferred theme using standard D-Bus / desktop portal interface."""
@@ -661,6 +671,22 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.batch_bar)
 
+        # Drop overlay
+        self.drop_overlay = QLabel(self)
+        self.drop_overlay.setObjectName("DropOverlay")
+        self.drop_overlay.setAlignment(Qt.AlignCenter)
+        self.drop_overlay.setStyleSheet("""
+            QLabel#DropOverlay {
+                background-color: rgba(52, 152, 219, 0.8);
+                color: white;
+                font-size: 24px;
+                font-weight: bold;
+                border: 4px dashed white;
+                border-radius: 12px;
+            }
+        """)
+        self.drop_overlay.hide()
+
         # 5. Status Bar
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
@@ -686,6 +712,7 @@ class MainWindow(QMainWindow):
         self.batch_install_btn.setText(tr("ui.install_selected"))
         self.batch_uninstall_btn.setText(tr("ui.uninstall_selected"))
         self.install_local_btn.setText(tr("ui.install_local_files"))
+        self.drop_overlay.setText(tr("ui.drop_files_here"))
         
         self.offline_badge.setText(tr("ui.offline_mode"))
         self.statusBar.showMessage(tr("ui.ready"))
@@ -935,6 +962,27 @@ class MainWindow(QMainWindow):
         painter.end()
         return QIcon(pixmap)
 
+    def process_local_files(self, file_paths):
+        """Processes a list of local files/directories for sideloading installation."""
+        if not file_paths:
+            return
+            
+        from src.core.translation import tr
+        import os
+        
+        for path in file_paths:
+            filename = os.path.basename(path)
+            mock_book = {
+                "id": f"local_{filename}",
+                "title": os.path.splitext(filename)[0],
+                "publisher": tr("cli.local_publisher"),
+                "file_name": filename,
+                "file_type": os.path.splitext(filename)[1].lstrip('.'),
+                "is_local": True,
+                "absolute_path": path
+            }
+            self.start_installation(mock_book, path)
+
     def on_install_local_clicked(self):
         from src.qt_compat import QFileDialog
         from src.core.translation import tr
@@ -947,30 +995,23 @@ class MainWindow(QMainWindow):
         )
         
         if file_paths:
-            for path in file_paths:
-                # Bypass the queue and start installation immediately
-                # Create a temporary mock book for the installer
-                import os
-                filename = os.path.basename(path)
-                mock_book = {
-                    "id": f"local_{filename}",
-                    "title": os.path.splitext(filename)[0],
-                    "publisher": tr("cli.local_publisher"),
-                    "file_name": filename,
-                    "file_type": os.path.splitext(filename)[1].lstrip('.'),
-                    "is_local": True,
-                    "absolute_path": path
-                }
-                self.start_installation(mock_book, path)
+            self.process_local_files(file_paths)
 
     def dragEnterEvent(self, event):
-        """Accept file drops if they contain URLs."""
+        """Accept file drops if they contain URLs and show overlay."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
+            self.drop_overlay.show()
+            self.drop_overlay.raise_()
+
+    def dragLeaveEvent(self, event):
+        """Hide overlay when mouse leaves."""
+        self.drop_overlay.hide()
+        super().dragLeaveEvent(event)
 
     def dropEvent(self, event):
         """Handle dropped files for sideloading."""
-        from src.core.translation import tr
+        self.drop_overlay.hide()
         import os
         
         valid_extensions = ('.deb', '.zip', '.appimage', '.fernus')
@@ -986,18 +1027,7 @@ class MainWindow(QMainWindow):
                     dropped_files.append(path)
 
         if dropped_files:
-            for path in dropped_files:
-                filename = os.path.basename(path)
-                mock_book = {
-                    "id": f"local_{filename}",
-                    "title": os.path.splitext(filename)[0],
-                    "publisher": tr("cli.local_publisher"),
-                    "file_name": filename,
-                    "file_type": os.path.splitext(filename)[1].lstrip('.'),
-                    "is_local": True,
-                    "absolute_path": path
-                }
-                self.start_installation(mock_book, path)
+            self.process_local_files(dropped_files)
 
     def show_about_dialog(self):
         """Displays the About application dialog."""

@@ -119,7 +119,8 @@
     "logs_menu": "Logs",
     "installation_logs_title": "Installation Logs",
     "clear_logs_btn": "Clear",
-    "close_btn": "Close"
+    "close_btn": "Close",
+    "drop_files_here": "Drop files here to install..."
   },
   "installer": {
     "sim_installing": "Simulation: Installing '{title}'...",
