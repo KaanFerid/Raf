@@ -134,6 +134,9 @@ class InstallerWorker(QThread):
         # This will pop up a PolicyKit password prompt for security.
         cmd = ["pkexec", "apt-get", "install", "-y", self.file_path]
         
+        self.output_received.emit(self.book_id, f"--- Starting DEB installation of {self.book.get('title')} ---")
+        self.output_received.emit(self.book_id, f"Executing: {' '.join(cmd)}")
+        
         try:
             process = subprocess.Popen(
                 cmd,
@@ -149,6 +152,7 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
+                self.output_received.emit(self.book_id, "--- Installation completed successfully ---")
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             elif process.returncode in (126, 127):
@@ -173,6 +177,9 @@ class InstallerWorker(QThread):
             return
 
         cmd = ["pkexec", "apt-get", "remove", "-y", package_name]
+        
+        self.output_received.emit(self.book_id, f"--- Starting DEB uninstallation of {self.book.get('title')} ---")
+        self.output_received.emit(self.book_id, f"Executing: {' '.join(cmd)}")
         
         try:
             process = subprocess.Popen(
@@ -235,16 +242,17 @@ class InstallerWorker(QThread):
             tmp_desktop_path = create_desktop_launcher(self.book, tmp_dir)
             
             self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
+            self.output_received.emit(self.book_id, f"--- Starting ZIP installation of {self.book.get('title')} ---")
             
             script = """
-            set -e
-            rm -rf "$1"
-            mkdir -p "$1"
-            cp -r "$2/"* "$1/"
-            cp "$3" "$4"
-            chmod 644 "$4"
-            rm -rf "$2"
-            rm -f "$3"
+            set -ex
+            rm -rfv "$1"
+            mkdir -pv "$1"
+            cp -rv "$2/"* "$1/"
+            cp -v "$3" "$4"
+            chmod -v 644 "$4"
+            rm -rfv "$2"
+            rm -fv "$3"
             """
             
             cmd = [
@@ -260,6 +268,7 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
+                self.output_received.emit(self.book_id, "--- Installation completed successfully ---")
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             elif process.returncode in (126, 127):
@@ -284,10 +293,11 @@ class InstallerWorker(QThread):
         desktop_file = f"/usr/share/applications/raf-{self.book_id}.desktop"
         
         try:
+            self.output_received.emit(self.book_id, f"--- Starting ZIP uninstallation of {self.book.get('title')} ---")
             script = """
-            set -e
-            rm -rf "$1"
-            rm -f "$2"
+            set -ex
+            rm -rfv "$1"
+            rm -fv "$2"
             """
             
             cmd = [
@@ -301,6 +311,7 @@ class InstallerWorker(QThread):
             process.wait()
                 
             if process.returncode == 0:
+                self.output_received.emit(self.book_id, "--- Uninstallation completed successfully ---")
                 self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
                 self.finished.emit(self.book_id, True)
             elif process.returncode in (126, 127):
@@ -333,15 +344,16 @@ class InstallerWorker(QThread):
             
             self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
             
+            self.output_received.emit(self.book_id, f"--- Starting AppImage/Standalone installation of {self.book.get('title')} ---")
             script = """
-            set -e
-            rm -rf "$1"
-            mkdir -p "$1"
-            cp "$2" "$1/$3"
-            cp "$4" "$5"
-            chmod 644 "$5"
-            rm -rf "$6"
-            rm -f "$4"
+            set -ex
+            rm -rfv "$1"
+            mkdir -pv "$1"
+            cp -v "$2" "$1/$3"
+            cp -v "$4" "$5"
+            chmod -v 644 "$5"
+            rm -rfv "$6"
+            rm -fv "$4"
             """
             
             cmd = [
@@ -359,6 +371,7 @@ class InstallerWorker(QThread):
             process.wait()
             
             if process.returncode == 0:
+                self.output_received.emit(self.book_id, "--- Installation completed successfully ---")
                 self.status_changed.emit(self.book_id, tr("installer.install_completed"))
                 self.finished.emit(self.book_id, True)
             else:

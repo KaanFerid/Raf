@@ -9,10 +9,13 @@ class InstallationLogsDialog(QDialog):
         
         layout = QVBoxLayout(self)
         
+        from PyQt5.QtGui import QFont
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
         # Use a monospace font for logs
-        self.log_output.setStyleSheet("font-family: monospace;")
+        font = QFont("monospace")
+        font.setStyleHint(QFont.Monospace)
+        self.log_output.setFont(font)
         layout.addWidget(self.log_output)
         
         btn_layout = QHBoxLayout()
