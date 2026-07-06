@@ -146,7 +146,26 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # ViewStack
         self.stack = Adw.ViewStack()
+        self.stack.set_vexpand(True)
         main_box.append(self.stack)
+
+        # Batch Action Bar
+        self.batch_bar = Gtk.ActionBar()
+        self.batch_bar.set_revealed(False)
+        main_box.append(self.batch_bar)
+
+        self.batch_count_label = Gtk.Label(label="0 Selected")
+        self.batch_bar.pack_start(self.batch_count_label)
+
+        self.batch_install_btn = Gtk.Button(label=tr("ui.install_selected"))
+        self.batch_install_btn.add_css_class("suggested-action")
+        self.batch_install_btn.connect("clicked", self.install_selected)
+        self.batch_bar.pack_end(self.batch_install_btn)
+
+        self.batch_uninstall_btn = Gtk.Button(label=tr("ui.uninstall_selected"))
+        self.batch_uninstall_btn.add_css_class("destructive-action")
+        self.batch_uninstall_btn.connect("clicked", self.uninstall_selected)
+        self.batch_bar.pack_end(self.batch_uninstall_btn)
 
         # Market Page
         self.market_page, self.market_listbox = self.create_list_page()
@@ -386,26 +405,33 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
-                card = self.card_widgets.get(book_id)
-                if card:
-                    card.primary_btn.set_sensitive(False)
-                    card.secondary_btn.set_sensitive(False)
-                    card.primary_btn.set_label(tr("ui.uninstalling_btn"))
-                
-                worker = InstallerWorker(book, None, action="uninstall")
-                worker.on_finished = self.on_uninstallation_finished
-                worker.on_output_received = self.on_install_output
-                worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
-                
-                self.active_installations[book_id] = worker
-                worker.start()
+                self._execute_uninstallation(book_id, book)
 
-        dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.uninstall_library_title"), body=tr("ui.uninstall_library_prompt", title=book['title']))
-        dialog.add_response("cancel", tr("ui.no"))
-        dialog.add_response("yes", tr("ui.yes"))
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=tr("ui.uninstall_library_title"),
+            body=tr("ui.confirm_uninstall", book=book['title'])
+        )
+        dialog.add_response("cancel", tr("ui.cancel_btn"))
+        dialog.add_response("yes", tr("ui.uninstall_btn"))
         dialog.set_response_appearance("yes", Adw.ResponseAppearance.DESTRUCTIVE)
         dialog.connect("response", on_response)
         dialog.present()
+
+    def _execute_uninstallation(self, book_id, book):
+        card = self.card_widgets.get(book_id)
+        if card:
+            card.primary_btn.set_sensitive(False)
+            card.secondary_btn.set_sensitive(False)
+            card.primary_btn.set_label(tr("ui.uninstalling_btn"))
+        
+        worker = InstallerWorker(book, None, action="uninstall")
+        worker.on_finished = self.on_uninstallation_finished
+        worker.on_output_received = self.on_install_output
+        worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
+        
+        self.active_installations[book_id] = worker
+        worker.start()
 
     def on_uninstallation_finished(self, book_id, success):
         worker = self.active_installations.pop(book_id, None)
@@ -480,8 +506,79 @@ class MainWindow(Gtk.ApplicationWindow):
     def toggle_selection_mode(self, btn):
         self._selection_mode = btn.get_active()
         self._selected_books.clear()
+        self.batch_bar.set_revealed(self._selection_mode)
+        self._update_batch_bar()
         for card in self.card_widgets.values():
             card.set_selection_mode(self._selection_mode)
+
+    def toggle_selection(self, book_id, is_selected):
+        if is_selected:
+            self._selected_books.add(book_id)
+        else:
+            self._selected_books.discard(book_id)
+        self._update_batch_bar()
+
+    def _update_batch_bar(self):
+        count = len(self._selected_books)
+        self.batch_count_label.set_label(tr("ui.selected_count", count=count))
+        
+        has_installed = False
+        has_uninstalled = False
+        for bid in self._selected_books:
+            card = self.card_widgets.get(bid)
+            if card:
+                if card.is_installed:
+                    has_installed = True
+                else:
+                    has_uninstalled = True
+                    
+        self.batch_install_btn.set_sensitive(count > 0 and has_uninstalled and not self.is_offline)
+        self.batch_uninstall_btn.set_sensitive(count > 0 and has_installed)
+
+    def install_selected(self, btn):
+        books = self.db.get_all_books()
+        book_map = {b['id']: b for b in books}
+        queued = 0
+        for book_id in list(self._selected_books):
+            card = self.card_widgets.get(book_id)
+            if card and not card.is_installed and not card.downloading and not card.is_queued:
+                book = book_map.get(book_id)
+                if book:
+                    self.start_download(book)
+                    queued += 1
+        if queued:
+            self.show_toast(tr("ui.batch_queued", count=queued))
+        self.select_mode_btn.set_active(False)
+
+    def uninstall_selected(self, btn):
+        installed_ids = [
+            bid for bid in self._selected_books
+            if bid in self.card_widgets and self.card_widgets[bid].is_installed
+        ]
+        if not installed_ids:
+            return
+            
+        def on_response(dialog, response):
+            dialog.close()
+            if response == "uninstall":
+                books = self.db.get_all_books()
+                book_map = {b['id']: b for b in books}
+                for book_id in installed_ids:
+                    book = book_map.get(book_id)
+                    if book:
+                        self._execute_uninstallation(book_id, book)
+            self.select_mode_btn.set_active(False)
+
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=tr("ui.uninstall_library_title"),
+            body=tr("ui.batch_confirm_uninstall", count=len(installed_ids))
+        )
+        dialog.add_response("cancel", tr("ui.cancel_btn"))
+        dialog.add_response("uninstall", tr("ui.uninstall_btn"))
+        dialog.set_response_appearance("uninstall", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.connect("response", on_response)
+        dialog.present()
 
     def on_install_local_clicked(self, btn):
         def on_response(dialog, response, file):
