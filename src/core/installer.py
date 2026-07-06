@@ -34,13 +34,14 @@ def save_mock_installed(installed_set):
         json.dump(list(installed_set), f, indent=2)
 
 class InstallerWorker(threading.Thread):
-    def __init__(self, book, file_path, action="install"):
+    def __init__(self, book, file_path, action="install", sudo_password=None):
         super().__init__()
         self.daemon = True
         self.book = book
         self.book_id = book['id']
         self.file_path = file_path
         self.action = action  # "install" or "uninstall"
+        self.sudo_password = sudo_password
         
         # Callbacks replacing pyqtSignal
         self.on_status_changed = None   # func(book_id, status_message)
@@ -60,22 +61,46 @@ class InstallerWorker(threading.Thread):
         if self.on_output_received:
             GLib.idle_add(self.on_output_received, book_id, output)
             
-    def _emit_auth_failed(self):
+    def _emit_auth_failed(self, book_id):
         if self.on_auth_failed:
-            GLib.idle_add(self.on_auth_failed, self.book_id)
+            GLib.idle_add(self.on_auth_failed, book_id)
+
+    def _execute_elevated(self, cmd):
+        if cmd[0] == "pkexec":
+            cmd = cmd[1:]
+        
+        if self.sudo_password:
+            full_cmd = ["sudo", "-S"] + cmd
+            process = subprocess.Popen(
+                full_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.PIPE,
+                text=True,
+                bufsize=1
+            )
+            try:
+                process.stdin.write(self.sudo_password + "\n")
+                process.stdin.flush()
+                process.stdin.close()
+            except: pass
+            return process
+        else:
+            full_cmd = ["pkexec"] + cmd
+            return subprocess.Popen(
+                full_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
 
     def _run_subprocess(self, cmd, start_log_msg, success_status_msg, success_log_msg):
         self._emit_output(self.book_id, start_log_msg)
         self._emit_output(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
         
         try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
+            process = self._execute_elevated(cmd)
             for line in process.stdout:
                 self._emit_output(self.book_id, line)
             process.wait()

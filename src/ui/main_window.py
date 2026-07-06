@@ -28,6 +28,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._selection_mode = False    # Batch selection mode active
         self._selected_books = set()    # book_ids selected in batch mode
         self.is_offline = False
+        self.sudo_password = None
         
         self.db = Database()
         self.installed_packages_cache = set()
@@ -293,7 +294,7 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
-                self.start_download(book)
+                self.require_sudo_password(lambda: self.start_download(book))
                 
         dialog = Adw.MessageDialog(
             transient_for=self, 
@@ -360,8 +361,9 @@ class MainWindow(Gtk.ApplicationWindow):
             card.primary_btn.set_label(tr("ui.installing_btn"))
             card.status_label.set_text(tr("ui.installing_btn"))
         
-        worker = InstallerWorker(book, local_file_path, action="install")
+        worker = InstallerWorker(book, local_file_path, action="install", sudo_password=self.sudo_password)
         worker.on_finished = self.on_installation_finished
+        worker.on_status_changed = lambda bid, msg: self.on_install_output(bid, f"[{bid}] Status: {msg}")
         worker.on_output_received = self.on_install_output
         worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
         
@@ -407,7 +409,7 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
-                self._execute_uninstallation(book_id, book)
+                self.require_sudo_password(lambda: self._execute_uninstallation(book_id, book))
 
         dialog = Adw.MessageDialog(
             transient_for=self,
@@ -427,7 +429,7 @@ class MainWindow(Gtk.ApplicationWindow):
             card.secondary_btn.set_sensitive(False)
             card.primary_btn.set_label(tr("ui.uninstalling_btn"))
         
-        worker = InstallerWorker(book, None, action="uninstall")
+        worker = InstallerWorker(book, None, action="uninstall", sudo_password=self.sudo_password)
         worker.on_finished = self.on_uninstallation_finished
         worker.on_output_received = self.on_install_output
         worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
@@ -554,9 +556,11 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
-                for book in to_install:
-                    self.start_download(book)
-                self.show_toast(tr("ui.batch_queued", count=len(to_install)))
+                def do_batch_install():
+                    for book in to_install:
+                        self.start_download(book)
+                    self.show_toast(tr("ui.batch_queued", count=len(to_install)))
+                self.require_sudo_password(do_batch_install)
             self.select_mode_btn.set_active(False)
 
         dialog = Adw.MessageDialog(
@@ -580,12 +584,14 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "uninstall":
-                books = self.db.get_all_books()
-                book_map = {b['id']: b for b in books}
-                for book_id in installed_ids:
-                    book = book_map.get(book_id)
-                    if book:
-                        self._execute_uninstallation(book_id, book)
+                def do_batch_uninstall():
+                    books = self.db.get_all_books()
+                    book_map = {b['id']: b for b in books}
+                    for book_id in installed_ids:
+                        book = book_map.get(book_id)
+                        if book:
+                            self._execute_uninstallation(book_id, book)
+                self.require_sudo_password(do_batch_uninstall)
             self.select_mode_btn.set_active(False)
 
         dialog = Adw.MessageDialog(
@@ -727,3 +733,44 @@ class MainWindow(Gtk.ApplicationWindow):
     def show_toast(self, msg):
         toast = Adw.Toast.new(msg)
         self.toast_overlay.add_toast(toast)
+
+    def require_sudo_password(self, callback):
+        import subprocess
+        def check_password(pwd):
+            try:
+                p = subprocess.Popen(["sudo", "-S", "-k", "true"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                p.communicate(pwd + "\n")
+                return p.returncode == 0
+            except: return False
+
+        if self.sudo_password and check_password(self.sudo_password):
+            callback()
+            return
+
+        dialog = Adw.MessageDialog(
+            transient_for=self, 
+            heading=tr("ui.auth_required_title", default="Authentication Required"), 
+            body=tr("ui.auth_required_prompt", default="Please enter your password to perform this action.")
+        )
+        dialog.add_response("cancel", tr("ui.cancel_btn"))
+        dialog.add_response("ok", tr("ui.ok_btn", default="OK"))
+        dialog.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
+
+        entry = Adw.PasswordEntryRow(title=tr("ui.password", default="Password"))
+        listbox = Gtk.ListBox()
+        listbox.add_css_class("boxed-list")
+        listbox.append(entry)
+        dialog.set_extra_child(listbox)
+
+        def on_response(dlg, response):
+            dlg.close()
+            if response == "ok":
+                pwd = entry.get_text()
+                if check_password(pwd):
+                    self.sudo_password = pwd
+                    callback()
+                else:
+                    self.show_toast(tr("ui.auth_failed", default="Authentication failed! Invalid password."))
+                    
+        dialog.connect("response", on_response)
+        dialog.present()
