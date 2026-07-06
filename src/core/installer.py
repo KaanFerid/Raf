@@ -106,6 +106,13 @@ class InstallerWorker(threading.Thread):
             process.wait()
             
             if process.returncode == 0:
+                if getattr(self, 'action', '') == "uninstall":
+                    local_desktop_file = os.path.expanduser(f"~/.local/share/applications/raf-{self.book_id}.desktop")
+                    if os.path.exists(local_desktop_file):
+                        try:
+                            os.remove(local_desktop_file)
+                        except Exception:
+                            pass
                 self._emit_output(self.book_id, success_log_msg)
                 self._emit_status(self.book_id, success_status_msg)
                 self._emit_finished(self.book_id, True)
