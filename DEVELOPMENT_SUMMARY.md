@@ -15,7 +15,7 @@ This document provides a chronological account of every completed development st
 | **License** | GPL-3.0 (see `debian/copyright`) |
 | **Target Platform** | Pardus ETAP Smart Boards (Debian-based) |
 | **Language** | Python 3.9+ |
-| **GUI Framework** | PySide6 / PyQt6 / PyQt5 (auto-detected) |
+| **GUI Framework** | GTK4 / Libadwaita |
 
 ---
 
@@ -27,16 +27,15 @@ This document provides a chronological account of every completed development st
 
 - Reorganized the project into a standard open-source Python layout:
   - `src/core/` — all business logic, fully separated from UI
-  - `src/ui/` — all Qt widgets and stylesheets
+  - `src/ui/` — all GTK widgets
   - `src/assets/` — book database and icon assets
   - `debian/` — Debian packaging configuration
   - `docs/` — technical documentation
   - `scripts/` — packaging and utility automation
   - `tests/` — automated test suite
   - `mock_system/` — sandboxed developer environment
-- Created `qt_compat.py` to abstract over PySide6, PyQt6, and PyQt5 with a single unified import surface, including enum shim patches for PyQt6 backward compatibility
 - Wrote the initial `Database` class to load and serve `books.json`
-- Created the `DownloadWorker` QThread with `progress_changed`, `finished`, and `error` signals
+- Created the `DownloadWorker` `threading.Thread` with callbacks
 
 ---
 
@@ -44,14 +43,10 @@ This document provides a chronological account of every completed development st
 
 **Goal:** Create a visually modern interface matching Pardus/GNOME desktop conventions.
 
-- Designed and implemented the full `LIGHT_STYLE` and `DARK_STYLE` QSS stylesheets in `styles.py` mimicking GTK Libadwaita's flat, rounded-corner aesthetic
-- Built the `BookCard` widget — a horizontal row layout with:
-  - `PublisherBadge` — a custom `QPainter`-drawn colored initials avatar using a deterministic palette based on the publisher name's first character
-  - Progress bar (hidden until downloading)
-  - Speed and status labels
-  - Primary and secondary action buttons with dynamic `class` property switching for CSS targeting
+- Implemented `Adw.ApplicationWindow` layout with native GTK4 widgets mimicking GTK Libadwaita's flat, rounded-corner aesthetic
+- Built the `BookRow` widget — a horizontal `Adw.ActionRow`
 - Built the header bar with centered search, left branding, right view switcher tabs (Market / My Library), Settings, and About buttons
-- Implemented `PreferencesDialog` with theme selector radio buttons and language combo box
+- Implemented `PreferencesWindow` natively using `Adw.PreferencesWindow`
 - Added `set_linux_dark_titlebar()` using `xprop` to sync the window manager's title bar decoration with the app's chosen theme
 
 ---
@@ -65,7 +60,7 @@ This document provides a chronological account of every completed development st
 - Added **HTTP Range resumption**: if the connection drops after partial download, retries with `Range: bytes=<bytes_received>-` header; up to 3 automatic retries before raising an error
 - Integrated **on-screen keyboard (OSK) trigger**: an `eventFilter` on the search `QLineEdit` detects focus events and fires `onboard` (or `florence`) for touchscreen environments
 - Added `last_percent` attribute to `DownloadWorker` for title bar progress reporting
-- Built the `InstallerWorker` QThread covering:
+- Built the `InstallerWorker` Thread covering:
   - `.deb` packages via `pkexec apt-get install -y ./file.deb`
   - `.zip`/`.fernus` packages: extract to `~/.local/share/raf/apps/<id>/`, create `.desktop` launcher
   - Simulated install/uninstall in developer mode (1.5s / 1s artificial delays)
@@ -83,8 +78,8 @@ This document provides a chronological account of every completed development st
   - `DEBIAN/md5sums` — MD5 checksums of all packaged data files
   - `usr/share/doc/raf/copyright` — GPL-3.0 declaration with strict `0o644` permissions
   - File permission enforcement (directories `0755`, files `0644`, executables `0755`)
-- Built `UpdateChecker` (QThread) — fetches `update.json` from GitHub, compares version tuples, and signals `update_available(version, url, changelog)`
-- Built `UpdateInstaller` (QThread) — downloads the update `.deb` and installs it via `pkexec apt-get install --reinstall -y`
+- Built `UpdateChecker` (Thread) — fetches `update.json` from GitHub, compares version tuples, and invokes callbacks
+- Built `UpdateInstaller` (Thread) — downloads the update `.deb` and installs it via `pkexec apt-get install --reinstall -y`
 - Connected the update flow to `MainWindow.on_update_available()` which presents a rich-text confirmation dialog with changelog
 
 ---
@@ -95,7 +90,7 @@ This document provides a chronological account of every completed development st
 
 - Created `src/core/cli.py` handling six commands: `list`, `list-installed`, `search`, `install`, `uninstall`, `clean`
 - Modified `src/main.py` to route to CLI mode when any argument is present
-- CLI uses a headless Qt context (`QT_QPA_PLATFORM=offscreen`) to reuse `DownloadWorker` and `InstallerWorker` directly
+- CLI reuses `DownloadWorker` and `InstallerWorker` directly
 - Added `--help` / `-h` / `help` argument for usage summary
 - Implemented a real-time ASCII progress bar in the terminal during downloads
 - All CLI strings are fully localized through the same `tr()` system as the GUI
@@ -106,11 +101,7 @@ This document provides a chronological account of every completed development st
 
 **Goal:** Fix visual regressions and tighten the user experience.
 
-- Fixed dark theme compatibility with PyQt5 fallback — the `DARK_STYLE` QSS now works identically across all three Qt backends
-- Fixed theme selection circles in `PreferencesDialog` — replaced pure CSS circles with `QRadioButton` custom `indicator` rules in the QSS for reliable cross-backend rendering
-- Fixed white bars in language selector in dark mode — patched `QComboBox` drop-down `QListView` background in `DARK_STYLE`
-- Ensured `PreferencesDialog` always inherits the parent window's active stylesheet
-- Made `PreferencesDialog` buttons dynamically sized with `adjustSize()` on `retranslate_ui()` to prevent text clipping
+- Built a native GTK4 UI, dropping custom QSS in favor of standard GTK themes
 - Removed unused locale keys (eliminated ~15 orphaned keys including `primary_keywords`, `middle_keywords`, `high_keywords`, and all category-related strings)
 - Replaced deprecated `locale.getdefaultlocale()` with `locale.getlocale()` in `translation.py`
 - Replaced all bare `except:` clauses with `except Exception:` across all core modules
@@ -125,39 +116,37 @@ Seven new features were designed, implemented, and integrated:
 
 #### 7.1 Download Queue (`src/core/download_queue.py`)
 
-- `DownloadQueue` — a `QObject`-based FIFO queue with configurable max concurrency (default: 2)
+- `DownloadQueue` — a FIFO queue with configurable max concurrency (default: 2)
 - Prevents duplicate enqueuing of the same book (checked by `book_id`)
-- Emits `job_started`, `job_finished`, `queue_changed` signals
-- `MainWindow` responds to `queue_changed` to update the header badge
+- Prevents duplicate enqueuing of the same book (checked by `book_id`)
+- `MainWindow` responds to queue changes to update the header badge
 - Clicking Cancel on a queued (not yet downloading) card calls `DownloadQueue.dequeue()` — instant removal, no download started
 
 #### 7.2 Toast Notifications & Prompts (`src/ui/toast.py`, `src/ui/dialogs.py`)
 
-- `ToastNotification` — a frameless overlay `QWidget` with `QPropertyAnimation` opacity fade-in
-- `ToastManager` — stacks active toasts in the bottom-right corner, repositions on dismiss and window resize
+- `ToastManager` — stacks active toasts via Adwaita Toast overlays.
 - Four types with distinct colors: `info` (blue), `success` (green), `warning` (amber), `error` (red)
 - Toasts are shown for: install success/error, uninstall success/error, download error, update available, database sync success
 - **Pre-Install Confirmation:** Added an intercepting modal prompt that asks users to confirm before escalating privileges via `pkexec`. This prompt appears immediately after a download completes but before `start_installation` is executed, preventing accidental root authentication popups.
 
 #### 7.3 Title Bar Progress
 
-- `MainWindow._update_title_progress()` called on every `progress_changed` signal and on download finish/error
+- `MainWindow._update_title_progress()` called on every progress callback and on download finish/error
 - Single download: `[▼ Ankara Kitabı — 67%] Raf`
 - Multiple downloads: `[▼ 3 downloads — avg 45%] Raf`
 - Title resets to `Raf` when no active downloads remain
 
 #### 7.4 Batch Operations
 
-- **Select mode** toggle button in the header (`SelectModeBtn`)
-- `BookCard.set_selection_mode(active)` shows/hides a `☐`/`☑` checkbox button
-- `BookCard.selection_changed` signal emits `(book_id, is_selected)` to `MainWindow`
-- Batch bar appears above the status bar with: selected count label, Install Selected button, Uninstall Selected button, and ✕ exit button
+- **Select mode** toggle button in the header
+- `BookRow.set_selection_mode(active)` shows/hides a checkbox
+- Batch bar appears with: selected count label, Install Selected button, Uninstall Selected button
 - `install_selected()` — queues all selected uninstalled books via the download queue
 - `uninstall_selected()` — shows a confirmation dialog then triggers `uninstall_requested` on each selected card
 
 #### 7.5 Remote Database Sync (`src/core/sync.py`)
 
-- `DatabaseSyncWorker` — QThread that fetches a remote `books.json` URL on startup
+- `DatabaseSyncWorker` — Thread that fetches a remote `books.json` URL on startup
 - Validates the JSON structure before writing to the local cache
 - `_on_sync_finished()` reloads the `Database` and refreshes the grid
 - Completely silent on failure — local cache always used as fallback
@@ -176,7 +165,7 @@ Seven new features were designed, implemented, and integrated:
 
 #### 7.7 Auto-Update Scheduler (`src/core/updater.py`)
 
-- `AutoUpdateScheduler` runs inside a `QTimer` at 6-hour intervals
+- `AutoUpdateScheduler` runs inside a background thread loop at 6-hour intervals
 - Three user-configurable policies stored in `config.json` under `"auto_update_policy"`:
   - `"off"` — no background checks at all
   - `"check"` — checks at most once per 24h; shows a toast if an update is found
@@ -194,7 +183,7 @@ Seven new features were designed, implemented, and integrated:
 - Fully localized installation log traces (`installer.py`) so background bash script steps report properly in the active UI language.
 - Wrapped standalone icons and formatting placeholders in localizable blocks where appropriate.
 - Fixed an interaction blocker bug where clicking "Logs" inside the modal `AboutDialog` spawned a non-clickable `LogsDialog` in the background (About window is now dismissed first).
-- Combined `run_arch.py` and `run_dev.py` into a unified `run_dev.py` that automatically provisions a PyQt5 virtual environment if dependencies are missing.
+- Combined `run_arch.py` and `run_dev.py` into a unified `run_dev.py` that automatically provisions a Python virtual environment if dependencies are missing.
 
 ---
 
@@ -205,9 +194,8 @@ Seven new features were designed, implemented, and integrated:
 | File | Role |
 |---|---|
 | `src/main.py` | Entry point — GUI or CLI routing |
-| `src/qt_compat.py` | Qt backend abstraction layer |
 | `src/core/database.py` | JSON book catalogue loader |
-| `src/core/downloader.py` | HTTP download QThread |
+| `src/core/downloader.py` | HTTP download Thread |
 | `src/core/download_queue.py` | FIFO download queue with concurrency control |
 | `src/core/installer.py` | Package install/uninstall for deb/zip/flatpak/snap |
 | `src/core/updater.py` | Update checker, installer, auto-update scheduler |
@@ -216,11 +204,11 @@ Seven new features were designed, implemented, and integrated:
 | `src/core/translation.py` | Runtime i18n engine |
 | `src/core/cli.py` | CLI command handler |
 | `src/core/version.py` | App version constant |
-| `src/ui/main_window.py` | MainWindow + PreferencesDialog |
-| `src/ui/components.py` | BookCard + PublisherBadge |
-| `src/ui/styles.py` | LIGHT_STYLE and DARK_STYLE QSS |
-| `src/ui/toast.py` | Toast notification overlay system |
-| `src/assets/books.json` | Built-in book database |
+| `src/ui/main_window.py` | MainWindow |
+| `src/ui/components.py` | BookRow |
+| `src/ui/preferences.py` | Native Preferences Window |
+| `src/ui/about.py` | Native About Window |
+| `src/ui/logs_dialog.py` | Real-time installation subprocess logger |
 | `src/assets/raf.png` | Application icon |
 | `src/assets/locales/en.json` | English locale strings |
 | `src/assets/locales/tr.json` | Turkish locale strings |
@@ -301,13 +289,9 @@ python3 tests/test_drive.py
 
 ## 🔧 Key Design Decisions
 
-### Why `QThread` workers instead of `asyncio`?
+### Why GTK4 / Libadwaita?
 
-Qt's own threading model integrates cleanly with the signal/slot system. `asyncio` would require an event loop bridge (`qasync`) and adds complexity for a project that is already tied to Qt. `QThread` + signals provides a simple, well-understood pattern.
-
-### Why three Qt backends?
-
-Pardus ETAP boards ship with `python3-pyqt5` in their Debian repos. Developer machines typically prefer `PySide6`. Supporting all three via `qt_compat.py` means the same codebase runs everywhere without modification.
+Libadwaita provides native styling that perfectly fits modern Pardus/GNOME desktop conventions, with built-in animations, responsive design out of the box, and a unified ecosystem approach. QSS maintenance became unwieldy and non-native.
 
 ### Why a local JSON database instead of SQLite?
 

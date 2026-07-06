@@ -1,5 +1,6 @@
 # CLI Reference
 
+[![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](cli-tr.md)
 Complete reference for the Raf command-line interface. The CLI shares all logic with the GUI — the same installer, downloader, and database modules are used.
 
 ---
@@ -247,7 +248,6 @@ Cache folder is empty or does not exist.
 | Variable | Values | Effect |
 |---|---|---|
 | `RAF_DEV` | `1` | Activate developer/simulation mode |
-| `QT_QPA_PLATFORM` | `offscreen` | Run headless (auto-set by CLI) |
 
 ---
 

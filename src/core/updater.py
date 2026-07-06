@@ -3,7 +3,8 @@ import time
 import json
 import requests
 import subprocess
-from PyQt5.QtCore import QThread, QObject, QTimer, pyqtSignal as Signal
+import threading
+from gi.repository import GLib
 from src.core.translation import tr
 from src.core.version import __version__ as APP_VERSION
 from src.core.config import load_config, get_last_update_check, set_last_update_check
@@ -11,18 +12,28 @@ from src.core.config import load_config, get_last_update_check, set_last_update_
 # Remote update metadata file
 UPDATE_URL = "https://api.github.com/repos/KaanFerid/Raf/releases/latest"
 
-# 6 hours between automatic checks
-AUTO_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
+# 6 hours between automatic checks in seconds
+AUTO_CHECK_INTERVAL_SEC = 6 * 60 * 60
 # Minimum time between checks (24 hours)
 MIN_CHECK_INTERVAL_SECONDS = 86400
 
 
-class UpdateChecker(QThread):
+class UpdateChecker(threading.Thread):
     """Checks the remote GitHub Releases API once and emits whether an update is available."""
 
-    # Signals to notify the UI
-    update_available = Signal(str, str, str)  # version, download_url, changelog
-    no_update = Signal()
+    def __init__(self):
+        super().__init__()
+        self.daemon = True
+        self.on_update_available = None  # func(version, download_url, changelog)
+        self.on_no_update = None         # func()
+
+    def _emit_available(self, version, download_url, changelog):
+        if self.on_update_available:
+            GLib.idle_add(self.on_update_available, version, download_url, changelog)
+
+    def _emit_none(self):
+        if self.on_no_update:
+            GLib.idle_add(self.on_no_update)
 
     def run(self):
         # Determine data source
@@ -49,7 +60,7 @@ class UpdateChecker(QThread):
                 pass
                 
         if not data:
-            self.no_update.emit()
+            self._emit_none()
             return
             
         # Parse GitHub Release format
@@ -65,7 +76,7 @@ class UpdateChecker(QThread):
                 break
                 
         if not download_url:
-            self.no_update.emit()
+            self._emit_none()
             return
         
         # Numeric comparison
@@ -73,71 +84,76 @@ class UpdateChecker(QThread):
         latest_parts = [int(x) for x in latest_version.split('.')]
         
         if latest_parts > local_parts:
-            self.update_available.emit(latest_version, download_url, changelog)
+            self._emit_available(latest_version, download_url, changelog)
         else:
-            self.no_update.emit()
+            self._emit_none()
 
 
-class UpdateInstaller(QThread):
+class UpdateInstaller(threading.Thread):
     """Installs a downloaded application update .deb file."""
-
-    status_changed = Signal(str)
-    finished = Signal(bool)
 
     def __init__(self, file_path):
         super().__init__()
+        self.daemon = True
         self.file_path = file_path
+        self.on_status_changed = None  # func(status_message)
+        self.on_finished = None        # func(success)
+
+    def _emit_status(self, msg):
+        if self.on_status_changed:
+            GLib.idle_add(self.on_status_changed, msg)
+
+    def _emit_finished(self, success):
+        if self.on_finished:
+            GLib.idle_add(self.on_finished, success)
 
     def run(self):
         # 1. Developer simulation path
         if os.environ.get("RAF_DEV") == "1":
-            self.status_changed.emit(tr("updater.sim_installing"))
-            self.msleep(2000)
-            self.finished.emit(True)
+            self._emit_status(tr("updater.sim_installing"))
+            time.sleep(2)
+            self._emit_finished(True)
             return
 
         # 2. Production system installation path
-        self.status_changed.emit(tr("updater.system_updating"))
+        self._emit_status(tr("updater.system_updating"))
         cmd = ["pkexec", "apt-get", "install", "--reinstall", "-y", self.file_path]
         try:
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120)
             if res.returncode == 0:
-                self.finished.emit(True)
+                self._emit_finished(True)
             else:
-                self.finished.emit(False)
+                self._emit_finished(False)
         except Exception as e:
             print(tr("log.error_installing_update", error=e))
-            self.finished.emit(False)
+            self._emit_finished(False)
 
 
-class AutoUpdateScheduler(QObject):
+class AutoUpdateScheduler:
     """
     Runs periodic background update checks based on the user's policy setting.
-    Policy values (stored in config as 'auto_update_policy'):
-      'off'    — Never check automatically (only on launch)
-      'check'  — Check daily, show a toast notification
-      'auto'   — Check daily, download and install automatically
     """
-
-    # Emitted when an update is found (in 'check' policy mode)
-    update_toast_requested = Signal(str)          # formatted toast message
-    # Emitted when an update should be installed automatically ('auto' mode)
-    auto_install_requested = Signal(str, str, str) # version, url, changelog
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self):
         self._checker = None
-        self._timer = QTimer(self)
-        self._timer.timeout.connect(self._maybe_check)
+        self._timeout_id = None
+        
+        self.on_update_toast_requested = None  # func(version)
+        self.on_auto_install_requested = None  # func(version, url, changelog)
 
     def start(self):
         """Starts the scheduler timer."""
-        self._timer.start(AUTO_CHECK_INTERVAL_MS)
-        # Also run once immediately on startup
+        # Run once immediately on startup
         self._maybe_check()
+        self._timeout_id = GLib.timeout_add_seconds(AUTO_CHECK_INTERVAL_SEC, self._maybe_check_loop)
 
     def stop(self):
-        self._timer.stop()
+        if self._timeout_id:
+            GLib.source_remove(self._timeout_id)
+            self._timeout_id = None
+
+    def _maybe_check_loop(self):
+        self._maybe_check()
+        return True  # Keep the timeout running
 
     def _maybe_check(self):
         """Runs an update check if the policy allows and enough time has passed."""
@@ -155,7 +171,7 @@ class AutoUpdateScheduler(QObject):
         set_last_update_check(time.time())
 
         self._checker = UpdateChecker()
-        self._checker.update_available.connect(self._on_update_found)
+        self._checker.on_update_available = self._on_update_found
         self._checker.start()
 
     def _on_update_found(self, version, download_url, changelog):
@@ -163,7 +179,7 @@ class AutoUpdateScheduler(QObject):
         config = load_config()
         policy = config.get("auto_update_policy", "check")
 
-        if policy == "auto":
-            self.auto_install_requested.emit(version, download_url, changelog)
-        else:
-            self.update_toast_requested.emit(version)
+        if policy == "auto" and self.on_auto_install_requested:
+            self.on_auto_install_requested(version, download_url, changelog)
+        elif self.on_update_toast_requested:
+            self.on_update_toast_requested(version)

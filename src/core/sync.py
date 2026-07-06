@@ -1,26 +1,33 @@
 import os
 import json
 import requests
-from PyQt5.QtCore import QThread, pyqtSignal as Signal
+import threading
+from gi.repository import GLib
 from src.core.translation import tr
 
-
-class DatabaseSyncWorker(QThread):
+class DatabaseSyncWorker(threading.Thread):
     """
     Background worker that fetches the remote books.json database,
     validates it, and writes it to the local cache file.
-    Emits sync_finished on success, sync_failed on error.
     """
-
-    sync_finished = Signal(int)  # new book count
-    sync_failed = Signal(str)    # error message
-
     REQUIRED_BOOK_KEYS = {'id', 'title', 'publisher', 'file_name', 'download_url'}
 
-    def __init__(self, remote_url, database_dir, parent=None):
-        super().__init__(parent)
+    def __init__(self, remote_url, database_dir):
+        super().__init__()
+        self.daemon = True
         self.remote_url = remote_url
         self.database_dir = database_dir
+        
+        self.on_sync_finished = None # func(new_book_count)
+        self.on_sync_failed = None   # func(error_message)
+
+    def _emit_finished(self, count):
+        if self.on_sync_finished:
+            GLib.idle_add(self.on_sync_finished, count)
+            
+    def _emit_failed(self, error):
+        if self.on_sync_failed:
+            GLib.idle_add(self.on_sync_failed, error)
 
     def run(self):
         try:
@@ -71,10 +78,10 @@ class DatabaseSyncWorker(QThread):
                     pass
 
             if total_books > 0:
-                self.sync_finished.emit(total_books)
+                self._emit_finished(total_books)
             else:
-                self.sync_failed.emit(tr("sync.no_valid_books"))
+                self._emit_failed(tr("sync.no_valid_books"))
         except requests.exceptions.ConnectionError:
-            self.sync_failed.emit(tr("sync.no_network"))
+            self._emit_failed(tr("sync.no_network"))
         except Exception as e:
-            self.sync_failed.emit(str(e))
+            self._emit_failed(str(e))

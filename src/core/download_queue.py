@@ -1,25 +1,33 @@
-from PyQt5.QtCore import QObject, pyqtSignal as Signal
+from gi.repository import GLib
 
-
-class DownloadQueue(QObject):
+class DownloadQueue:
     """
     FIFO download queue with configurable concurrency.
     Manages the lifecycle of book download + install jobs, allowing
     multiple books to be queued and started automatically as slots open.
     """
 
-    # Emitted when a job moves from pending to active
-    job_started = Signal(str)     # book_id
-    # Emitted when a running job finishes (success or failure)
-    job_finished = Signal(str)    # book_id
-    # Emitted whenever the pending queue changes (for UI badge)
-    queue_changed = Signal(int)   # pending count
-
-    def __init__(self, max_concurrent=2, parent=None):
-        super().__init__(parent)
+    def __init__(self, max_concurrent=2):
         self.max_concurrent = max_concurrent
         self._pending = []       # list of (book, local_path) in FIFO order
         self._active_ids = set() # book_ids currently downloading
+        
+        # Callbacks replacing pyqtSignal
+        self.on_job_started = None    # func(book_id)
+        self.on_job_finished = None   # func(book_id)
+        self.on_queue_changed = None  # func(pending_count)
+
+    def _emit_started(self, book_id):
+        if self.on_job_started:
+            GLib.idle_add(self.on_job_started, book_id)
+
+    def _emit_finished(self, book_id):
+        if self.on_job_finished:
+            GLib.idle_add(self.on_job_finished, book_id)
+
+    def _emit_changed(self):
+        if self.on_queue_changed:
+            GLib.idle_add(self.on_queue_changed, len(self._pending))
 
     # ------------------------------------------------------------------
     # Public API
@@ -34,7 +42,7 @@ class DownloadQueue(QObject):
         if self.is_queued(book_id) or self.is_active(book_id):
             return False
         self._pending.append((book, local_path))
-        self.queue_changed.emit(len(self._pending))
+        self._emit_changed()
         self._try_start_next()
         return True
 
@@ -43,7 +51,7 @@ class DownloadQueue(QObject):
         before = len(self._pending)
         self._pending = [(b, p) for (b, p) in self._pending if b['id'] != book_id]
         if len(self._pending) != before:
-            self.queue_changed.emit(len(self._pending))
+            self._emit_changed()
 
     def is_queued(self, book_id):
         """Returns True if the book is waiting in the pending queue."""
@@ -75,16 +83,16 @@ class DownloadQueue(QObject):
         Frees the slot and starts the next job.
         """
         self._active_ids.discard(book_id)
-        self.job_finished.emit(book_id)
+        self._emit_finished(book_id)
         self._try_start_next()
 
     def _try_start_next(self):
         """Start as many pending jobs as allowed by max_concurrent."""
         while self._pending and len(self._active_ids) < self.max_concurrent:
             book, local_path = self._pending.pop(0)
-            self.queue_changed.emit(len(self._pending))
+            self._emit_changed()
             
             # Store the args so MainWindow can retrieve them before emitting the signal
             self._last_started = (book, local_path)
             
-            self.job_started.emit(book['id'])
+            self._emit_started(book['id'])

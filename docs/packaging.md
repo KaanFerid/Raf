@@ -1,5 +1,6 @@
 # Packaging & Distribution Documentation
 
+[![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](packaging-tr.md)
 This document covers everything needed to build, verify, and distribute the Raf `.deb` package. The package is designed to be fully Lintian-compliant for Pardus, Debian, and Ubuntu systems.
 
 ---
@@ -14,7 +15,7 @@ Architecture: all
 Version: (see debian/changelog)
 Section: utils
 Priority: optional
-Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, python3-requests, policykit-1
 Maintainer: Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 Description: Pardus Akilli Tahta Raf Uygulamasi
  Pardus tabanli akilli tahtalarda interaktif kitap raflarinin
@@ -26,7 +27,7 @@ Description: Pardus Akilli Tahta Raf Uygulamasi
 | Package | Why required |
 |---|---|
 | `python3` | Application runtime |
-| `python3-pyside6` or `python3-pyqt5` | Qt GUI framework |
+| `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1` | GTK4 and Libadwaita GUI framework |
 | `python3-requests` | HTTP downloads and Google Drive bypass |
 | `policykit-1` | `pkexec` for privilege escalation when installing `.deb` packages |
 

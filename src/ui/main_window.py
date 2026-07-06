@@ -1,1070 +1,455 @@
 import os
 import subprocess
-import re
-from PyQt5.QtCore import Qt, QTimer, QEvent
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QScrollArea, QStatusBar, QSizePolicy, QPushButton, QProgressBar, QFrame, QDialog, QButtonGroup, QRadioButton, QGroupBox, QApplication, QFileDialog
-from src.ui.dialogs import RafMessageBox
-from PyQt5.QtGui import QIcon, QPixmap, QPen, QColor, QPainter
-from src.ui.styles import LIGHT_STYLE, DARK_STYLE
-from src.ui.components import BookCard
-from src.ui.toast import ToastManager
+from gi.repository import Gtk, Adw, GLib, Gio
+from src.core.translation import tr, on_language_change, remove_language_listener
 from src.core.database import Database
 from src.core.downloader import DownloadWorker
 from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name, get_all_installed_packages
-from src.core.translation import tr, set_language, available_languages, on_language_change, remove_language_listener
-from src.core.config import load_config, save_config
 from src.core.updater import UpdateChecker, UpdateInstaller, AutoUpdateScheduler
 from src.core.download_queue import DownloadQueue
 from src.core.sync import DatabaseSyncWorker
-from src.core.version import __version__ as APP_VERSION
+from src.core.config import load_config
+from src.ui.components import BookRow
+from src.ui.preferences import PreferencesWindow
+from src.ui.about import AboutWindow
 from src.ui.logs_dialog import InstallationLogsDialog
-from PyQt5.QtCore import QThread, pyqtSignal
+from src.ui.desktop_editor import show_message
 
-class PackageQueryWorker(QThread):
-    packages_loaded = pyqtSignal(set)
-    def run(self):
-        from src.core.installer import get_all_installed_packages
-        self.packages_loaded.emit(get_all_installed_packages())
-
-
-
-def set_linux_dark_titlebar(window, dark=True):
-    """Signals the Linux window manager to draw window decorations in dark or light mode using _GTK_THEME_VARIANT."""
-    if os.name != "posix":
-        return
-    try:
-        win_id = window.winId()
-        if win_id:
-            variant = "dark" if dark else "light"
-            subprocess.Popen(
-                ["xprop", "-id", str(int(win_id)), "-f", "_GTK_THEME_VARIANT", "8u", "-set", "_GTK_THEME_VARIANT", variant],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-    except Exception:
-        pass
-
-from PyQt5.QtCore import QObject
-
-class TitleBarThemeFilter(QObject):
-    def __init__(self, main_window):
-        super().__init__()
-        self.main_window = main_window
-
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Show and hasattr(obj, "isWindow") and obj.isWindow():
-            is_dark = getattr(self.main_window, "current_theme", "light") == "dark"
-            set_linux_dark_titlebar(obj, is_dark)
-        return False
-
-
-class PreferencesDialog(QDialog):
-    """Preferences window styled in Adwaita format for theme configuration."""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setMinimumSize(380, 430)
-        self.init_ui()
-        
-    def init_ui(self):
-        self.config = load_config()
-        current_mode = self.config.get("theme_mode", "system")
-        current_lang = self.config.get("language", "tr")
-        
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
-        
-        # Appearance setting frame
-        self.appearance_group = QGroupBox()
-        group_layout = QVBoxLayout(self.appearance_group)
-        group_layout.setContentsMargins(15, 12, 15, 12)
-        group_layout.setSpacing(8)
-        
-        self.radio_system = QRadioButton()
-        self.radio_light = QRadioButton()
-        self.radio_dark = QRadioButton()
-        
-        if current_mode == "system":
-            self.radio_system.setChecked(True)
-        elif current_mode == "light":
-            self.radio_light.setChecked(True)
-        elif current_mode == "dark":
-            self.radio_dark.setChecked(True)
-            
-        group_layout.addWidget(self.radio_system)
-        group_layout.addWidget(self.radio_light)
-        group_layout.addWidget(self.radio_dark)
-        
-        layout.addWidget(self.appearance_group)
-        
-        # Language setting frame
-        self.lang_group = QGroupBox()
-        lang_layout = QVBoxLayout(self.lang_group)
-        lang_layout.setContentsMargins(15, 12, 15, 12)
-        lang_layout.setSpacing(8)
-        
-        self.lang_combo = QComboBox()
-        available_langs = available_languages()
-        
-        selected_index = 0
-        for idx, (lang_code, display_name) in enumerate(available_langs.items()):
-            self.lang_combo.addItem(display_name, lang_code)
-            if lang_code == current_lang:
-                selected_index = idx
-                
-        self.lang_combo.setCurrentIndex(selected_index)
-            
-        lang_layout.addWidget(self.lang_combo)
-        layout.addWidget(self.lang_group)
-        
-        # Disk Info Box
-        self.disk_group = QGroupBox()
-        disk_layout = QVBoxLayout(self.disk_group)
-        disk_layout.setContentsMargins(15, 12, 15, 12)
-        disk_layout.setSpacing(8)
-        
-        self.disk_label = QLabel()
-        self.disk_label.setObjectName("DiskInfoLabel")
-        
-        self.cache_label = QLabel()
-        self.cache_label.setObjectName("CacheInfoLabel")
-        
-        self.clear_btn = QPushButton()
-        self.clear_btn.setProperty("class", "AdwSecondaryBtn")
-        self.clear_btn.clicked.connect(self.clear_cache)
-        
-        disk_layout.addWidget(self.disk_label)
-        disk_layout.addWidget(self.cache_label)
-        disk_layout.addWidget(self.clear_btn)
-        
-        layout.addWidget(self.disk_group)
-        
-        # Actions
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-        
-        self.cancel_btn = QPushButton()
-        self.cancel_btn.setProperty("class", "AdwSecondaryBtn")
-        self.cancel_btn.clicked.connect(self.reject)
-        
-        self.save_btn = QPushButton()
-        self.save_btn.setProperty("class", "AdwPrimaryBtn")
-        self.save_btn.clicked.connect(self.save_preferences)
-        
-        button_layout.addWidget(self.cancel_btn)
-        button_layout.addWidget(self.save_btn)
-        
-        # Database URL setting
-        self.db_group = QGroupBox()
-        db_layout = QVBoxLayout(self.db_group)
-        db_layout.setContentsMargins(15, 12, 15, 12)
-        db_layout.setSpacing(6)
-
-        self.db_url_hint = QLabel()
-        self.db_url_hint.setObjectName("DiskInfoLabel")
-        db_layout.addWidget(self.db_url_hint)
-
-        self.db_url_field = QLineEdit()
-        self.db_url_field.setObjectName("DatabaseUrlField")
-        self.db_url_field.setText(self.config.get("database_url", ""))
-        db_layout.addWidget(self.db_url_field)
-        layout.addWidget(self.db_group)
-
-        # Auto-update policy setting
-        self.update_group = QGroupBox()
-        update_layout = QVBoxLayout(self.update_group)
-        update_layout.setContentsMargins(15, 12, 15, 12)
-        update_layout.setSpacing(8)
-
-        self.radio_update_manual = QRadioButton()
-        self.radio_update_check = QRadioButton()
-        self.radio_update_auto = QRadioButton()
-
-        current_policy = self.config.get("auto_update_policy", "check")
-        if current_policy == "off":
-            self.radio_update_manual.setChecked(True)
-        elif current_policy == "auto":
-            self.radio_update_auto.setChecked(True)
-        else:
-            self.radio_update_check.setChecked(True)
-
-        update_layout.addWidget(self.radio_update_manual)
-        update_layout.addWidget(self.radio_update_check)
-        update_layout.addWidget(self.radio_update_auto)
-        layout.addWidget(self.update_group)
-
-        # Save/Cancel buttons below new groups
-        layout.addLayout(button_layout)
-        
-        # Localize strings
-        self.retranslate_ui()
-        
-        if self.parent():
-            is_dark = getattr(self.parent(), "current_theme", "light") == "dark"
-            set_linux_dark_titlebar(self, is_dark)
-            
-    def retranslate_ui(self):
-        self.setWindowTitle(tr("ui.preferences"))
-        self.appearance_group.setTitle(tr("ui.appearance"))
-        self.radio_system.setText(tr("ui.system_theme"))
-        self.radio_light.setText(tr("ui.light_theme"))
-        self.radio_dark.setText(tr("ui.dark_theme"))
-        self.lang_group.setTitle(tr("ui.language"))
-        self.disk_group.setTitle(tr("ui.system_and_cache"))
-        self.clear_btn.setText(tr("ui.clear_cache"))
-        self.cancel_btn.setText(tr("ui.cancel"))
-        self.save_btn.setText(tr("ui.save"))
-        self.disk_label.setText(self.get_disk_info())
-        self.cache_label.setText(self.get_cache_size())
-        self.db_group.setTitle(tr("ui.database_url"))
-        self.db_url_hint.setText(tr("ui.database_url_hint"))
-        self.update_group.setTitle(tr("ui.auto_update"))
-        self.radio_update_manual.setText(tr("ui.update_policy_manual"))
-        self.radio_update_check.setText(tr("ui.update_policy_check"))
-        self.radio_update_auto.setText(tr("ui.update_policy_auto"))
-        self.adjustSize()
-
-    def get_disk_info(self):
-        if os.environ.get("RAF_DEV") == "1":
-            path = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "mock_system"
-            ))
-        else:
-            path = os.path.expanduser("~")
-            
-        try:
-            import shutil
-            total, used, free = shutil.disk_usage(path)
-            free_gb = free / (1024**3)
-            total_gb = total / (1024**3)
-            return tr("ui.system_free_space", free=f"{free_gb:.1f}", total=f"{total_gb:.1f}")
-        except Exception:
-            return tr("ui.disk_space_unknown")
-
-    def get_cache_size(self):
-        if os.environ.get("RAF_DEV") == "1":
-            cache_dir = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "mock_system",
-                "cache"
-            ))
-        else:
-            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-            
-        if not os.path.exists(cache_dir):
-            return tr("ui.cache_size_zero")
-            
-        total_size = 0
-        try:
-            for dirpath, dirnames, filenames in os.walk(cache_dir):
-                for f in filenames:
-                    fp = os.path.join(dirpath, f)
-                    total_size += os.path.getsize(fp)
-            size_mb = total_size / (1024 * 1024)
-            return tr("ui.download_cache_size", size=f"{size_mb:.1f}")
-        except Exception:
-            return tr("ui.cache_size_unknown")
-
-    def clear_cache(self):
-        if os.environ.get("RAF_DEV") == "1":
-            cache_dir = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "mock_system",
-                "cache"
-            ))
-        else:
-            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-            
-        if os.path.exists(cache_dir):
-            try:
-                for f in os.listdir(cache_dir):
-                    file_path = os.path.join(cache_dir, f)
-                    if os.path.isfile(file_path):
-                        os.remove(file_path)
-                RafMessageBox.information(self, tr("ui.success"), tr("ui.cache_clear_success"))
-                self.cache_label.setText(self.get_cache_size())
-                self.disk_label.setText(self.get_disk_info())
-            except Exception as e:
-                RafMessageBox.warning(self, tr("ui.error"), tr("ui.cache_clear_error", error=str(e)))
-
-    def save_preferences(self):
-        if self.radio_system.isChecked():
-            mode = "system"
-        elif self.radio_light.isChecked():
-            mode = "light"
-        elif self.radio_dark.isChecked():
-            mode = "dark"
-            
-        self.config["theme_mode"] = mode
-        
-        # Save active language
-        selected_lang = self.lang_combo.currentData()
-        self.config["language"] = selected_lang
-
-        # Save database URL
-        self.config["database_url"] = self.db_url_field.text().strip()
-
-        # Save auto-update policy
-        if self.radio_update_manual.isChecked():
-            self.config["auto_update_policy"] = "off"
-        elif self.radio_update_auto.isChecked():
-            self.config["auto_update_policy"] = "auto"
-        else:
-            self.config["auto_update_policy"] = "check"
-
-        save_config(self.config)
-        
-        # Notify dynamic language switch
-        set_language(selected_lang)
-        
-        self.accept()
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        is_dark = False
-        if self.parent() and hasattr(self.parent(), "current_theme"):
-            is_dark = self.parent().current_theme == "dark"
-        set_linux_dark_titlebar(self, is_dark)
-
-class AboutDialog(QDialog):
-    """Custom About Dialog with themed buttons and logs viewer link."""
-    def __init__(self, main_window):
-        super().__init__(main_window)
-        self.main_window = main_window
-        self.setWindowTitle(tr("ui.about_title"))
-        self.setMinimumSize(400, 200)
-        
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
-        
-        # Logo and text
-        top_layout = QHBoxLayout()
-        logo_label = QLabel()
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "raf.png")
-        if os.path.exists(icon_path):
-            logo_label.setPixmap(QPixmap(icon_path).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        else:
-            logo_label.setText("ℹ")
-            logo_label.setStyleSheet("font-size: 48px;")
-        
-        text_label = QLabel(tr("ui.about_content", version=APP_VERSION))
-        text_label.setWordWrap(True)
-        text_label.setTextFormat(Qt.RichText)
-        text_label.setOpenExternalLinks(True)
-        
-        top_layout.addWidget(logo_label)
-        top_layout.addSpacing(15)
-        top_layout.addWidget(text_label, 1)
-        layout.addLayout(top_layout)
-        
-        # Buttons
-        btn_layout = QHBoxLayout()
-        
-        self.logs_btn = QPushButton(tr("ui.logs_menu", default="Logs"))
-        self.logs_btn.setProperty("class", "AdwSecondaryBtn")
-        self.logs_btn.clicked.connect(self.show_logs)
-        btn_layout.addWidget(self.logs_btn)
-        
-        btn_layout.addStretch(1)
-        
-        self.update_btn = QPushButton(tr("ui.check_updates"))
-        self.update_btn.setProperty("class", "AdwSecondaryBtn")
-        self.update_btn.clicked.connect(self.check_updates)
-        btn_layout.addWidget(self.update_btn)
-        
-        self.close_btn = QPushButton(tr("ui.close_btn", default="Close"))
-        self.close_btn.setProperty("class", "AdwPrimaryBtn")
-        self.close_btn.clicked.connect(self.accept)
-        btn_layout.addWidget(self.close_btn)
-        
-        layout.addLayout(btn_layout)
-        
-    def show_logs(self):
-        self.accept()
-        self.main_window.logs_dialog.show()
-        self.main_window.logs_dialog.raise_()
-        self.main_window.logs_dialog.activateWindow()
-        
-    def check_updates(self):
-        from src.core.updater import UpdateChecker
-        self.updater = UpdateChecker()
-        self.updater.update_available.connect(self.main_window.on_update_available)
-        
-        def on_no_update():
-            RafMessageBox.information(self, tr("ui.no_update_title"), tr("ui.no_update_message"))
-            
-        self.updater.no_update.connect(on_no_update)
-        self.updater.start()
-
-class MainWindow(QMainWindow):
-    def __init__(self, startup_files=None):
-        super().__init__()
+class MainWindow(Adw.ApplicationWindow):
+    def __init__(self, app, startup_files=None):
+        super().__init__(application=app)
         self.startup_files = startup_files or []
-        self.resize(1100, 700)
-        self.setMinimumSize(1080, 550)
-        
-        # Theme configuration variables
-        self.current_theme = None
-        self.theme_timer = QTimer(self)
-        self.theme_timer.timeout.connect(self.check_system_theme_update)
-        
-        # Search debouncing
-        self.search_timer = QTimer(self)
-        self.search_timer.setSingleShot(True)
-        self.search_timer.timeout.connect(self.refresh_grid)
-        
-        # Core components
-        print(tr("log.loading_db"))
-        self.db = Database()
-        print(tr("log.db_loaded", count=len(self.db.get_all_books())))
+        self.set_title(tr("ui.app_title"))
+        self.set_default_size(1100, 700)
         
         # State tracking
         self.active_downloads = {}      # book_id -> DownloadWorker
         self.active_installations = {}  # book_id -> InstallerWorker
         self.logs_dialog = InstallationLogsDialog(self)
-        self.card_widgets = {}          # book_id -> BookCard
+        self.card_widgets = {}          # book_id -> BookRow
         self._selection_mode = False    # Batch selection mode active
         self._selected_books = set()    # book_ids selected in batch mode
-        
-        # Network state
         self.is_offline = False
-        self.check_network_status()
         
-        self.installed_packages_cache = None
+        self.db = Database()
+        self.installed_packages_cache = set()
         
+        # Drop Target
+        drop_target = Gtk.DropTarget(actions=Gdk.DragAction.COPY)
+        drop_target.set_gtypes([Gio.File.__gtype__])
+        drop_target.connect("drop", self.on_drop)
+        self.add_controller(drop_target)
+
+        # Download queue
+        self.download_queue = DownloadQueue(max_concurrent=2)
+        self.download_queue.on_job_started = self._on_queue_job_started
+        self.download_queue.on_queue_changed = self._on_queue_changed
+
         self.init_ui()
-        self.update_theme()
-        
-        # Enable drag and drop for sideloading apps
-        self.setAcceptDrops(True)
-        
-        # Install global title bar event filter
-        self.titlebar_filter = TitleBarThemeFilter(self)
-        QApplication.instance().installEventFilter(self.titlebar_filter)
-
-        # Toast notification manager (must be after init_ui so parent window exists)
-        self.toast_manager = ToastManager(self)
-
-        # Download queue (max 2 concurrent downloads)
-        self.download_queue = DownloadQueue(max_concurrent=2, parent=self)
-        self.download_queue.job_started.connect(self._on_queue_job_started)
-        self.download_queue.queue_changed.connect(self._on_queue_changed)
         
         # Auto-update scheduler
-        self.auto_update_scheduler = AutoUpdateScheduler(self)
-        self.auto_update_scheduler.update_toast_requested.connect(self._on_update_toast)
-        self.auto_update_scheduler.auto_install_requested.connect(self.on_update_available)
+        self.auto_update_scheduler = AutoUpdateScheduler()
+        self.auto_update_scheduler.on_update_toast_requested = self._on_update_toast
+        self.auto_update_scheduler.on_auto_install_requested = self.on_update_available
         self.auto_update_scheduler.start()
 
-        # Remote database sync (auto-sync default to GitHub repo)
+        # Database Sync
         config = load_config()
         db_url = config.get("database_url", "").strip()
         if not db_url:
             db_url = "https://raw.githubusercontent.com/KaanFerid/Raf/main/database/"
-            
+        
         if db_url and not self.is_offline:
-            self.sync_worker = DatabaseSyncWorker(db_url, self.db.database_dir, parent=self)
-            self.sync_worker.sync_finished.connect(self._on_sync_finished)
-            self.sync_worker.sync_failed.connect(self._on_sync_failed)
+            self.sync_worker = DatabaseSyncWorker(db_url, self.db.database_dir)
+            self.sync_worker.on_sync_finished = self._on_sync_finished
+            self.sync_worker.on_sync_failed = self._on_sync_failed
             self.sync_worker.start()
-            
-        # Start async package query
+
         self.refresh_packages_cache()
-        
-        # Periodically refresh installation status of displayed items
-        self.refresh_timer = QTimer(self)
-        self.refresh_timer.timeout.connect(self.refresh_all_statuses)
-        self.refresh_timer.start(15000)
-        
-        # Register translation change listener
+        GLib.timeout_add_seconds(15, self.refresh_all_statuses)
         on_language_change(self.retranslate_ui)
-        
-        # Process any files passed from CLI (Open With)
-        if self.startup_files:
-            QTimer.singleShot(500, lambda: self.process_local_files(self.startup_files))
-
-    def closeEvent(self, event):
-        # Unregister translation listener to prevent memory leaks
-        remove_language_listener(self.retranslate_ui)
-        super().closeEvent(event)
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        is_dark = self.current_theme == "dark"
-        set_linux_dark_titlebar(self, is_dark)
-        
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if hasattr(self, 'drop_overlay') and self.centralWidget():
-            self.drop_overlay.setGeometry(0, 0, self.centralWidget().width(), self.centralWidget().height())
-
-    def get_system_theme(self):
-        """Checks the system preferred theme using standard D-Bus / desktop portal interface."""
-        try:
-            res = subprocess.run([
-                "dbus-send", "--print-reply", 
-                "--dest=org.freedesktop.portal.Desktop", 
-                "/org/freedesktop/portal/desktop", 
-                "org.freedesktop.portal.Settings.Read", 
-                "string:org.freedesktop.appearance", 
-                "string:color-scheme"
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=1)
-            if res.returncode == 0:
-                match = re.search(r"uint32\s+(\d+)", res.stdout)
-                if match:
-                    val = int(match.group(1))
-                    if val == 1:
-                        return "dark"
-                    elif val == 2:
-                        return "light"
-        except Exception:
-            pass
-
-        # Gsettings fallback for GNOME
-        try:
-            res = subprocess.run([
-                "gsettings", "get", 
-                "org.gnome.desktop.interface", "color-scheme"
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=1)
-            if res.returncode == 0:
-                val = res.stdout.strip().strip("'")
-                if "dark" in val:
-                    return "dark"
-                else:
-                    return "light"
-        except Exception:
-            pass
-
-        return "light"
-
-    def update_theme(self):
-        """Loads preference config and sets light/dark stylesheet layout repainting."""
-        config = load_config()
-        mode = config.get("theme_mode", "system")
-        
-        if mode == "system":
-            theme = self.get_system_theme()
-            if not self.theme_timer.isActive():
-                self.theme_timer.start(4000) # check every 4 seconds
-        else:
-            theme = mode
-            self.theme_timer.stop()
-            
-        if theme == "dark":
-            QApplication.instance().setStyleSheet(DARK_STYLE)
-            self.current_theme = "dark"
-            set_linux_dark_titlebar(self, True)
-        else:
-            QApplication.instance().setStyleSheet(LIGHT_STYLE)
-            self.current_theme = "light"
-            set_linux_dark_titlebar(self, False)
-            
-        # Refresh child widgets style
-        for card in self.card_widgets.values():
-            card.style().unpolish(card)
-            card.style().polish(card)
-            card.status_label.style().unpolish(card.status_label)
-            card.status_label.style().polish(card.status_label)
-            card.primary_btn.style().unpolish(card.primary_btn)
-            card.primary_btn.style().polish(card.primary_btn)
-            card.secondary_btn.style().unpolish(card.secondary_btn)
-            card.secondary_btn.style().polish(card.secondary_btn)
-
-    def check_system_theme_update(self):
-        """Automatic system theme monitor callback."""
-        config = load_config()
-        if config.get("theme_mode", "system") != "system":
-            return
-            
-        theme = self.get_system_theme()
-        if theme != self.current_theme:
-            self.update_theme()
 
     def init_ui(self):
-        central_widget = QWidget()
-        central_widget.setObjectName("CentralWidget")
-        self.setCentralWidget(central_widget)
+        # Toast Overlay
+        self.toast_overlay = Adw.ToastOverlay()
+        self.set_content(self.toast_overlay)
+
+        # Main Box
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.toast_overlay.set_child(main_box)
+
+        # HeaderBar
+        self.header = Adw.HeaderBar()
+        main_box.append(self.header)
+
+        # Title widget (View Switcher)
+        self.view_switcher = Adw.ViewSwitcher()
+        self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
+        self.header.set_title_widget(self.view_switcher)
+
+        # Search Bar
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_width_request(250)
+        self.search_entry.connect("search-changed", self.on_search_changed)
+        self.header.pack_start(self.search_entry)
+
+        # Queue Badge
+        self.queue_badge = Gtk.Label()
+        self.queue_badge.add_css_class("numeric")
+        self.queue_badge.set_visible(False)
+        self.header.pack_start(self.queue_badge)
+
+        # Select Mode Toggle
+        self.select_mode_btn = Gtk.ToggleButton(icon_name="selection-mode-symbolic")
+        self.select_mode_btn.connect("toggled", self.toggle_selection_mode)
+        self.header.pack_start(self.select_mode_btn)
+
+        # Settings
+        menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic")
+        menu = Gio.Menu()
+        menu.append(tr("ui.preferences"), "app.preferences")
+        menu.append(tr("ui.about_title"), "app.about")
+        menu_btn.set_menu_model(menu)
+        self.header.pack_end(menu_btn)
+
+        # Local Install
+        self.local_install_btn = Gtk.Button(label=tr("ui.install_local_files"))
+        self.local_install_btn.connect("clicked", self.on_install_local_clicked)
+        self.header.pack_end(self.local_install_btn)
+
+        # ViewStack
+        self.stack = Adw.ViewStack()
+        self.view_switcher.set_stack(self.stack)
+        main_box.append(self.stack)
+
+        # Market Page
+        self.market_page = self.create_list_page()
+        self.stack.add_titled(self.market_page, "market", tr("ui.market"), "emblem-system-symbolic")
+
+        # Library Page
+        self.library_page = self.create_list_page()
+        self.stack.add_titled(self.library_page, "library", tr("ui.my_library"), "folder-documents-symbolic")
+
+        self.stack.connect("notify::visible-child", self.on_tab_changed)
+
+    def create_list_page(self):
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_vexpand(True)
         
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        # 1. Header Area Widget (Adwaita flat header bar)
-        header_widget = QWidget()
-        header_widget.setObjectName("HeaderWidget")
-        header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(16, 12, 16, 12)
-        header_layout.setSpacing(16)
-
-        # App branding Title
-        self.app_title_label = QLabel()
-        self.app_title_label.setObjectName("AppTitleLabel")
-        self.app_title_label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
-        header_layout.addWidget(self.app_title_label)
-
-        # Queue badge (shown when items are queued)
-        self.queue_badge = QLabel()
-        self.queue_badge.setObjectName("QueueBadge")
-        self.queue_badge.setVisible(False)
-        header_layout.addWidget(self.queue_badge)
-
-        # Select mode toggle
-        self.select_mode_btn = QPushButton()
-        self.select_mode_btn.setObjectName("SelectModeBtn")
-        self.select_mode_btn.setCheckable(True)
-        self.select_mode_btn.clicked.connect(self.toggle_selection_mode)
-        header_layout.addWidget(self.select_mode_btn)
-
-        header_layout.addStretch(1)
-
-        # Search Bar input field (Centered)
-        self.search_input = QLineEdit()
-        self.search_input.setMinimumWidth(150)
-        self.search_input.setMaximumWidth(250)
-        self.search_input.textChanged.connect(self.on_search_changed)
-        self.search_input.installEventFilter(self) # Intercept focus events for keyboard trigger
-        # Add custom drawn clean search icon to avoid Unicode rendering issues on Pardus
-        self.search_input.addAction(self.create_search_icon(), QLineEdit.LeadingPosition)
-        header_layout.addWidget(self.search_input)
-
-        header_layout.addStretch(1)
-
-        # Right segmented control (View Switcher - Adwaita style)
-        switcher_container = QWidget()
-        switcher_container.setObjectName("ViewSwitcherContainer")
-        switcher_container.setMinimumWidth(200)
-        switcher_layout = QHBoxLayout(switcher_container)
-        switcher_layout.setContentsMargins(0, 0, 0, 0)
-        switcher_layout.setSpacing(0)
-
-        self.tab_market_btn = QPushButton()
-        self.tab_market_btn.setCheckable(True)
-        self.tab_market_btn.setChecked(True)
-        self.tab_market_btn.setProperty("class", "ViewSwitcherBtn")
-        self.tab_market_btn.setMinimumWidth(80)
-
-        self.tab_library_btn = QPushButton()
-        self.tab_library_btn.setCheckable(True)
-        self.tab_library_btn.setProperty("class", "ViewSwitcherBtn")
-        self.tab_library_btn.setMinimumWidth(110)
-
-        self.tab_group = QButtonGroup(self)
-        self.tab_group.addButton(self.tab_market_btn)
-        self.tab_group.addButton(self.tab_library_btn)
-        self.tab_group.setExclusive(True)
+        clamp = Adw.Clamp()
+        clamp.set_maximum_size(800)
+        scrolled.set_child(clamp)
         
-        self.tab_market_btn.clicked.connect(self.on_tab_changed)
-        self.tab_library_btn.clicked.connect(self.on_tab_changed)
-
-        switcher_layout.addWidget(self.tab_market_btn)
-        switcher_layout.addWidget(self.tab_library_btn)
-        header_layout.addWidget(switcher_container)
-
-        # Install Local File Button
-        self.install_local_btn = QPushButton(tr("ui.install_local_files"))
-        self.install_local_btn.setProperty("class", "AdwSecondaryBtn")
-        self.install_local_btn.clicked.connect(self.on_install_local_clicked)
-        header_layout.addWidget(self.install_local_btn)
-
-        # Settings/Preferences Button
-        self.settings_btn = QPushButton("⚙")
-        self.settings_btn.setProperty("class", "AdwSecondaryBtn")
-        self.settings_btn.clicked.connect(self.open_preferences)
-        header_layout.addWidget(self.settings_btn)
-
-        # About Button
-        self.about_btn = QPushButton("ℹ")
-        self.about_btn.setProperty("class", "AdwSecondaryBtn")
-        self.about_btn.clicked.connect(self.show_about_dialog)
-        header_layout.addWidget(self.about_btn)
-
-        main_layout.addWidget(header_widget)
-
-        # 2. Count Label
-        self.count_label = QLabel("")
-        self.count_label.setObjectName("CountLabel")
-        self.count_label.setContentsMargins(20, 8, 20, 8)
-        main_layout.addWidget(self.count_label)
-
-        # 3. Content Scroll Area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setFrameShape(QFrame.NoFrame)
+        listbox = Gtk.ListBox()
+        listbox.add_css_class("boxed-list")
+        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        clamp.set_child(listbox)
         
-        self.scroll_content = QWidget()
-        self.scroll_content.setObjectName("ScrollContent")
-        
-        # List layout for books (Vertical List instead of Grid)
-        self.list_layout = QVBoxLayout(self.scroll_content)
-        self.list_layout.setContentsMargins(20, 8, 20, 20)
-        self.list_layout.setSpacing(10)
-        self.list_layout.setAlignment(Qt.AlignTop)
-        
-        # Empty library / search placeholder state
-        self.placeholder_widget = QWidget()
-        placeholder_layout = QVBoxLayout(self.placeholder_widget)
-        placeholder_layout.setContentsMargins(40, 80, 40, 80)
-        placeholder_layout.setAlignment(Qt.AlignCenter)
-        
-        self.placeholder_label = QLabel()
-        self.placeholder_label.setObjectName("PlaceholderLabel")
-        self.placeholder_label.setAlignment(Qt.AlignCenter)
-        placeholder_layout.addWidget(self.placeholder_label)
-        
-        self.list_layout.addWidget(self.placeholder_widget)
-        self.placeholder_widget.hide()
-        
-        scroll_area.setWidget(self.scroll_content)
-        main_layout.addWidget(scroll_area, 1)
+        # We will share this listbox reference in self.listbox and swap it when tab changes, or just rebuild it.
+        # Actually, let's keep one listbox and repopulate it on tab switch to save memory.
+        return scrolled
 
-        # 4. Batch action bar (floats above status bar, hidden by default)
-        self.batch_bar = QWidget()
-        self.batch_bar.setObjectName("BatchBar")
-        self.batch_bar.setVisible(False)
-        batch_layout = QHBoxLayout(self.batch_bar)
-        batch_layout.setContentsMargins(16, 8, 16, 8)
-        batch_layout.setSpacing(10)
-
-        self.batch_count_label = QLabel()
-        self.batch_count_label.setObjectName("BatchCountLabel")
-        batch_layout.addWidget(self.batch_count_label)
-        batch_layout.addStretch(1)
-
-        self.batch_install_btn = QPushButton()
-        self.batch_install_btn.setProperty("class", "BatchActionBtn")
-        self.batch_install_btn.clicked.connect(self.install_selected)
-        batch_layout.addWidget(self.batch_install_btn)
-
-        self.batch_uninstall_btn = QPushButton()
-        self.batch_uninstall_btn.setProperty("class", "BatchActionBtn")
-        self.batch_uninstall_btn.clicked.connect(self.uninstall_selected)
-        batch_layout.addWidget(self.batch_uninstall_btn)
-
-        self.batch_done_btn = QPushButton("✕")
-        self.batch_done_btn.setProperty("class", "BatchCancelBtn")
-        self.batch_done_btn.clicked.connect(lambda: self.toggle_selection_mode(False))
-        batch_layout.addWidget(self.batch_done_btn)
-
-        main_layout.addWidget(self.batch_bar)
-
-        # Drop overlay
-        self.drop_overlay = QLabel(central_widget)
-        self.drop_overlay.setObjectName("DropOverlay")
-        self.drop_overlay.setAlignment(Qt.AlignCenter)
-        self.drop_overlay.setStyleSheet("""
-            QLabel#DropOverlay {
-                background-color: rgba(52, 152, 219, 0.8);
-                color: white;
-                font-size: 24px;
-                font-weight: bold;
-                border: 4px dashed white;
-                border-radius: 12px;
-            }
-        """)
-        self.drop_overlay.hide()
-
-        # 5. Status Bar
-        self.statusBar = QStatusBar()
-        self.setStatusBar(self.statusBar)
-        
-        self.offline_badge = QLabel()
-        self.offline_badge.setObjectName("OfflineBadge")
-        self.offline_badge.setVisible(self.is_offline)
-        self.statusBar.addPermanentWidget(self.offline_badge)
-        
-        # Localize strings initially
-        self.retranslate_ui()
-
-    def retranslate_ui(self):
-        self.setWindowTitle(tr("ui.app_title"))
-        self.app_title_label.setText(tr("ui.app_title"))
-        self.tab_market_btn.setText(tr("ui.market"))
-        self.tab_library_btn.setText(tr("ui.my_library"))
-        self.search_input.setPlaceholderText(tr("ui.search_placeholder"))
-        self.select_mode_btn.setText(tr("ui.select_mode"))
-        self.batch_install_btn.setText(tr("ui.install_selected"))
-        self.batch_uninstall_btn.setText(tr("ui.uninstall_selected"))
-        self.install_local_btn.setText(tr("ui.install_local_files"))
-        self.drop_overlay.setText(tr("ui.drop_files_here"))
-        
-        self.offline_badge.setText(tr("ui.offline_mode"))
-        self.statusBar.showMessage(tr("ui.ready"))
-        
-        # Refresh dynamic strings in placeholder labels and grid cards
+    def on_tab_changed(self, stack, pspec):
         self.refresh_grid()
-        for card in self.card_widgets.values():
-            card.retranslate_ui(is_offline=self.is_offline)
 
-    # ------------------------------------------------------------------
-    # Title Bar Progress
-    # ------------------------------------------------------------------
-
-    def _update_title_progress(self):
-        """Updates the window title to show aggregate download progress."""
-        active = {bid: w for bid, w in self.active_downloads.items()}
-        if not active:
-            self.setWindowTitle(tr("ui.app_title"))
-            return
-        percents = [w.last_percent for w in active.values()]
-        avg = sum(percents) // len(percents) if percents else 0
-        if len(active) == 1:
-            book_id = next(iter(active))
-            card = self.card_widgets.get(book_id)
-            title_str = card.book['title'] if card else book_id
-            self.setWindowTitle(f"[\u25bc {title_str} \u2014 {avg}%] {tr('ui.app_title')}")
-        else:
-            self.setWindowTitle(f"[\u25bc {len(active)} {tr('ui.downloads')} \u2014 {avg}%] {tr('ui.app_title')}")
-
-    # ------------------------------------------------------------------
-    # Download Queue Handlers
-    # ------------------------------------------------------------------
-
-    def _on_queue_job_started(self, book_id):
-        """Called by the queue when a pending job is promoted to active."""
-        job = self.download_queue._last_started
-        if job:
-            book, local_path = job
-            self.download_queue.on_download_started(book_id)
-            self.start_download(book, local_path)
-
-    def _on_queue_changed(self, pending_count):
-        """Updates the queue badge in the header."""
-        if pending_count > 0:
-            self.queue_badge.setText(tr("ui.queue_count", count=pending_count))
-            self.queue_badge.setVisible(True)
-        else:
-            self.queue_badge.setVisible(False)
-
-    # ------------------------------------------------------------------
-    # Remote Database Sync Handlers
-    # ------------------------------------------------------------------
-
-    def _on_sync_finished(self, count):
-        """Called when the remote database sync succeeds."""
-        self.db.load_books()
-        self.refresh_grid()
-        self.toast_manager.show_toast(tr("ui.sync_success", count=count), "success")
-
-    def _on_sync_failed(self, error):
-        """Called when the remote database sync fails (silent — local cache is used)."""
-        print(f"Database sync failed: {error}")
-
-    # ------------------------------------------------------------------
-    # Auto-update Scheduler Handlers
-    # ------------------------------------------------------------------
-
-    def _on_update_toast(self, version):
-        """Shows a toast notification when the auto-update scheduler finds an update."""
-        self.toast_manager.show_toast(
-            tr("ui.toast_update_available", version=version),
-            "info",
-            duration=8000
-        )
-
-    # ------------------------------------------------------------------
-    # Batch Selection Mode
-    # ------------------------------------------------------------------
-
-    def toggle_selection_mode(self, active=None):
-        """Enters or exits batch selection mode."""
-        if active is None:
-            active = self.select_mode_btn.isChecked()
-        else:
-            self.select_mode_btn.setChecked(active)
-
-        self._selection_mode = active
-        self._selected_books.clear()
-
-        for card in self.card_widgets.values():
-            card.set_selection_mode(active)
-            if active:
-                card.selection_changed.connect(self._on_card_selection_changed)
-            else:
-                try:
-                    card.selection_changed.disconnect(self._on_card_selection_changed)
-                except Exception:
-                    pass
-
-        self.batch_bar.setVisible(active)
-        self._update_batch_bar()
-
-    def _on_card_selection_changed(self, book_id, is_selected):
-        """Tracks selected books for batch operations."""
-        if is_selected:
-            self._selected_books.add(book_id)
-        else:
-            self._selected_books.discard(book_id)
-        self._update_batch_bar()
-
-    def _update_batch_bar(self):
-        """Updates the batch action bar count and button states."""
-        count = len(self._selected_books)
-        self.batch_count_label.setText(tr("ui.selected_count", count=count))
-
-        books = self.db.get_all_books()
-        book_map = {b['id']: b for b in books}
-
-        has_uninstalled = any(
-            not self.card_widgets[bid].is_installed
-            for bid in self._selected_books
-            if bid in self.card_widgets
-        )
-        has_installed = any(
-            self.card_widgets[bid].is_installed
-            for bid in self._selected_books
-            if bid in self.card_widgets
-        )
-
-        self.batch_install_btn.setEnabled(count > 0 and has_uninstalled and not self.is_offline)
-        self.batch_uninstall_btn.setEnabled(count > 0 and has_installed)
-
-    def install_selected(self):
-        """Queues downloads for all selected uninstalled books."""
-        books = self.db.get_all_books()
-        book_map = {b['id']: b for b in books}
-        to_install = []
-        for book_id in list(self._selected_books):
-            card = self.card_widgets.get(book_id)
-            if card and not card.is_installed and not card.downloading and not card.is_queued:
-                to_install.append(book_id)
-                
-        if not to_install:
-            self.toggle_selection_mode(False)
-            return
-            
-        reply = RafMessageBox.question(
-            self,
-            tr("ui.confirm_install_title", default="Ready to Install"),
-            tr("ui.confirm_batch_install_prompt", count=len(to_install)),
-            default_no=True
-        )
+    # --- Actions ---
+    def refresh_grid(self):
+        # Determine current tab
+        visible_name = self.stack.get_visible_child_name()
         
-        if not reply:
-            return
+        # Get active listbox
+        active_scrolled = self.stack.get_visible_child()
+        if not active_scrolled: return
+        clamp = active_scrolled.get_child()
+        listbox = clamp.get_child()
+
+        # Clear existing
+        while child := listbox.get_first_child():
+            listbox.remove(child)
+
+        self.card_widgets.clear()
+        
+        query = self.search_entry.get_text().lower().strip()
+        all_books = self.db.get_all_books()
+        
+        # Filter
+        filtered = []
+        for b in all_books:
+            if query and query not in b['title'].lower() and query not in b.get('publisher', '').lower():
+                continue
+            is_inst = is_book_installed(b, self.installed_packages_cache)
+            if visible_name == "library" and not is_inst:
+                continue
+            filtered.append(b)
+
+        # Populate
+        for b in filtered:
+            is_inst = is_book_installed(b, self.installed_packages_cache)
+            row = BookRow(b, is_installed=is_inst)
+            row.connect('install-requested', lambda r, bk: self.start_download(bk))
+            row.connect('uninstall-requested', lambda r, bk: self.start_uninstallation(bk))
+            row.connect('launch-requested', lambda r, bk: self.launch_book(bk))
+            row.connect('cancel-requested', lambda r, bk: self.cancel_download(bk))
             
-        queued = 0
-        for book_id in to_install:
-            book = book_map.get(book_id)
-            if book:
-                self._enqueue_book(book)
-                queued += 1
-                
-        if queued:
-            self.toast_manager.show_toast(
-                tr("ui.batch_queued", count=queued), "info"
-            )
-        self.toggle_selection_mode(False)
+            self.card_widgets[b['id']] = row
+            listbox.append(row)
 
-    def uninstall_selected(self):
-        """Confirms and uninstalls all selected installed books."""
-        installed_ids = [
-            bid for bid in self._selected_books
-            if bid in self.card_widgets and self.card_widgets[bid].is_installed
-        ]
-        if not installed_ids:
+    def start_download(self, book):
+        book_id = book['id']
+        if book_id in self.active_downloads:
             return
-        count = len(installed_ids)
-        reply = RafMessageBox.question(
-            self,
-            tr("ui.uninstall_library_title"),
-            tr("ui.batch_confirm_uninstall", count=count),
-            default_no=True
-        )
-        if reply:
-            books = self.db.get_all_books()
-            book_map = {b['id']: b for b in books}
-            for book_id in installed_ids:
-                book = book_map.get(book_id)
-                if book:
-                    card = self.card_widgets.get(book_id)
-                    if card:
-                        card.uninstall_requested.emit(book)
-        self.toggle_selection_mode(False)
 
-    def _enqueue_book(self, book):
-        """Resolves the local path and adds the book to the download queue."""
+        file_name = book['file_name']
         if os.environ.get("RAF_DEV") == "1":
             cache_dir = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                 "mock_system", "cache"
             ))
         else:
             cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-        local_path = os.path.join(cache_dir, book['file_name'])
+        local_file_path = os.path.join(cache_dir, file_name)
 
-        if self.download_queue.enqueue(book, local_path):
-            card = self.card_widgets.get(book['id'])
+        card = self.card_widgets.get(book_id)
+        if card:
+            card.update_status(is_installed=False, downloading=True, percent=0, speed_str=tr("ui.download_preparing"))
+
+        worker = DownloadWorker(book_id, book['download_url'], local_file_path)
+        worker.on_progress_changed = self.on_download_progress
+        worker.on_finished = self.on_download_finished
+        worker.on_error = self.on_download_error
+        
+        self.active_downloads[book_id] = worker
+        worker.start()
+
+    def on_download_progress(self, book_id, percent, speed_str):
+        if book_id in self.card_widgets:
+            card = self.card_widgets[book_id]
+            pct = percent if percent >= 0 else 50
+            card.update_status(is_installed=False, downloading=True, percent=pct, speed_str=speed_str)
+
+    def on_download_finished(self, book_id, local_file_path):
+        worker = self.active_downloads.pop(book_id, None)
+        self.download_queue.on_download_completed(book_id)
+
+        book = self.card_widgets[book_id].book
+        def on_response(dialog, response):
+            dialog.close()
+            if response == "yes":
+                self.start_installation(book, local_file_path)
+            else:
+                card = self.card_widgets.get(book_id)
+                if card: card.update_status(is_installed=False)
+                try: os.remove(local_file_path)
+                except: pass
+
+        dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.confirm_install_title"), body=tr("ui.confirm_install_prompt", title=book['title']))
+        dialog.add_response("cancel", tr("ui.no"))
+        dialog.add_response("yes", tr("ui.yes"))
+        dialog.connect("response", on_response)
+        dialog.present()
+
+    def on_download_error(self, book_id, err_msg):
+        self.active_downloads.pop(book_id, None)
+        self.download_queue.on_download_completed(book_id)
+        
+        if book_id in self.card_widgets:
+            self.card_widgets[book_id].update_status(is_installed=False)
+            
+        if "cancel" not in err_msg.lower():
+            self.show_toast(tr("ui.toast_download_error", error=err_msg[:60]))
+
+    def cancel_download(self, book):
+        book_id = book['id']
+        if self.download_queue.is_queued(book_id):
+            self.download_queue.dequeue(book_id)
+            card = self.card_widgets.get(book_id)
             if card:
-                card.set_queued(True)
-        else:
-            self.toast_manager.show_toast(tr("ui.already_queued"), "warning", duration=2500)
-
-    def resizeEvent(self, event):
-        """Repositions toast notifications when the window is resized."""
-        super().resizeEvent(event)
-        if hasattr(self, 'toast_manager'):
-            self.toast_manager._reposition_all()
-
-
-    def check_network_status(self):
-        """Checks if the system has an active internet connection."""
-        import socket
-        try:
-            socket.setdefaulttimeout(1.5)
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect(("8.8.8.8", 53))
-            s.close()
-            self.is_offline = False
-        except Exception:
-            self.is_offline = True
-
-
-
-    def open_preferences(self):
-        """Opens user Preferences modal dialog."""
-        dialog = PreferencesDialog(self)
-        if hasattr(dialog, 'exec'):
-            result = dialog.exec()
-        else:
-            result = dialog.exec_()
-        
-        if result:
-            self.update_theme()
-            self.refresh_grid()
-
-    def create_search_icon(self):
-        """Creates a clean custom drawn magnifying glass icon to avoid Unicode font rendering bugs on Pardus."""
-        pixmap = QPixmap(18, 18)
-        pixmap.fill(Qt.transparent)
-        painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        # Color: #8a8a8a (neutral gray matching the placeholder text)
-        pen = QPen(QColor("#8a8a8a"))
-        pen.setWidth(2)
-        pen.setCapStyle(Qt.RoundCap)
-        painter.setPen(pen)
-        
-        # Draw a beautiful magnifying glass
-        # Circle radius 4.5, centered at (7.5, 7.5) -> top-left at (3, 3)
-        painter.drawEllipse(3, 3, 9, 9)
-        # Handle line from (10, 10) to (14, 14)
-        painter.drawLine(10, 10, 14, 14)
-        
-        painter.end()
-        return QIcon(pixmap)
-
-    def process_local_files(self, file_paths):
-        """Processes a list of local files/directories for sideloading installation."""
-        if not file_paths:
+                card.set_queued(False)
+                card.update_status(card.is_installed)
             return
             
-        from src.core.translation import tr
-        import os
-        from PyQt5.QtWidgets import QMessageBox
+        if book_id in self.active_downloads:
+            self.active_downloads[book_id].cancel()
+
+    def start_installation(self, book, local_file_path):
+        book_id = book['id']
+        if book_id in self.active_installations:
+            return
+
+        card = self.card_widgets.get(book_id)
+        if card:
+            card.primary_btn.set_sensitive(False)
+            card.primary_btn.set_label(tr("ui.installing_btn"))
+            card.status_label.set_text(tr("ui.installing_btn"))
         
+        worker = InstallerWorker(book, local_file_path, action="install")
+        worker.on_finished = self.on_installation_finished
+        worker.on_output_received = self.on_install_output
+        worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
+        
+        self.active_installations[book_id] = worker
+        worker.start()
+
+    def on_install_output(self, book_id, text):
+        self.logs_dialog.append_log(f"[{book_id}] {text.strip()}")
+
+    def on_installation_finished(self, book_id, success):
+        worker = self.active_installations.pop(book_id, None)
+        book = worker.book if worker else None
+        card = self.card_widgets.get(book_id)
+        
+        if not book and card: book = card.book
+
+        if card:
+            card.primary_btn.set_sensitive(True)
+            installed = is_book_installed(book, self.installed_packages_cache)
+            card.update_status(installed)
+        
+        installed = is_book_installed(book, self.installed_packages_cache) if book else success
+        
+        if success and installed:
+            self.show_toast(tr("ui.toast_install_success", title=book['title']))
+            if book and book.get('is_local'):
+                self.db.add_sideloaded_book(book)
+            if book.get('file_type') == 'deb':
+                cache_dir = os.path.expanduser("~/.cache/raf/downloads")
+                try: os.remove(os.path.join(cache_dir, book['file_name']))
+                except: pass
+            self.refresh_packages_cache()
+        elif getattr(worker, '_auth_failed', False):
+            pass
+        else:
+            self.show_toast(tr("ui.toast_install_error", title=book['title']))
+
+    def start_uninstallation(self, book):
+        book_id = book['id']
+        if book_id in self.active_installations:
+            return
+
+        def on_response(dialog, response):
+            dialog.close()
+            if response == "yes":
+                card = self.card_widgets.get(book_id)
+                if card:
+                    card.primary_btn.set_sensitive(False)
+                    card.secondary_btn.set_sensitive(False)
+                    card.primary_btn.set_label(tr("ui.uninstalling_btn"))
+                
+                worker = InstallerWorker(book, None, action="uninstall")
+                worker.on_finished = self.on_uninstallation_finished
+                worker.on_output_received = self.on_install_output
+                worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
+                
+                self.active_installations[book_id] = worker
+                worker.start()
+
+        dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.uninstall_library_title"), body=tr("ui.uninstall_library_prompt", title=book['title']))
+        dialog.add_response("cancel", tr("ui.no"))
+        dialog.add_response("yes", tr("ui.yes"))
+        dialog.set_response_appearance("yes", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.connect("response", on_response)
+        dialog.present()
+
+    def on_uninstallation_finished(self, book_id, success):
+        worker = self.active_installations.pop(book_id, None)
+        book = worker.book if worker else None
+        card = self.card_widgets.get(book_id)
+        if not book and card: book = card.book
+
+        if card:
+            card.primary_btn.set_sensitive(True)
+            installed = is_book_installed(book, self.installed_packages_cache)
+            card.update_status(installed)
+        
+        installed = is_book_installed(book, self.installed_packages_cache) if book else not success
+        
+        if success and not installed:
+            self.show_toast(tr("ui.toast_uninstall_success", title=book['title']))
+            if book and book.get('is_local'):
+                self.db.remove_sideloaded_book(book['id'])
+            self.refresh_packages_cache()
+        elif getattr(worker, '_auth_failed', False):
+            pass
+        else:
+            self.show_toast(tr("ui.toast_install_error", title=book['title']))
+
+    def on_auth_failed(self, book_id, worker):
+        worker._auth_failed = True
+        title = worker.book['title'] if worker.book else ""
+        self.show_toast(tr("ui.toast_auth_failed", title=title))
+
+    def launch_book(self, book):
+        if os.environ.get("RAF_DEV") == "1":
+            show_message(self, tr("ui.book_launched_sim_title"), tr("ui.book_launched_sim_message", title=book['title'], publisher=book['publisher'], filename=book['file_name']))
+            return
+        
+        file_type = book.get('file_type', 'deb')
+        
+        if file_type == 'deb':
+            package_name = get_deb_package_name(book)
+            cmd = ["gtk-launch", package_name]
+            try:
+                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                try: subprocess.Popen([package_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except Exception as e:
+                    show_message(self, tr("ui.app_launch_failed_title"), tr("ui.app_launch_failed_message", error=str(e)), type="error")
+        else:
+            desktop_name = f"raf-{book['id']}"
+            cmd = ["gtk-launch", desktop_name]
+            try:
+                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as e:
+                show_message(self, tr("ui.app_launch_failed_title"), tr("ui.book_launch_failed_message", error=str(e)), type="error")
+
+    def refresh_packages_cache(self):
+        def _get_pkgs():
+            pkgs = get_all_installed_packages()
+            GLib.idle_add(lambda: self._on_packages_loaded(pkgs))
+        import threading
+        threading.Thread(target=_get_pkgs, daemon=True).start()
+
+    def _on_packages_loaded(self, pkgs):
+        self.installed_packages_cache = pkgs
+        self.refresh_grid()
+
+    def refresh_all_statuses(self):
+        self.refresh_packages_cache()
+        return True
+
+    def on_search_changed(self, entry):
+        self.refresh_grid()
+
+    def toggle_selection_mode(self, btn):
+        self._selection_mode = btn.get_active()
+        self._selected_books.clear()
+        for card in self.card_widgets.values():
+            card.set_selection_mode(self._selection_mode)
+
+    def on_install_local_clicked(self, btn):
+        def on_response(dialog, response, file):
+            if response == Gtk.ResponseType.ACCEPT:
+                path = file.get_path()
+                if path: self.process_local_files([path])
+        
+        dialog = Gtk.FileChooserNative(title=tr("ui.select_local_files"), transient_for=self, action=Gtk.FileChooserAction.OPEN)
+        filter_all = Gtk.FileFilter()
+        filter_all.set_name(tr("ui.supported_files"))
+        filter_all.add_pattern("*.deb")
+        filter_all.add_pattern("*.zip")
+        filter_all.add_pattern("*.appimage")
+        filter_all.add_pattern("*.fernus")
+        dialog.add_filter(filter_all)
+        dialog.connect("response", on_response)
+        dialog.show()
+
+    def on_drop(self, target, value, x, y):
+        path = value.get_path()
+        if path and path.lower().endswith(('.deb', '.zip', '.appimage', '.fernus')):
+            self.process_local_files([path])
+        return True
+
+    def process_local_files(self, file_paths):
         mock_books = []
         file_list_str = ""
         for path in file_paths:
@@ -1081,562 +466,82 @@ class MainWindow(QMainWindow):
             mock_books.append((mock_book, path))
             file_list_str += f"• {filename}\n"
             
-        prompt_text = tr("ui.confirm_sideload_prompt", count=len(mock_books), files=file_list_str.strip())
+        def on_response(dialog, response):
+            dialog.close()
+            if response == "yes":
+                for mock_book, path in mock_books:
+                    self.start_installation(mock_book, path)
         
-        reply = RafMessageBox.question(
-            self,
-            tr("ui.confirm_sideload_title"),
-            prompt_text,
-            default_no=True
-        )
-        
-        if reply:
-            for mock_book, path in mock_books:
-                self.start_installation(mock_book, path)
+        dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.confirm_sideload_title"), body=tr("ui.confirm_sideload_prompt", count=len(mock_books), files=file_list_str.strip()))
+        dialog.add_response("cancel", tr("ui.no"))
+        dialog.add_response("yes", tr("ui.yes"))
+        dialog.connect("response", on_response)
+        dialog.present()
 
-    def on_install_local_clicked(self):
-        from PyQt5.QtWidgets import QFileDialog
-        from src.core.translation import tr
-        
-        file_paths, _ = QFileDialog.getOpenFileNames(
-            self,
-            tr("ui.select_local_files"),
-            "",
-            tr("ui.supported_files") + " (*.deb *.zip *.appimage *.fernus)"
-        )
-        
-        if file_paths:
-            self.process_local_files(file_paths)
+    def retranslate_ui(self):
+        self.set_title(tr("ui.app_title"))
+        self.stack.get_page(self.market_page).set_title(tr("ui.market"))
+        self.stack.get_page(self.library_page).set_title(tr("ui.my_library"))
+        self.local_install_btn.set_label(tr("ui.install_local_files"))
+        self.refresh_grid()
 
-    def dragEnterEvent(self, event):
-        """Accept file drops if they contain URLs and show overlay."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-            self.drop_overlay.setGeometry(0, 0, self.centralWidget().width(), self.centralWidget().height())
-            self.drop_overlay.raise_()
-            self.drop_overlay.show()
+    def _on_queue_job_started(self, book_id):
+        job = self.download_queue._last_started
+        if job:
+            book, local_path = job
+            self.download_queue.on_download_started(book_id)
+            GLib.idle_add(lambda: self.start_download(book))
 
-    def dragLeaveEvent(self, event):
-        """Hide overlay when mouse leaves."""
-        self.drop_overlay.hide()
-        super().dragLeaveEvent(event)
+    def _on_queue_changed(self, count):
+        GLib.idle_add(lambda: self.queue_badge.set_visible(count > 0))
+        GLib.idle_add(lambda: self.queue_badge.set_text(tr("ui.queue_count", count=count)))
 
-    def dropEvent(self, event):
-        """Handle dropped files for sideloading."""
-        self.drop_overlay.hide()
-        import os
-        
-        valid_extensions = ('.deb', '.zip', '.appimage', '.fernus')
-        dropped_files = []
-        
-        for url in event.mimeData().urls():
-            if url.isLocalFile():
-                path = url.toLocalFile()
-                if path.lower().endswith(valid_extensions):
-                    dropped_files.append(path)
-                elif os.path.isdir(path):
-                    # Also accept directories like install-local does
-                    dropped_files.append(path)
+    def _on_sync_finished(self, count):
+        self.db.load_books()
+        GLib.idle_add(self.refresh_grid)
+        GLib.idle_add(lambda: self.show_toast(tr("ui.sync_success", count=count)))
 
-        if dropped_files:
-            self.process_local_files(dropped_files)
+    def _on_sync_failed(self, err):
+        print(f"Database sync failed: {err}")
 
-    def show_about_dialog(self):
-        """Displays the About application dialog."""
-        dialog = AboutDialog(self)
-        dialog.exec_()
+    def _on_update_toast(self, ver):
+        GLib.idle_add(lambda: self.show_toast(tr("ui.toast_update_available", version=ver)))
 
-    def eventFilter(self, obj, event):
-        """Intercepts focus and click events on search input to automatically open OSK."""
-        if obj == self.search_input and event.type() in [QEvent.FocusIn, QEvent.MouseButtonPress]:
-            self.trigger_virtual_keyboard()
-        return super().eventFilter(obj, event)
-
-    def trigger_virtual_keyboard(self):
-        """Attempts to display the system-level virtual keyboard using Qt, D-Bus, or Onboard launch."""
-        # 1. Standard Qt input method request
-        app = QApplication.instance()
-        if app:
-            app.inputMethod().show()
+    def on_update_available(self, ver, url, changelog):
+        def _show():
+            def on_response(dialog, response):
+                dialog.close()
+                if response == "yes":
+                    self.start_app_update(ver, url)
             
-        # 2. Trigger Onboard via D-Bus (Pardus standard)
-        try:
-            subprocess.Popen([
-                "dbus-send", "--type=method_call",
-                "--dest=org.onboard.Onboard",
-                "/org/onboard/Onboard/Keyboard",
-                "org.onboard.Onboard.Keyboard.Show"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception:
-            pass
-            
-        # 3. Trigger GNOME Caribou OSK via D-Bus (GNOME standard)
-        try:
-            subprocess.Popen([
-                "dbus-send", "--type=method_call",
-                "--dest=org.gnome.Caribou.Keyboard",
-                "/org/gnome/Caribou/Keyboard",
-                "org.gnome.Caribou.Keyboard.Show"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception:
-            pass
-            
-        # 4. Fallback: launch onboard if not already active
-        try:
-            subprocess.Popen(["onboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception:
-            pass
-
-    def on_update_available(self, version, download_url, changelog):
-        """Callback triggered when the UpdateChecker thread detects a newer version."""
-        reply = RafMessageBox.question(
-            self,
-            tr("ui.new_update_available"),
-            tr("ui.update_prompt", version=version, changelog=changelog),
-            default_no=False
-        )
-        
-        if reply:
-            self.start_app_update(version, download_url)
+            dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.new_update_available"), body=tr("ui.update_prompt", version=ver, changelog=changelog))
+            dialog.add_response("cancel", tr("ui.no"))
+            dialog.add_response("yes", tr("ui.yes"))
+            dialog.connect("response", on_response)
+            dialog.present()
+        GLib.idle_add(_show)
 
     def start_app_update(self, version, download_url):
-        """Starts downloading the update deb file."""
-        if os.environ.get("RAF_DEV") == "1":
-            cache_dir = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "mock_system",
-                "cache"
-            ))
-        else:
-            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-            
+        cache_dir = os.path.expanduser("~/.cache/raf/downloads")
         file_path = os.path.join(cache_dir, f"raf_{version}_update.deb")
-        self.statusBar.showMessage(tr("ui.downloading_update"))
-        
-        # Reuse DownloadWorker for downloading update deb
         self.update_download_worker = DownloadWorker("app_update", download_url, file_path)
-        self.update_download_worker.progress_changed.connect(self.on_update_download_progress)
-        self.update_download_worker.finished.connect(self.on_update_download_finished)
-        self.update_download_worker.error.connect(self.on_update_download_error)
+        
+        def on_finished(bid, path):
+            self.update_installer_worker = UpdateInstaller(path)
+            self.update_installer_worker.on_finished = self.on_update_install_finished
+            self.update_installer_worker.start()
+            
+        self.update_download_worker.on_finished = on_finished
         self.update_download_worker.start()
-        
-    def on_update_download_progress(self, bid, percent, speed_str):
-        pct = percent if percent >= 0 else 50
-        self.statusBar.showMessage(tr("ui.downloading_update_percent", percent=pct, speed=speed_str))
-        
-    def on_update_download_finished(self, bid, file_path):
-        self.statusBar.showMessage(tr("ui.update_downloaded_installing"))
-        
-        # Start installation process
-        self.update_installer_worker = UpdateInstaller(file_path)
-        self.update_installer_worker.status_changed.connect(lambda msg: self.statusBar.showMessage(msg))
-        self.update_installer_worker.finished.connect(self.on_update_install_finished)
-        self.update_installer_worker.start()
-        
-    def on_update_download_error(self, bid, err_msg):
-        self.statusBar.showMessage(tr("ui.update_download_error_status"), 5000)
-        RafMessageBox.warning(self, tr("ui.update_download_error_status"), tr("ui.update_download_failed", error=err_msg))
-        
+
     def on_update_install_finished(self, success):
-        if success:
-            self.statusBar.showMessage(tr("ui.update_completed_status"), 5000)
-            RafMessageBox.information(
-                self,
-                tr("ui.update_successful_title"),
-                tr("ui.update_successful_message")
-            )
-            self.close()
-        else:
-            self.statusBar.showMessage(tr("ui.update_error_status"), 5000)
-            RafMessageBox.critical(
-                self,
-                tr("ui.update_error_title"),
-                tr("ui.update_error_message")
-            )
-
-    def on_tab_changed(self):
-        """Handles switcher tab toggle between Market and Library views."""
-        self.refresh_grid()
-
-    def refresh_packages_cache(self):
-        self.pkg_worker = PackageQueryWorker()
-        self.pkg_worker.packages_loaded.connect(self._on_packages_loaded)
-        self.pkg_worker.start()
-
-    def _on_packages_loaded(self, installed_set):
-        self.installed_packages_cache = installed_set
-        self.refresh_grid()
-
-    def get_filtered_books(self):
-        if self.installed_packages_cache is None:
-            return []
-            
-        query = self.search_input.text()
-        books = self.db.search_books(query)
-            
-        # Filter by switcher tab state
-        if self.tab_library_btn.isChecked():
-            books = [b for b in books if is_book_installed(b, self.installed_packages_cache)]
-            
-        return books
-
-    def refresh_grid(self):
-        """Re-populates the vertical list layout container with filtered items."""
-        if self.installed_packages_cache is None:
-            return
-            
-        # Hide and remove all card widgets from list layout
-        for card in self.card_widgets.values():
-            card.hide()
-            self.list_layout.removeWidget(card)
-
-        # Retrieve filtered list
-        books = self.get_filtered_books()
-        self.count_label.setText(tr("ui.books_listed", count=len(books)))
-
-        for idx, book in enumerate(books):
-            book_id = book['id']
-            
-            installed = is_book_installed(book, self.installed_packages_cache)
-            # Retrieve or create widget
-            if book_id in self.card_widgets:
-                card = self.card_widgets[book_id]
-                if book_id not in self.active_downloads and book_id not in self.active_installations:
-                    card.update_status(installed, is_offline=self.is_offline)
+        def _show():
+            if success:
+                show_message(self, tr("ui.update_successful_title"), tr("ui.update_successful_message"))
             else:
-                card = BookCard(book, is_installed=installed)
-                card.install_requested.connect(self.start_download)
-                card.uninstall_requested.connect(self.start_uninstallation)
-                card.launch_requested.connect(self.launch_book)
-                card.cancel_requested.connect(self.cancel_download)
-                self.card_widgets[book_id] = card
-                card.update_status(installed, is_offline=self.is_offline)
-            
-            # Style synchronization
-            card.style().unpolish(card)
-            card.style().polish(card)
-            
-            # Position into layout list
-            self.list_layout.addWidget(card)
-            card.show()
-            
-        # Move placeholder widget to the bottom of layout list
-        self.list_layout.removeWidget(self.placeholder_widget)
-        self.list_layout.addWidget(self.placeholder_widget)
+                show_message(self, tr("ui.update_error_title"), tr("ui.update_error_message"), type="error")
+        GLib.idle_add(_show)
 
-        # Toggle empty-state placeholder view
-        if len(books) == 0:
-            if self.tab_library_btn.isChecked():
-                self.placeholder_label.setText(tr("ui.no_installed_books_found"))
-            else:
-                self.placeholder_label.setText(tr("ui.no_books_found"))
-            self.placeholder_widget.show()
-        else:
-            self.placeholder_widget.hide()
-
-    def refresh_all_statuses(self):
-        """Check all books' actual installation state in the background."""
-        self.check_network_status()
-        self.offline_badge.setVisible(self.is_offline)
-        
-        self.refresh_packages_cache()
-
-    def on_search_changed(self, text):
-        # Restart the debounce timer (300ms) to prevent UI blocking while typing
-        self.search_timer.start(300)
-
-
-
-    # --- Actions / Core Operations ---
-
-    def start_download(self, book):
-        book_id = book['id']
-        if book_id in self.active_downloads:
-            return
-
-        file_name = book['file_name']
-        if os.environ.get("RAF_DEV") == "1":
-            cache_dir = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-                "mock_system", 
-                "cache"
-            ))
-        else:
-            cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-        local_file_path = os.path.join(cache_dir, file_name)
-
-        card = self.card_widgets[book_id]
-        card.update_status(is_installed=False, downloading=True, percent=0, speed_str=tr("ui.download_preparing"))
-
-        worker = DownloadWorker(book_id, book['download_url'], local_file_path)
-        worker.progress_changed.connect(self.on_download_progress)
-        worker.finished.connect(self.on_download_finished)
-        worker.error.connect(self.on_download_error)
-        
-        self.active_downloads[book_id] = worker
-        self.statusBar.showMessage(tr("ui.downloading_status", title=book['title']))
-        worker.start()
-
-    def on_download_progress(self, book_id, percent, speed_str):
-        if book_id in self.card_widgets:
-            card = self.card_widgets[book_id]
-            pct = percent if percent >= 0 else 50
-            card.update_status(is_installed=False, downloading=True, percent=pct, speed_str=speed_str)
-        self._update_title_progress()
-
-    def on_download_finished(self, book_id, local_file_path):
-        worker = self.active_downloads.pop(book_id, None)
-        if worker:
-            worker.deleteLater()
-        self.download_queue.on_download_completed(book_id)
-        self._update_title_progress()
-
-        book = self.card_widgets[book_id].book
-        
-        reply = RafMessageBox.question(
-            self,
-            tr("ui.confirm_install_title", default="Ready to Install"),
-            tr("ui.confirm_install_prompt", title=book['title']),
-            default_no=True
-        )
-        
-        if reply:
-            self.start_installation(book, local_file_path)
-        else:
-            if book_id in self.card_widgets:
-                card = self.card_widgets[book_id]
-                card.update_status(is_installed=False)
-            self.statusBar.showMessage(tr("ui.cancelling_download"), 3000)
-            try:
-                import os
-                if os.path.exists(local_file_path):
-                    os.remove(local_file_path)
-            except Exception:
-                pass
-
-    def on_download_error(self, book_id, err_msg):
-        worker = self.active_downloads.pop(book_id, None)
-        if worker:
-            worker.deleteLater()
-        self.download_queue.on_download_completed(book_id)
-        self._update_title_progress()
-
-        self.statusBar.showMessage(tr("ui.download_error_status", error=err_msg), 5000)
-        
-        if book_id in self.card_widgets:
-            card = self.card_widgets[book_id]
-            card.update_status(is_installed=False)
-            
-        is_cancelled = (
-            err_msg == tr("downloader.download_cancelled") or
-            "cancelled" in err_msg.lower()
-        )
-        if not is_cancelled:
-            self.toast_manager.show_toast(tr("ui.toast_download_error", error=err_msg[:60]), "error")
-
-    def cancel_download(self, book):
-        book_id = book['id']
-        # If queued but not yet downloading, just dequeue it
-        if self.download_queue.is_queued(book_id):
-            self.download_queue.dequeue(book_id)
-            card = self.card_widgets.get(book_id)
-            if card:
-                card.is_queued = False
-                card.update_status(card.is_installed, is_offline=self.is_offline)
-            self.statusBar.showMessage(tr("ui.cancelling_download"), 2000)
-            return
-        # If actively downloading, cancel the worker
-        if book_id in self.active_downloads:
-            worker = self.active_downloads[book_id]
-            worker.cancel()
-            self.statusBar.showMessage(tr("ui.cancelling_download"), 3000)
-
-    def start_installation(self, book, local_file_path):
-        book_id = book['id']
-        if book_id in self.active_installations:
-            return
-
-        card = self.card_widgets.get(book_id)
-        if card:
-            card.status_label.setText(tr("ui.installing_btn"))
-            card.status_label.setObjectName("StatusDownloadingLabel")
-            card.status_label.style().unpolish(card.status_label)
-            card.status_label.style().polish(card.status_label)
-            card.primary_btn.setEnabled(False)
-            card.primary_btn.setText(tr("ui.installing_btn"))
-        
-        worker = InstallerWorker(book, local_file_path, action="install")
-        worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
-        worker.finished.connect(self.on_installation_finished)
-        worker.output_received.connect(self.on_install_output)
-        worker.auth_failed.connect(lambda bid: self.on_auth_failed(bid, worker))
-        
-        self.active_installations[book_id] = worker
-        self.statusBar.showMessage(tr("ui.installing_status", title=book['title']))
-        worker.start()
-
-    def on_install_output(self, book_id, text):
-        print(tr("log.install_stdout", id=book_id, text=text.strip()))
-        self.logs_dialog.append_log(f"[{book_id}] {text.strip()}")
-
-    def on_installation_finished(self, book_id, success):
-        worker = self.active_installations.pop(book_id, None)
-        book = worker.book if worker else None
-        if worker:
-            worker.deleteLater()
-
-        card = self.card_widgets.get(book_id)
-        if not book and card:
-            book = card.book
-
-        if card:
-            card.primary_btn.setEnabled(True)
-            installed = is_book_installed(book)
-            card.update_status(installed, is_offline=self.is_offline)
-        else:
-            installed = is_book_installed(book) if book else success
-        
-        if success and installed:
-            self.statusBar.showMessage(tr("ui.install_success_status", title=book['title']), 5000)
-            self.toast_manager.show_toast(tr("ui.toast_install_success", title=book['title']), "success")
-            
-            # Save to database if it was sideloaded
-            if book and book.get('is_local'):
-                from src.core.database import Database
-                self.db.add_sideloaded_book(book)
-
-            if book.get('file_type') == 'deb':
-                try:
-                    if os.environ.get("RAF_DEV") == "1":
-                        cache_dir = os.path.abspath(os.path.join(
-                            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-                            "mock_system", 
-                            "cache"
-                        ))
-                    else:
-                        cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-                    local_file_path = os.path.join(cache_dir, book['file_name'])
-                    if os.path.exists(local_file_path):
-                        os.remove(local_file_path)
-                except Exception:
-                    pass
-            # Trigger refresh to update list layout view
-            self.refresh_packages_cache()
-        elif getattr(worker, '_auth_failed', False):
-            pass # Already handled by on_auth_failed
-        else:
-            self.statusBar.showMessage(tr("ui.install_error_status", title=book['title']), 5000)
-            self.toast_manager.show_toast(tr("ui.toast_install_error", title=book['title']), "error")
-
-    def start_uninstallation(self, book):
-        book_id = book['id']
-        if book_id in self.active_installations:
-            return
-
-        reply = RafMessageBox.question(
-            self,
-            tr("ui.uninstall_library_title"),
-            tr("ui.uninstall_library_prompt", title=book['title']),
-            default_no=True
-        )
-        
-        if not reply:
-            return
-
-        card = self.card_widgets.get(book_id)
-        if card:
-            card.primary_btn.setEnabled(False)
-            card.secondary_btn.setEnabled(False)
-            card.primary_btn.setText(tr("ui.uninstalling_btn"))
-        
-        worker = InstallerWorker(book, None, action="uninstall")
-        worker.status_changed.connect(lambda bid, msg: self.statusBar.showMessage(f"{book['title']}: {msg}"))
-        worker.finished.connect(self.on_uninstallation_finished)
-        worker.output_received.connect(self.on_install_output)
-        worker.auth_failed.connect(lambda bid: self.on_auth_failed(bid, worker))
-        
-        self.active_installations[book_id] = worker
-        self.statusBar.showMessage(tr("ui.uninstalling_status", title=book['title']))
-        worker.start()
-
-    def on_uninstallation_finished(self, book_id, success):
-        worker = self.active_installations.pop(book_id, None)
-        book = worker.book if worker else None
-        if worker:
-            worker.deleteLater()
-
-        card = self.card_widgets.get(book_id)
-        if not book and card:
-            book = card.book
-
-        if card:
-            card.primary_btn.setEnabled(True)
-            card.secondary_btn.setEnabled(True)
-            installed = is_book_installed(book)
-            card.update_status(installed, is_offline=self.is_offline)
-        else:
-            installed = is_book_installed(book) if book else not success
-        
-        if success and not installed:
-            self.statusBar.showMessage(tr("ui.uninstall_success_status", title=book['title']), 5000)
-            self.toast_manager.show_toast(tr("ui.toast_uninstall_success", title=book['title']), "success")
-            
-            if book and book.get('is_local'):
-                from src.core.database import Database
-                self.db.remove_sideloaded_book(book['id'])
-                
-            self.refresh_packages_cache()
-        elif getattr(worker, '_auth_failed', False):
-            pass # Already handled by on_auth_failed
-        else:
-            self.statusBar.showMessage(tr("ui.uninstall_error_status", title=book['title']), 5000)
-            self.toast_manager.show_toast(tr("ui.toast_install_error", title=book['title']), "error")
-
-    def on_auth_failed(self, book_id, worker):
-        worker._auth_failed = True
-        book = worker.book
-        title = book['title'] if book else ""
-        self.statusBar.showMessage(tr("ui.auth_failed_status", title=title), 5000)
-        self.toast_manager.show_toast(tr("ui.toast_auth_failed", title=title), "warning")
-
-    def launch_book(self, book):
-        if os.environ.get("RAF_DEV") == "1":
-            print(tr("log.dev_book_launched", title=book['title'], file=book['file_name']))
-            RafMessageBox.information(
-                self,
-                tr("ui.book_launched_sim_title"),
-                tr("ui.book_launched_sim_message", title=book['title'], publisher=book['publisher'], filename=book['file_name'])
-            )
-            return
-        
-        file_type = book.get('file_type', 'deb')
-        
-        if file_type == 'deb':
-            package_name = get_deb_package_name(book)
-            cmd = ["gtk-launch", package_name]
-            
-            try:
-                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
-            except Exception as e:
-                try:
-                    subprocess.Popen([package_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
-                except Exception as e2:
-                    self.statusBar.showMessage(tr("ui.launch_error_status"), 5000)
-                    RafMessageBox.warning(
-                        self, 
-                        tr("ui.app_launch_failed_title"), 
-                        tr("ui.app_launch_failed_message", error=str(e2))
-                    )
-                    
-        elif file_type in ['zip', 'fernus']:
-            desktop_name = f"raf-{book['id']}"
-            cmd = ["gtk-launch", desktop_name]
-            
-            try:
-                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                self.statusBar.showMessage(tr("ui.launching_status", title=book['title']), 3000)
-            except Exception as e:
-                self.statusBar.showMessage(tr("ui.launch_error_status"), 5000)
-                RafMessageBox.warning(self, tr("ui.app_launch_failed_title"), tr("ui.book_launch_failed_message", error=str(e)))
+    def show_toast(self, msg):
+        toast = Adw.Toast.new(msg)
+        self.toast_overlay.add_toast(toast)

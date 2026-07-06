@@ -1,5 +1,6 @@
 # Raf — Documentation Index
 
+[![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](index-tr.md)
 Welcome to the Raf documentation. Use the links below to navigate to the topic you need.
 
 ---

@@ -71,7 +71,7 @@
 | Bağımlılık | Amaç |
 |---|---|
 | `python3` (≥ 3.9) | Çalışma zamanı |
-| `python3-pyqt5` | Birincil Qt GUI çerçevesi (Pardus ETAP için optimize edilmiştir) |
+| `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1` | GTK4 / Libadwaita GUI çerçevesi |
 | `python3-requests` | HTTP indirmeleri |
 | `policykit-1` | Yetkili paket işlemleri (`pkexec`) |
 | `dpkg` / `apt-get` | `.deb` paketi kurulumu |
@@ -79,7 +79,7 @@
 ### Geliştirici Makinesi (Herhangi bir Linux/macOS)
 
 ```text
-PyQt5 >= 5.15.0
+PyGObject >= 3.42.0
 requests >= 2.25.0
 urllib3 >= 1.26.0
 ```
@@ -149,7 +149,7 @@ raf
 ./run_dev.py
 ```
 
-Eğer `PyQt5` veya `requests` kurulu değilse, betik başlatılmadan önce otomatik olarak bir `.venv` sanal ortamı oluşturur ve kütüphaneleri kurar.
+Eğer `PyGObject` veya `requests` kurulu değilse, betik başlatılmadan önce otomatik olarak bir `.venv` sanal ortamı oluşturur ve kütüphaneleri kurar.
 
 ---
 
@@ -262,7 +262,7 @@ Başlık çubuğundan **Ayarlar**'ı açın. Değişiklikler, **Kaydet**'e tıkl
 | **Aydınlık Tema** | Aydınlık Libadwaita paletini zorlar |
 | **Karanlık Tema** | Karanlık Libadwaita paletini zorlar |
 
-Yeni merkezi motor sayesinde, `QApplication.instance().setStyleSheet(...)` ve `RafMessageBox` yoğun olarak kullanılır, bu da her modülün, pencerenin ve toast bildiriminin renklerinin anında doğru bir şekilde değişmesi anlamına gelir.
+Yeni merkezi motor sayesinde yerel GTK4/Libadwaita renk şemaları kullanılır; bu da her modülün, pencerenin ve toast bildiriminin renklerinin anında masaüstü veya kullanıcı ayarlarına göre doğru bir şekilde değişmesi anlamına gelir.
 
 ### Dil
 **Türkçe** ve **İngilizce** arasında seçim yapın. Kullanıcı arayüzü, yeniden başlatma gerektirmeden, özel JSON tabanlı `_meta` i18n gözlemci motoru sayesinde anında güncellenir.
@@ -352,7 +352,7 @@ raf/
 ├── mock_system/                  # Geliştirici modu kum havuzu
 ├── docs/                         # Mimari ve API belgeleri
 ├── run_dev.py                   # Geliştirici çalıştırıcısı (oto-venv + simülasyon)
-├── requirements.txt              # Python bağımlılıkları (PyQt5)
+├── requirements.txt              # Python bağımlılıkları
 └── README.md                     # Bu dosya
 ```
 
@@ -381,17 +381,17 @@ python3 tests/test_drive.py
 
 ### İş Parçacığı (Threading) Modeli
 
-Tüm ağ giriş/çıkışları ve paket işlemleri, özel olarak Qt sinyalleri aracılığıyla ana UI iş parçacığıyla iletişim kuran arka plan `QThread` işçilerinde çalışır. `PackageQueryWorker`, `dpkg-query` yoklamasının GUI olay döngülerini duraklatmamasını sağlar.
+Tüm ağ giriş/çıkışları ve paket işlemleri, özel olarak `GLib.idle_add` fonksiyonları (callbacks) aracılığıyla ana UI iş parçacığıyla iletişim kuran arka plan `threading.Thread` işçilerinde çalışır.
 
 ```
 [UI İş Parçacığı (MainWindow)]
         │
-        ├── PackageQueryWorker (QThread) ──sinyaller──► db_sync_status
-        ├── DownloadWorker (QThread) ──sinyaller──► progress_changed, finished, error
-        ├── InstallerWorker (QThread) ──sinyaller──► status_changed, finished, output_received
-        ├── UpdateChecker (QThread) ──sinyaller──► update_available, no_update
-        ├── DatabaseSyncWorker (QThread) ──sinyaller──► sync_finished, sync_failed
-        └── AutoUpdateScheduler (QObject + QTimer) ──sinyaller──► update_toast_requested
+        ├── PackageQueryWorker (Thread) ──callbacks──► db_sync_status
+        ├── DownloadWorker (Thread) ──callbacks──► progress_changed, finished, error
+        ├── InstallerWorker (Thread) ──callbacks──► status_changed, finished, output_received
+        ├── UpdateChecker (Thread) ──callbacks──► update_available, no_update
+        ├── DatabaseSyncWorker (Thread) ──callbacks──► sync_finished, sync_failed
+        └── AutoUpdateScheduler (Thread) ──callbacks──► update_toast_requested
 ```
 
 ### Konfigürasyon Depolama

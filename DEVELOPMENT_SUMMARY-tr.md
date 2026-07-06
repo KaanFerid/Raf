@@ -15,7 +15,7 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
 | **Lisans** | GPL-3.0 (bkz. `debian/copyright`) |
 | **Hedef Platform** | Pardus ETAP Akıllı Tahtalar (Debian tabanlı) |
 | **Dil** | Python 3.9+ |
-| **GUI Çerçevesi** | PySide6 / PyQt6 / PyQt5 (otomatik algılama) |
+| **GUI Çerçevesi** | GTK4 / Libadwaita |
 
 ---
 
@@ -27,16 +27,15 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
 
 - Proje standart bir açık kaynak Python düzenine göre yeniden düzenlendi:
   - `src/core/` — kullanıcı arayüzünden (UI) tamamen ayrılmış iş mantığı (business logic)
-  - `src/ui/` — tüm Qt araçları ve stil dosyaları
+  - `src/ui/` — tüm GTK araçları
   - `src/assets/` — kitap veritabanı ve simge varlıkları
   - `debian/` — Debian paketleme konfigürasyonu
   - `docs/` — teknik dokümantasyon
   - `scripts/` — paketleme ve yardımcı araç otomasyonu
   - `tests/` — otomatik test takımı
   - `mock_system/` — korumalı (sandboxed) geliştirici ortamı
-- PyQt6 geriye dönük uyumluluğu için `enum` düzeltmeleri dahil olmak üzere PySide6, PyQt6 ve PyQt5 üzerinde tek bir birleşik içe aktarma arayüzü sağlamak amacıyla `qt_compat.py` oluşturuldu.
 - `books.json` dosyasını yüklemek ve sunmak için ilk `Database` sınıfı yazıldı.
-- `progress_changed`, `finished` ve `error` sinyalleri ile `DownloadWorker` (QThread) oluşturuldu.
+- `progress_changed`, `finished` ve `error` sinyalleri ile `DownloadWorker` (`threading.Thread`) oluşturuldu.
 
 ---
 
@@ -44,14 +43,10 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
 
 **Hedef:** Pardus/GNOME masaüstü standartlarına uygun görsel olarak modern bir arayüz oluşturmak.
 
-- GTK Libadwaita'nın düz, yuvarlatılmış köşeli estetiğini taklit eden tam `LIGHT_STYLE` ve `DARK_STYLE` QSS stil sayfaları `styles.py` içinde tasarlandı ve uygulandı.
-- `BookCard` widget'ı şu öğeleri içeren yatay bir satır düzeniyle oluşturuldu:
-  - `PublisherBadge` — yayıncı adının ilk harfine dayalı deterministik bir palet kullanan, özel `QPainter` ile çizilmiş renkli baş harf avatarı.
-  - İlerleme çubuğu (indirme başlayana kadar gizli).
-  - Hız ve durum etiketleri.
-  - CSS hedeflemesi için dinamik `class` özelliği geçişli birincil ve ikincil eylem düğmeleri.
+- GTK Libadwaita'nın düz, yuvarlatılmış köşeli estetiğini taklit eden `Adw.ApplicationWindow` ve yerel GTK4 bileşenleri uygulandı.
+- `BookRow` widget'ı (`Adw.ActionRow`) oluşturuldu.
 - Ortalanmış arama, solda marka logosu, sağda görünüm değiştirme sekmeleri (Market / Kütüphanem), Ayarlar ve Hakkında düğmeleri içeren başlık çubuğu oluşturuldu.
-- Tema seçici radyo düğmeleri ve dil açılır kutusu içeren `PreferencesDialog` (Ayarlar İletişim Kutusu) uygulandı.
+- Doğal Libadwaita `Adw.PreferencesWindow` kullanılarak Ayarlar penceresi (`PreferencesWindow`) uygulandı.
 - Pencere yöneticisinin başlık çubuğu dekorasyonunu seçilen temayla eşitlemek için `xprop` kullanan `set_linux_dark_titlebar()` eklendi.
 
 ---
@@ -65,7 +60,7 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
 - **HTTP Range (Aralık) devam ettirme** eklendi: Kısmi indirmeden sonra bağlantı koparsa, indirmeyi `Range: bytes=<alınan_bayt>-` başlığı ile yeniden dener; hata vermeden önce en fazla 3 otomatik deneme yapar.
 - **Ekran klavyesi (OSK) tetikleyicisi** entegre edildi: Arama `QLineEdit`'indeki bir `eventFilter`, odaklanma (focus) olaylarını algılar ve dokunmatik ortamlar için `onboard` (veya `florence`) klavyesini başlatır.
 - Başlık çubuğu indirme ilerlemesi için `DownloadWorker` sınıfına `last_percent` özniteliği eklendi.
-- Şu işlemleri kapsayan `InstallerWorker` QThread oluşturuldu:
+- Şu işlemleri kapsayan `InstallerWorker` Thread oluşturuldu:
   - `pkexec apt-get install -y ./file.deb` üzerinden `.deb` paketleri.
   - `.zip`/`.fernus` paketleri: `~/.local/share/raf/apps/<id>/` konumuna çıkartır ve `.desktop` başlatıcı oluşturur.
   - Geliştirici modunda simüle edilmiş yükleme/kaldırma (1,5 sn / 1 sn yapay gecikmeler).
@@ -83,8 +78,8 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
   - `DEBIAN/md5sums` — Paketlenmiş tüm veri dosyalarının MD5 sağlama toplamları.
   - `usr/share/doc/raf/copyright` — Katı `0o644` izinleriyle GPL-3.0 beyanı.
   - Dosya izni yaptırımları (dizinler `0755`, dosyalar `0644`, çalıştırılabilir dosyalar `0755`).
-- `UpdateChecker` (QThread) oluşturuldu — GitHub'dan `update.json` dosyasını çeker, sürüm numaralarını karşılaştırır ve `update_available(versiyon, url, değişiklik_notları)` sinyalini yayar.
-- `UpdateInstaller` (QThread) oluşturuldu — Güncelleme `.deb` dosyasını indirir ve `pkexec apt-get install --reinstall -y` ile kurar.
+- `UpdateChecker` (Thread) oluşturuldu — GitHub'dan `update.json` dosyasını çeker, sürüm numaralarını karşılaştırır ve callbacks çağırır.
+- `UpdateInstaller` (Thread) oluşturuldu — Güncelleme `.deb` dosyasını indirir ve `pkexec apt-get install --reinstall -y` ile kurar.
 - Güncelleme akışı, değişiklik notlarını zengin metin (rich-text) biçiminde sunan bir onay iletişim kutusu gösteren `MainWindow.on_update_available()` fonksiyonuna bağlandı.
 
 ---
@@ -95,7 +90,7 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
 
 - Altı komutu ( `list`, `list-installed`, `search`, `install`, `uninstall`, `clean`) işleyen `src/core/cli.py` oluşturuldu.
 - `src/main.py`, herhangi bir argüman mevcut olduğunda CLI moduna yönlendirecek şekilde değiştirildi.
-- CLI, `DownloadWorker` ve `InstallerWorker` sınıflarını doğrudan yeniden kullanmak için başsız bir Qt bağlamı (`QT_QPA_PLATFORM=offscreen`) kullanır.
+- CLI, `DownloadWorker` ve `InstallerWorker` sınıflarını doğrudan yeniden kullanır.
 - Kullanım özeti için `--help` / `-h` / `help` argümanı eklendi.
 - İndirmeler sırasında terminalde gerçek zamanlı bir ASCII ilerleme çubuğu uygulandı.
 - Tüm CLI dizeleri, GUI ile aynı `tr()` sistemi üzerinden tamamen yerelleştirildi (lokalize edildi).
@@ -106,11 +101,7 @@ Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, 
 
 **Hedef:** Görsel regresyonları (bozulmaları) düzeltmek ve kullanıcı deneyimini iyileştirmek.
 
-- PyQt5 karanlık tema uyumluluğu düzeltildi — `DARK_STYLE` QSS artık her üç Qt arka ucunda (backend) da aynı şekilde çalışıyor.
-- `PreferencesDialog` içindeki tema seçimi daireleri düzeltildi — Güvenilir çapraz arka uç (cross-backend) oluşturma (rendering) için saf CSS daireleri yerine QSS'de `QRadioButton` özel `indicator` kuralları getirildi.
-- Karanlık modda dil seçicideki beyaz çubuklar düzeltildi — `DARK_STYLE` içinde `QComboBox` açılır `QListView` arka planı yamandı.
-- `PreferencesDialog` penceresinin her zaman ana pencerenin aktif stil sayfasını (stylesheet) miras alması sağlandı.
-- Metin kırpılmasını önlemek için `PreferencesDialog` düğmeleri `retranslate_ui()` üzerinde `adjustSize()` ile dinamik olarak boyutlandırıldı.
+- Saf GTK4 kullanıcı arayüzü inşa edildi. Standart GTK temaları lehine özel QSS stili kullanımdan kaldırıldı.
 - Kullanılmayan yerel dil anahtarları (locale keys) kaldırıldı (`primary_keywords`, `middle_keywords`, `high_keywords` ve kategoriyle ilgili tüm dizeler dahil olmak üzere yaklaşık 15 yetim anahtar temizlendi).
 - `translation.py` dosyasında kullanımdan kaldırılmış (deprecated) `locale.getdefaultlocale()`, `locale.getlocale()` ile değiştirildi.
 - Tüm çekirdek modüllerdeki tüm yalın (bare) `except:` ifadeleri `except Exception:` ile değiştirildi.
@@ -125,39 +116,37 @@ Yedi yeni özellik tasarlandı, uygulandı ve entegre edildi:
 
 #### 7.1 İndirme Kuyruğu (`src/core/download_queue.py`)
 
-- `DownloadQueue` — Yapılandırılabilir maksimum eşzamanlılığa (varsayılan: 2) sahip `QObject` tabanlı bir FIFO (ilk giren ilk çıkar) kuyruğu.
+- `DownloadQueue` — Yapılandırılabilir maksimum eşzamanlılığa (varsayılan: 2) sahip bir FIFO (ilk giren ilk çıkar) kuyruğu.
 - Aynı kitabın birden fazla kez kuyruğa eklenmesini engeller (`book_id` ile kontrol edilir).
-- `job_started`, `job_finished`, `queue_changed` sinyallerini yayar.
-- `MainWindow`, başlık çubuğu rozetini güncellemek için `queue_changed` sinyaline yanıt verir.
+- Aynı kitabın birden fazla kez kuyruğa eklenmesini engeller (`book_id` ile kontrol edilir).
+- `MainWindow`, başlık çubuğu rozetini güncellemek için kuyruk değişikliklerine yanıt verir.
 - Kuyruğa alınmış (henüz indirilmeyen) bir karttaki İptal düğmesine tıklamak `DownloadQueue.dequeue()` öğesini çağırır — indirme başlatılmadan anında kaldırma.
 
 #### 7.2 Toast Bildirimleri ve Uyarılar (`src/ui/toast.py`, `src/ui/dialogs.py`)
 
-- `ToastNotification` — `QPropertyAnimation` ile yavaşça beliren (fade-in) çerçevesiz bir bindirme (overlay) `QWidget`.
-- `ToastManager` — Aktif bildirimleri sağ alt köşede istifler, kapatıldıklarında ve pencere yeniden boyutlandırıldığında konumlarını günceller.
+- `ToastManager` — Aktif bildirimleri Adwaita Toast overlays aracılığıyla istifler.
 - Farklı renklere sahip dört tür: `info` (mavi), `success` (yeşil), `warning` (kehribar), `error` (kırmızı).
 - Bildirimlerin gösterildiği durumlar: kurulum başarılı/hata, kaldırma başarılı/hata, indirme hatası, güncelleme mevcut, veritabanı senkronizasyonu başarılı.
 - **Kurulum Öncesi Onayı:** `pkexec` aracılığıyla ayrıcalıkları yükseltmeden önce kullanıcılardan onay isteyen araya giren (intercepting) bir modal (zorunlu) istem eklendi. Bu istem, bir indirme tamamlandıktan hemen sonra ancak `start_installation` yürütülmeden önce görünür ve yanlışlıkla çıkabilecek kök (root) kimlik doğrulama isteklerini önler.
 
 #### 7.3 Başlık Çubuğu İlerlemesi
 
-- `MainWindow._update_title_progress()` her `progress_changed` sinyalinde ve indirme bitiminde/hatasında çağrılır.
+- `MainWindow._update_title_progress()` her progress_changed callback'te ve indirme bitiminde/hatasında çağrılır.
 - Tek indirme: `[▼ Ankara Kitabı — %67] Raf`
 - Çoklu indirmeler: `[▼ 3 indirme — ort %45] Raf`
 - Hiçbir aktif indirme kalmadığında başlık `Raf` olarak sıfırlanır.
 
 #### 7.4 Toplu İşlemler
 
-- Başlık çubuğunda **Seçim modu** geçiş düğmesi (`SelectModeBtn`).
-- `BookCard.set_selection_mode(active)` bir `☐`/`☑` onay kutusu düğmesini gösterir/gizler.
-- `BookCard.selection_changed` sinyali `(kitap_id, secili_mi)` bilgisini `MainWindow`'a iletir.
-- Durum çubuğunun üstünde toplu işlem çubuğu görünür: seçili öğe sayısı etiketi, Seçilenleri Kur düğmesi, Seçilenleri Kaldır düğmesi ve ✕ çıkış düğmesi.
+- Başlık çubuğunda **Seçim modu** geçiş düğmesi.
+- `BookRow.set_selection_mode(active)` bir onay kutusu düğmesini gösterir/gizler.
+- Durum çubuğunun üstünde toplu işlem çubuğu görünür: seçili öğe sayısı etiketi, Seçilenleri Kur düğmesi, Seçilenleri Kaldır düğmesi.
 - `install_selected()` — İndirme kuyruğu aracılığıyla seçilen ancak kurulmamış tüm kitapları kuyruğa ekler.
 - `uninstall_selected()` — Bir onay iletişim kutusu gösterir ve ardından seçilen her kartta `uninstall_requested` sinyalini tetikler.
 
 #### 7.5 Uzak Veritabanı Senkronizasyonu (`src/core/sync.py`)
 
-- `DatabaseSyncWorker` — Başlangıçta uzak bir `books.json` URL'sini çeken QThread.
+- `DatabaseSyncWorker` — Başlangıçta uzak bir `books.json` URL'sini çeken Thread.
 - Yerel önbelleğe yazmadan önce JSON yapısını doğrular.
 - `_on_sync_finished()`, `Database` sınıfını yeniden yükler ve kitap ızgarasını (grid) yeniler.
 - Başarısızlıkta tamamen sessizdir — yerel önbellek her zaman yedek olarak kullanılır.
@@ -176,7 +165,7 @@ Yedi yeni özellik tasarlandı, uygulandı ve entegre edildi:
 
 #### 7.7 Otomatik Güncelleme Zamanlayıcı (`src/core/updater.py`)
 
-- `AutoUpdateScheduler`, 6 saatlik aralıklarla bir `QTimer` içinde çalışır.
+- `AutoUpdateScheduler`, 6 saatlik aralıklarla arka planda çalışan bir thread içinde çalışır.
 - `config.json` içinde `"auto_update_policy"` altında saklanan üç kullanıcı tarafından yapılandırılabilir politika:
   - `"off"` (Kapalı) — Arka planda hiçbir kontrol yapılmaz.
   - `"check"` (Kontrol Et) — 24 saatte en fazla bir kez kontrol eder; güncelleme bulunursa bir toast bildirimi gösterir.
@@ -194,7 +183,7 @@ Yedi yeni özellik tasarlandı, uygulandı ve entegre edildi:
 - Arka plan bash komut dosyasının doğru UI dilinde rapor vermesi için kurulum günlüğü izleri (`installer.py`) tamamen yerelleştirildi.
 - Bağımsız simgeler ve biçimlendirme yer tutucuları uygun olduğunda yerelleştirilebilir bloklara sarıldı.
 - Zorunlu `AboutDialog` (Hakkında) içindeki "Günlükler"e tıklamanın arka planda tıklanamaz bir `LogsDialog` oluşturduğu bir etkileşim engelleyici hata düzeltildi (Hakkında penceresi artık önce kapatılıyor).
-- Bağımlılıklar eksikse otomatik olarak bir PyQt5 sanal ortamı sağlayan birleşik bir `run_dev.py` oluşturmak için `run_arch.py` ve `run_dev.py` birleştirildi.
+- Bağımlılıklar eksikse otomatik olarak bir Python sanal ortamı sağlayan birleşik bir `run_dev.py` oluşturmak için `run_arch.py` ve `run_dev.py` birleştirildi.
 
 ---
 
@@ -205,9 +194,8 @@ Yedi yeni özellik tasarlandı, uygulandı ve entegre edildi:
 | Dosya | Görev |
 |---|---|
 | `src/main.py` | Giriş noktası — GUI veya CLI yönlendirmesi |
-| `src/qt_compat.py` | Qt arka uç soyutlama katmanı |
 | `src/core/database.py` | JSON kitap kataloğu yükleyici |
-| `src/core/downloader.py` | HTTP indirme QThread'i |
+| `src/core/downloader.py` | HTTP indirme Thread'i |
 | `src/core/download_queue.py` | Eşzamanlılık kontrollü FIFO indirme kuyruğu |
 | `src/core/installer.py` | deb/zip/flatpak/snap için paket kurma/kaldırma |
 | `src/core/updater.py` | Güncelleme denetleyicisi, kurucu, otomatik güncelleme zamanlayıcı |
@@ -216,11 +204,11 @@ Yedi yeni özellik tasarlandı, uygulandı ve entegre edildi:
 | `src/core/translation.py` | Çalışma zamanı i18n motoru |
 | `src/core/cli.py` | CLI komut işleyici |
 | `src/core/version.py` | Uygulama versiyon sabiti |
-| `src/ui/main_window.py` | Ana Pencere + Tercihler (Ayarlar) |
-| `src/ui/components.py` | BookCard (Kitap Kartı) + PublisherBadge (Yayıncı Rozeti) |
-| `src/ui/styles.py` | LIGHT_STYLE (Aydınlık) ve DARK_STYLE (Karanlık) QSS |
-| `src/ui/toast.py` | Toast bildirim bindirme sistemi |
-| `src/assets/books.json` | Yerleşik kitap veritabanı |
+| `src/ui/main_window.py` | Ana Pencere |
+| `src/ui/components.py` | BookRow |
+| `src/ui/preferences.py` | Doğal Ayarlar Penceresi |
+| `src/ui/about.py` | Doğal Hakkında Penceresi |
+| `src/ui/logs_dialog.py` | Gerçek zamanlı alt süreç günlükleyici |
 | `src/assets/raf.png` | Uygulama simgesi |
 | `src/assets/locales/en.json` | İngilizce dil dizeleri |
 | `src/assets/locales/tr.json` | Türkçe dil dizeleri |
@@ -301,13 +289,9 @@ python3 tests/test_drive.py
 
 ## 🔧 Temel Tasarım Kararları
 
-### Neden `asyncio` yerine `QThread` çalışanları (workers)?
+### Neden GTK4 / Libadwaita?
 
-Qt'nin kendi iş parçacığı modeli, sinyal/yuva (signal/slot) sistemi ile temiz bir şekilde bütünleşir. `asyncio`, bir olay döngüsü köprüsü (`qasync`) gerektirir ve zaten Qt'ye bağlı olan bir proje için karmaşıklık katar. `QThread` + sinyaller basit, iyi anlaşılan bir kalıp sunar.
-
-### Neden üç Qt arka ucu?
-
-Pardus ETAP tahtaları, Debian depolarında `python3-pyqt5` ile birlikte gönderilir. Geliştirici makineleri genellikle `PySide6` tercih eder. Tüm üçünü `qt_compat.py` aracılığıyla desteklemek, aynı kod tabanının değişiklik yapılmadan her yerde çalışmasını sağlar.
+Libadwaita, yerleşik animasyonları, hazır duyarlı tasarımı ve birleşik ekosistem yaklaşımıyla modern Pardus/GNOME masaüstü standartlarına mükemmel şekilde uyan yerel (native) stillendirme sağlar. QSS bakımı, yerel olmayan bir yaklaşım olduğu için hantallaşmıştı.
 
 ### Neden SQLite yerine yerel JSON veritabanı?
 

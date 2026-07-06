@@ -1,5 +1,6 @@
 # Contributing & Developer Guide
 
+[![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](contributing-tr.md)
 This guide explains how to set up a development environment, understand the codebase, add new features, and submit changes.
 
 ---
@@ -20,9 +21,9 @@ cd raf
 ```
 
 `run_arch.py` automatically:
-1. Detects whether `PySide6` and `requests` are available
+1. Detects whether `PyGObject` and `requests` are available
 2. If not, creates an isolated `.venv` in the project directory
-3. Installs `PySide6` and `requests` into `.venv`
+3. Installs `PyGObject` and `requests` into `.venv`
 4. Launches the app in simulation/developer mode
 
 > **The script never modifies system packages.** All dependencies are contained in `.venv`.
@@ -66,10 +67,9 @@ Setting `RAF_DEV=1` activates the simulation sandbox. Every system-level operati
 
 ```
 src/
-├── core/         Business logic (no Qt widgets)
-├── ui/           Qt widgets only
+├── core/         Business logic (no GTK widgets)
+├── ui/           GTK widgets only
 ├── assets/       Static resources (JSON, images, locale strings)
-└── qt_compat.py  Qt backend abstraction
 ```
 
 **Rule:** Core modules must never import from `src/ui/`. UI modules may import from `src/core/`.
@@ -165,23 +165,24 @@ label.setText(tr("ui.my_new_key", placeholder="value"))
 
 Workers that do background I/O (network, filesystem) must:
 
-1. Extend `QThread`
-2. Emit all results via signals (no direct UI calls from background threads)
+1. Extend `threading.Thread`
+2. Emit all results via callbacks invoked by `GLib.idle_add` (no direct UI calls from background threads)
 3. Accept cancellation via a `self._cancelled` flag
 
 Template:
 
 ```python
-from src.qt_compat import QThread, Signal
+import threading
+from gi.repository import GLib
 
-class MyWorker(QThread):
-    result_ready = Signal(str)   # emit data back to the UI
-    error = Signal(str)          # emit errors
-
-    def __init__(self, param, parent=None):
-        super().__init__(parent)
+class MyWorker(threading.Thread):
+    def __init__(self, param):
+        super().__init__()
+        self.daemon = True
         self._cancelled = False
         self.param = param
+        self.on_result_ready = None
+        self.on_error = None
 
     def cancel(self):
         self._cancelled = True
@@ -192,58 +193,31 @@ class MyWorker(QThread):
                 if self._cancelled:
                     return
                 # process chunk ...
-            self.result_ready.emit("Done")
+            if self.on_result_ready:
+                GLib.idle_add(lambda: self.on_result_ready("Done"))
         except Exception as e:
-            self.error.emit(str(e))
+            if self.on_error:
+                GLib.idle_add(lambda: self.on_error(str(e)))
 ```
 
 In `MainWindow`:
 ```python
-self.worker = MyWorker("input", parent=self)
-self.worker.result_ready.connect(self.on_result)
-self.worker.error.connect(self.on_error)
+self.worker = MyWorker("input")
+self.worker.on_result_ready = self.on_result
+self.worker.on_error = self.on_error
 self.worker.start()
 ```
-
-Always call `worker.deleteLater()` in the finished slot to avoid memory leaks.
 
 ---
 
 ## 7. Theming New Widgets
 
-All new widgets must be styleable via `objectName` or `property("class")`:
+All new widgets must be styled via Adwaita CSS classes or GTK native styling.
 
 ```python
-# Object name targeting (specific widget):
-my_label = QLabel("text")
-my_label.setObjectName("MySpecialLabel")
-
-# Class targeting (reusable button type):
-my_btn = QPushButton("Click")
-my_btn.setProperty("class", "AdwPrimaryBtn")
-```
-
-Then in `src/ui/styles.py`, add to both `LIGHT_STYLE` and `DARK_STYLE`:
-
-```css
-/* Light version */
-#MySpecialLabel {
-    color: #1c1c1e;
-    font-weight: 600;
-}
-
-/* Dark version */
-/* (in DARK_STYLE) */
-#MySpecialLabel {
-    color: #f0f0f0;
-    font-weight: 600;
-}
-```
-
-After changing a property at runtime, force Qt to reapply styles:
-```python
-widget.style().unpolish(widget)
-widget.style().polish(widget)
+# Apply a custom CSS class to a widget:
+my_btn = Gtk.Button(label="Click")
+my_btn.add_css_class("suggested-action")
 ```
 
 ---
@@ -269,12 +243,11 @@ Toasts are non-blocking and do not interrupt user interaction.
 
 ```bash
 # All tests from project root:
-python3 tests/test_ui_features.py
 python3 tests/test_updater.py
 python3 tests/test_drive.py
 ```
 
-Tests use `RAF_DEV=1` implicitly. UI tests use the `offscreen` Qt platform (no display needed).
+Tests use `RAF_DEV=1` implicitly.
 
 ### Writing a New Test
 
@@ -282,9 +255,6 @@ Tests use `RAF_DEV=1` implicitly. UI tests use the `offscreen` Qt platform (no d
 import os, sys
 os.environ["RAF_DEV"] = "1"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.qt_compat import QApplication
-app = QApplication.instance() or QApplication(sys.argv)
 
 # ... test assertions ...
 
@@ -318,7 +288,7 @@ Before tagging a new release:
 
 - [ ] Update `src/core/version.py` with the new version string
 - [ ] Add entry to `debian/changelog` with correct date and maintainer
-- [ ] Run all tests — `python3 tests/test_ui_features.py`, `test_updater.py`, `test_drive.py`
+- [ ] Run all tests — `python3 tests/test_updater.py`, `test_drive.py`
 - [ ] Build and inspect the `.deb`: `./scripts/build_deb.sh && python3 scripts/inspect_deb.py`
 - [ ] Update `update.json` on GitHub with new version + download URL
 - [ ] Create a GitHub release and attach the `.deb`

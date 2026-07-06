@@ -20,7 +20,7 @@ setup(
         ],
     },
     install_requires=[
-        "PySide6>=6.0.0",
+        "PyGObject>=3.42.0",
         "requests>=2.25.0",
     ],
     entry_points={

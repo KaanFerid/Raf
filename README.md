@@ -58,7 +58,7 @@
 - 🌐 **Offline mode detection** — disables downloads and shows a badge when no network is available.
 
 ### Interface & Theming
-- 🎨 **Centralized Theme Engine** — Instantly flips between Light and Dark styles across the entire application (including message boxes and popups) by utilizing `QApplication`-level stylesheets.
+- 🎨 **Centralized Theme Engine** — Instantly flips between Light and Dark styles across the entire application (including message boxes and popups) by utilizing native GTK4/Libadwaita color schemes.
 - 🌍 **Custom Zero-Dependency i18n Engine** — Built from scratch with flattened JSON traversal, auto-discovery of languages via `_meta` blocks, English fallback prevention, and live-UI updating without app restarts!
 - 🔔 **System theme sync** — follows desktop dark/light preference via D-Bus.
 
@@ -71,7 +71,7 @@
 | Dependency | Purpose |
 |---|---|
 | `python3` (≥ 3.9) | Runtime |
-| `python3-pyqt5` | Primary Qt GUI framework (optimized for Pardus ETAP) |
+| `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1` | GTK4 / Libadwaita GUI framework |
 | `python3-requests` | HTTP downloads |
 | `policykit-1` | Elevated package operations (`pkexec`) |
 | `dpkg` / `apt-get` | `.deb` package installation |
@@ -79,7 +79,7 @@
 ### Developer Machine (any Linux/macOS)
 
 ```text
-PyQt5 >= 5.15.0
+PyGObject >= 3.42.0
 requests >= 2.25.0
 urllib3 >= 1.26.0
 ```
@@ -149,7 +149,7 @@ The `run_dev.py` script launches the app in a fully sandboxed simulation environ
 ./run_dev.py
 ```
 
-If `PyQt5` or `requests` are missing, the script automatically creates a `.venv` virtual environment and installs them before launching.
+If `PyGObject` or `requests` are missing, the script automatically creates a `.venv` virtual environment and installs them before launching.
 
 ---
 
@@ -262,7 +262,7 @@ Open **Preferences** from the header bar. Changes take effect immediately after 
 | **Light Theme** | Forces the light Libadwaita palette |
 | **Dark Theme** | Forces the dark Libadwaita palette |
 
-Due to the new centralized engine, `QApplication.instance().setStyleSheet(...)` and `RafMessageBox` are heavily utilized, meaning every modal, window, and toast notification instantly changes color accurately.
+Due to the new centralized engine, native GTK4/Libadwaita color schemes are used, meaning every modal, window, and toast notification instantly changes color accurately based on desktop or user preferences.
 
 ### Language
 Choose between **Turkish** and **English**. The UI updates instantly without restarting, powered by the custom JSON-based `_meta` i18n observer engine.
@@ -330,10 +330,11 @@ raf/
 │   │   ├── cli.py                # CLI command handler
 │   │   └── version.py            # App version string
 │   ├── ui/
-│   │   ├── main_window.py        # MainWindow + PreferencesDialog
-│   │   ├── components.py         # BookCard, PublisherBadge widgets
-│   │   ├── styles.py             # LIGHT_STYLE, DARK_STYLE QSS stylesheets
-│   │   ├── toast.py              # ToastNotification, ToastManager
+│   │   ├── main_window.py        # MainWindow
+│   │   ├── components.py         # BookRow, PublisherBadge widgets
+│   │   ├── preferences.py        # Native PreferencesWindow
+│   │   ├── about.py              # Native AboutWindow
+│   │   ├── toast.py              # Toast notification overlay system
 │   │   └── logs_dialog.py        # Real-time installation subprocess logger
 │   └── assets/
 │       ├── raf.png               # Application icon
@@ -352,18 +353,13 @@ raf/
 ├── mock_system/                  # Developer mode sandbox
 ├── docs/                         # Architecture and API documentation
 ├── run_dev.py                   # Developer runner (auto-venv + simulation)
-├── requirements.txt              # Python dependencies (PyQt5)
+├── requirements.txt              # Python dependencies
 └── README.md                     # This file
 ```
 
 ---
 
 ## Running Tests
-
-### UI Feature Tests
-```bash
-python3 tests/test_ui_features.py
-```
 
 ### Self-Updater Tests
 ```bash
@@ -381,17 +377,17 @@ python3 tests/test_drive.py
 
 ### Threading Model
 
-All network I/O and package operations run in background `QThread` workers that communicate with the main UI thread exclusively via Qt signals. The `PackageQueryWorker` ensures `dpkg-query` polling does not pause GUI event loops.
+All network I/O and package operations run in background `threading.Thread` workers that communicate with the main UI thread exclusively via `GLib.idle_add` callbacks.
 
 ```
 [UI Thread (MainWindow)]
         │
-        ├── PackageQueryWorker (QThread) ──signals──► db_sync_status
-        ├── DownloadWorker (QThread) ──signals──► progress_changed, finished, error
-        ├── InstallerWorker (QThread) ──signals──► status_changed, finished, output_received
-        ├── UpdateChecker (QThread) ──signals──► update_available, no_update
-        ├── DatabaseSyncWorker (QThread) ──signals──► sync_finished, sync_failed
-        └── AutoUpdateScheduler (QObject + QTimer) ──signals──► update_toast_requested
+        ├── PackageQueryWorker (Thread) ──callbacks──► db_sync_status
+        ├── DownloadWorker (Thread) ──callbacks──► progress_changed, finished, error
+        ├── InstallerWorker (Thread) ──callbacks──► status_changed, finished, output_received
+        ├── UpdateChecker (Thread) ──callbacks──► update_available, no_update
+        ├── DatabaseSyncWorker (Thread) ──callbacks──► sync_finished, sync_failed
+        └── AutoUpdateScheduler (Thread) ──callbacks──► update_toast_requested
 ```
 
 ### Configuration Storage

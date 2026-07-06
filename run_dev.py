@@ -26,9 +26,12 @@ def check_dependencies():
         return False
         
     try:
-        import PyQt5
+        import gi
+        gi.require_version('Gtk', '4.0')
+        gi.require_version('Adw', '1')
+        from gi.repository import Gtk, Adw
         return True
-    except ImportError:
+    except (ImportError, ValueError):
         return False
 
 def run_in_venv():
@@ -40,14 +43,14 @@ def run_in_venv():
         print("-> Gerekli Python kütüphaneleri sisteminizde bulunamadı.")
         print("-> Proje klasöründe izole bir sanal ortam (.venv) oluşturuluyor...")
         try:
-            subprocess.run([sys.executable, "-m", "venv", venv_dir], check=True)
-            print("-> Sanal ortam oluşturuldu. Kütüphaneler kuruluyor (pip install PyQt5 requests)...")
+            subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", venv_dir], check=True)
+            print("-> Sanal ortam oluşturuldu. Kütüphaneler kuruluyor (pip install PyGObject requests)...")
             
             # Upgrade pip first to avoid issues
             subprocess.run([venv_pip, "install", "--upgrade", "pip"], check=False)
             
             # Install requirements
-            subprocess.run([venv_pip, "install", "PyQt5", "requests"], check=True)
+            subprocess.run([venv_pip, "install", "PyGObject", "requests"], check=True)
             print("-> Kurulum tamamlandı.\n")
         except Exception as e:
             print(f"\nHATA: Sanal ortam oluşturulurken veya kütüphaneler kurulurken hata oluştu: {e}")

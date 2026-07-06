@@ -2,25 +2,39 @@ import os
 import time
 import re
 import requests
-from PyQt5.QtCore import QThread, pyqtSignal as Signal
+import threading
+from gi.repository import GLib
 from src.core.translation import tr
 
-class DownloadWorker(QThread):
-    # Signals to communicate with the GUI thread
-    progress_changed = Signal(str, int, str)  # book_id, percentage, speed_str
-    finished = Signal(str, str)               # book_id, local_file_path
-    error = Signal(str, str)                  # book_id, error_message
-
+class DownloadWorker(threading.Thread):
     def __init__(self, book_id, url, dest_path):
         super().__init__()
+        self.daemon = True
         self.book_id = book_id
         self.url = url
         self.dest_path = dest_path
         self._is_cancelled = False
         self.last_percent = 0  # tracked for title bar progress display
+        
+        # Callbacks replacing pyqtSignal
+        self.on_progress_changed = None # func(book_id, percentage, speed_str)
+        self.on_finished = None         # func(book_id, local_file_path)
+        self.on_error = None            # func(book_id, error_message)
 
     def cancel(self):
         self._is_cancelled = True
+
+    def _emit_progress(self, percent, speed_str):
+        if self.on_progress_changed:
+            GLib.idle_add(self.on_progress_changed, self.book_id, percent, speed_str)
+            
+    def _emit_finished(self, path):
+        if self.on_finished:
+            GLib.idle_add(self.on_finished, self.book_id, path)
+            
+    def _emit_error(self, err_msg):
+        if self.on_error:
+            GLib.idle_add(self.on_error, self.book_id, err_msg)
 
     def run(self):
         temp_dest_path = self.dest_path + ".tmp"
@@ -117,7 +131,7 @@ class DownloadWorker(QThread):
                                         os.remove(temp_dest_path)
                                     except Exception:
                                         pass
-                                self.error.emit(self.book_id, tr("downloader.download_cancelled"))
+                                self._emit_error(tr("downloader.download_cancelled"))
                                 return
 
                             if chunk:
@@ -135,10 +149,10 @@ class DownloadWorker(QThread):
                                     if total_size > 0:
                                         percent = int((downloaded / total_size) * 100)
                                         self.last_percent = percent
-                                        self.progress_changed.emit(self.book_id, percent, speed_str)
+                                        self._emit_progress(percent, speed_str)
                                     else:
                                         downloaded_mb = downloaded / (1024 * 1024)
-                                        self.progress_changed.emit(self.book_id, -1, tr("ui.downloaded_mb_speed", downloaded=f"{downloaded_mb:.1f}", speed=speed_str))
+                                        self._emit_progress(-1, tr("ui.downloaded_mb_speed", downloaded=f"{downloaded_mb:.1f}", speed=speed_str))
 
                     # Successfully finished download loop
                     if total_size > 0 and downloaded >= total_size:
@@ -152,9 +166,9 @@ class DownloadWorker(QThread):
                             if os.path.exists(temp_dest_path):
                                 try: os.remove(temp_dest_path)
                                 except Exception: pass
-                            self.error.emit(self.book_id, tr("downloader.connection_error", error="Connection truncated"))
+                            self._emit_error(tr("downloader.connection_error", error="Connection truncated"))
                             return
-                        self.msleep(3000)
+                        time.sleep(3)
                         file_mode = "ab"
                         continue
 
@@ -168,11 +182,11 @@ class DownloadWorker(QThread):
                                 os.remove(temp_dest_path)
                             except Exception:
                                 pass
-                        self.error.emit(self.book_id, tr("downloader.connection_error", error=str(e)))
+                        self._emit_error(tr("downloader.connection_error", error=str(e)))
                         return
                     
                     # Sleep 3 seconds before retrying
-                    self.msleep(3000)
+                    time.sleep(3)
                     file_mode = "ab"  # Ensure we append on retry
 
             # Rename temp file to final destination file
@@ -180,7 +194,7 @@ class DownloadWorker(QThread):
                 os.remove(self.dest_path)
             os.rename(temp_dest_path, self.dest_path)
             
-            self.finished.emit(self.book_id, self.dest_path)
+            self._emit_finished(self.dest_path)
 
         except Exception as e:
             if os.path.exists(temp_dest_path):
@@ -188,4 +202,4 @@ class DownloadWorker(QThread):
                     os.remove(temp_dest_path)
                 except Exception:
                     pass
-            self.error.emit(self.book_id, str(e))
+            self._emit_error(str(e))

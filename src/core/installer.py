@@ -4,7 +4,9 @@ import shutil
 import zipfile
 import json
 import re
-from PyQt5.QtCore import QThread, pyqtSignal as Signal
+import time
+import threading
+from gi.repository import GLib
 from src.core.config import get_cached_package_name, set_cached_package_name
 from src.core.translation import tr
 
@@ -31,19 +33,36 @@ def save_mock_installed(installed_set):
     with open(MOCK_DB_PATH, 'w', encoding='utf-8') as f:
         json.dump(list(installed_set), f, indent=2)
 
-class InstallerWorker(QThread):
-    # Signals
-    status_changed = Signal(str, str)  # book_id, status_message
-    finished = Signal(str, bool)       # book_id, success
-    output_received = Signal(str, str) # book_id, console_output
-    auth_failed = Signal(str)          # book_id
-
+class InstallerWorker(threading.Thread):
     def __init__(self, book, file_path, action="install"):
         super().__init__()
+        self.daemon = True
         self.book = book
         self.book_id = book['id']
         self.file_path = file_path
         self.action = action  # "install" or "uninstall"
+        
+        # Callbacks replacing pyqtSignal
+        self.on_status_changed = None   # func(book_id, status_message)
+        self.on_finished = None         # func(book_id, success)
+        self.on_output_received = None  # func(book_id, console_output)
+        self.on_auth_failed = None      # func(book_id)
+
+    def _emit_status(self, msg):
+        if self.on_status_changed:
+            GLib.idle_add(self.on_status_changed, self.book_id, msg)
+            
+    def _emit_finished(self, success):
+        if self.on_finished:
+            GLib.idle_add(self.on_finished, self.book_id, success)
+            
+    def _emit_output(self, output):
+        if self.on_output_received:
+            GLib.idle_add(self.on_output_received, self.book_id, output)
+            
+    def _emit_auth_failed(self):
+        if self.on_auth_failed:
+            GLib.idle_add(self.on_auth_failed, self.book_id)
 
     def run(self):
         if os.environ.get("RAF_DEV") == "1":
@@ -57,22 +76,22 @@ class InstallerWorker(QThread):
 
     def run_mock(self):
         if self.action == "install":
-            self.status_changed.emit(self.book_id, tr("installer.sim_installing", title=self.book['title']))
-            self.msleep(1500)  # Wait 1.5 seconds (simulate)
+            self._emit_status(tr("installer.sim_installing", title=self.book['title']))
+            time.sleep(1.5)  # Wait 1.5 seconds (simulate)
             installed = load_mock_installed()
             installed.add(self.book_id)
             save_mock_installed(installed)
-            self.status_changed.emit(self.book_id, tr("installer.sim_install_completed"))
-            self.finished.emit(self.book_id, True)
+            self._emit_status(tr("installer.sim_install_completed"))
+            self._emit_finished(True)
         elif self.action == "uninstall":
-            self.status_changed.emit(self.book_id, tr("installer.sim_uninstalling", title=self.book['title']))
-            self.msleep(1000)  # Wait 1 second (simulate)
+            self._emit_status(tr("installer.sim_uninstalling", title=self.book['title']))
+            time.sleep(1.0)  # Wait 1 second (simulate)
             installed = load_mock_installed()
             if self.book_id in installed:
                 installed.remove(self.book_id)
             save_mock_installed(installed)
-            self.status_changed.emit(self.book_id, tr("installer.sim_uninstall_completed"))
-            self.finished.emit(self.book_id, True)
+            self._emit_status(tr("installer.sim_uninstall_completed"))
+            self._emit_finished(True)
 
     def install(self):
         file_type = self.book.get('file_type', 'deb')
@@ -88,8 +107,8 @@ class InstallerWorker(QThread):
         elif file_type == 'snap':
             self.install_snap()
         else:
-            self.status_changed.emit(self.book_id, tr("installer.unsupported_file_type"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.unsupported_file_type"))
+            self._emit_finished(self.book_id, False)
 
     def uninstall(self):
         file_type = self.book.get('file_type', 'deb')
@@ -105,11 +124,11 @@ class InstallerWorker(QThread):
         elif file_type == 'snap':
             self.uninstall_snap()
         else:
-            self.status_changed.emit(self.book_id, tr("installer.unsupported_file_type"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.unsupported_file_type"))
+            self._emit_finished(self.book_id, False)
 
     def install_deb(self):
-        self.status_changed.emit(self.book_id, tr("installer.querying_package_info"))
+        self._emit_status(self.book_id, tr("installer.querying_package_info"))
         
         # Extract the exact package name from the downloaded .deb file
         try:
@@ -128,14 +147,14 @@ class InstallerWorker(QThread):
         except Exception as e:
             print(tr("log.error_reading_pkg", id=self.book_id, error=e))
 
-        self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
+        self._emit_status(self.book_id, tr("installer.installing_system_package"))
         
         # We will use pkexec apt-get install -y ./file.deb
         # This will pop up a PolicyKit password prompt for security.
         cmd = ["pkexec", "apt-get", "install", "-y", self.file_path]
         
-        self.output_received.emit(self.book_id, tr("log.start_deb_install", title=self.book.get('title'), default=f"--- Starting DEB installation of {self.book.get('title')} ---"))
-        self.output_received.emit(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
+        self._emit_output(self.book_id, tr("log.start_deb_install", title=self.book.get('title'), default=f"--- Starting DEB installation of {self.book.get('title')} ---"))
+        self._emit_output(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
         
         try:
             process = subprocess.Popen(
@@ -147,39 +166,39 @@ class InstallerWorker(QThread):
             )
             
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
                 
             process.wait()
             
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
-                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_output(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
+                self._emit_status(self.book_id, tr("installer.install_completed"))
+                self._emit_finished(self.book_id, True)
             elif process.returncode in (126, 127):
-                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
-                self.auth_failed.emit(self.book_id)
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
     def uninstall_deb(self):
-        self.status_changed.emit(self.book_id, tr("installer.uninstalling_system_package"))
+        self._emit_status(self.book_id, tr("installer.uninstalling_system_package"))
         package_name = get_deb_package_name(self.book)
         
         if not package_name:
-            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.package_name_not_found"))
+            self._emit_finished(self.book_id, False)
             return
 
         cmd = ["pkexec", "apt-get", "remove", "-y", package_name]
         
-        self.output_received.emit(self.book_id, tr("log.start_deb_uninstall", title=self.book.get('title'), default=f"--- Starting DEB uninstallation of {self.book.get('title')} ---"))
-        self.output_received.emit(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
+        self._emit_output(self.book_id, tr("log.start_deb_uninstall", title=self.book.get('title'), default=f"--- Starting DEB uninstallation of {self.book.get('title')} ---"))
+        self._emit_output(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
         
         try:
             process = subprocess.Popen(
@@ -191,27 +210,27 @@ class InstallerWorker(QThread):
             )
             
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
                 
             process.wait()
             
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_status(self.book_id, tr("installer.uninstall_completed"))
+                self._emit_finished(self.book_id, True)
             elif process.returncode in (126, 127):
-                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
-                self.auth_failed.emit(self.book_id)
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
     def install_zip(self):
-        self.status_changed.emit(self.book_id, tr("installer.extracting_files"))
+        self._emit_status(self.book_id, tr("installer.extracting_files"))
         
         import tempfile
         tmp_dir = tempfile.mkdtemp(prefix=f"raf_{self.book_id}_")
@@ -226,7 +245,7 @@ class InstallerWorker(QThread):
                     zip_ref.extract(file, tmp_dir)
                     if i % max(1, total_files // 10) == 0:
                         percent = int((i / total_files) * 100)
-                        self.status_changed.emit(self.book_id, tr("installer.extracting_percent", percent=percent))
+                        self._emit_status(self.book_id, tr("installer.extracting_percent", percent=percent))
             
             # Make sure all files are executable if they are scripts/binaries
             for root, dirs, files in os.walk(tmp_dir):
@@ -238,11 +257,11 @@ class InstallerWorker(QThread):
                         except Exception:
                             pass
 
-            self.status_changed.emit(self.book_id, tr("installer.creating_desktop_launcher"))
+            self._emit_status(self.book_id, tr("installer.creating_desktop_launcher"))
             tmp_desktop_path = create_desktop_launcher(self.book, tmp_dir)
             
-            self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
-            self.output_received.emit(self.book_id, tr("log.start_zip_install", title=self.book.get('title'), default=f"--- Starting ZIP installation of {self.book.get('title')} ---"))
+            self._emit_status(self.book_id, tr("installer.installing_system_package"))
+            self._emit_output(self.book_id, tr("log.start_zip_install", title=self.book.get('title'), default=f"--- Starting ZIP installation of {self.book.get('title')} ---"))
             
             script = """
             set -ex
@@ -264,36 +283,36 @@ class InstallerWorker(QThread):
             ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
             
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
-                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_output(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
+                self._emit_status(self.book_id, tr("installer.install_completed"))
+                self._emit_finished(self.book_id, True)
             elif process.returncode in (126, 127):
-                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
-                self.auth_failed.emit(self.book_id)
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
 
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
             try: shutil.rmtree(tmp_dir)
             except: pass
 
     def uninstall_zip(self):
-        self.status_changed.emit(self.book_id, tr("installer.deleting_files"))
+        self._emit_status(self.book_id, tr("installer.deleting_files"))
         
         apps_dir = f"/opt/raf/apps/{self.book_id}"
         desktop_file = f"/usr/share/applications/raf-{self.book_id}.desktop"
         
         try:
-            self.output_received.emit(self.book_id, tr("log.start_zip_uninstall", title=self.book.get('title'), default=f"--- Starting ZIP uninstallation of {self.book.get('title')} ---"))
+            self._emit_output(self.book_id, tr("log.start_zip_uninstall", title=self.book.get('title'), default=f"--- Starting ZIP uninstallation of {self.book.get('title')} ---"))
             script = """
             set -ex
             rm -rfv "$1"
@@ -307,27 +326,27 @@ class InstallerWorker(QThread):
             ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
                 
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---"))
-                self.status_changed.emit(self.book_id, tr("installer.library_uninstalled"))
-                self.finished.emit(self.book_id, True)
+                self._emit_output(self.book_id, tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---"))
+                self._emit_status(self.book_id, tr("installer.library_uninstalled"))
+                self._emit_finished(self.book_id, True)
             elif process.returncode in (126, 127):
-                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
-                self.auth_failed.emit(self.book_id)
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
     def install_standalone(self):
-        self.status_changed.emit(self.book_id, tr("installer.extracting_files"))
+        self._emit_status(self.book_id, tr("installer.extracting_files"))
         
         import tempfile
         tmp_dir = tempfile.mkdtemp(prefix=f"raf_{self.book_id}_")
@@ -339,12 +358,12 @@ class InstallerWorker(QThread):
             shutil.copy2(self.file_path, tmp_file_path)
             os.chmod(tmp_file_path, 0o755)
             
-            self.status_changed.emit(self.book_id, tr("installer.creating_desktop_launcher"))
+            self._emit_status(self.book_id, tr("installer.creating_desktop_launcher"))
             tmp_desktop_path = create_desktop_launcher(self.book, tmp_dir, is_standalone=True, exec_name=file_name)
             
-            self.status_changed.emit(self.book_id, tr("installer.installing_system_package"))
+            self._emit_status(self.book_id, tr("installer.installing_system_package"))
             
-            self.output_received.emit(self.book_id, tr("log.start_standalone_install", title=self.book.get('title'), default=f"--- Starting AppImage/Standalone installation of {self.book.get('title')} ---"))
+            self._emit_output(self.book_id, tr("log.start_standalone_install", title=self.book.get('title'), default=f"--- Starting AppImage/Standalone installation of {self.book.get('title')} ---"))
             script = """
             set -ex
             rm -rfv "$1"
@@ -367,21 +386,21 @@ class InstallerWorker(QThread):
             ]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
             
             if process.returncode == 0:
-                self.output_received.emit(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
-                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_output(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
+                self._emit_status(self.book_id, tr("installer.install_completed"))
+                self._emit_finished(self.book_id, True)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
                 
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
             try: shutil.rmtree(tmp_dir)
             except: pass
 
@@ -393,17 +412,17 @@ class InstallerWorker(QThread):
         """Installs a Flatpak application for the current user."""
         # Check flatpak is available
         if not shutil.which("flatpak"):
-            self.status_changed.emit(self.book_id, tr("installer.flatpak_not_available"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.flatpak_not_available"))
+            self._emit_finished(self.book_id, False)
             return
 
         flatpak_ref = self.book.get('flatpak_ref', '')
         if not flatpak_ref:
-            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.package_name_not_found"))
+            self._emit_finished(self.book_id, False)
             return
 
-        self.status_changed.emit(self.book_id, tr("installer.installing_flatpak"))
+        self._emit_status(self.book_id, tr("installer.installing_flatpak"))
         cmd = ["flatpak", "install", "--user", "--noninteractive", flatpak_ref]
 
         try:
@@ -415,34 +434,34 @@ class InstallerWorker(QThread):
                 bufsize=1
             )
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
 
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_status(self.book_id, tr("installer.install_completed"))
+                self._emit_finished(self.book_id, True)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
     def uninstall_flatpak(self):
         """Removes a Flatpak application for the current user."""
         if not shutil.which("flatpak"):
-            self.status_changed.emit(self.book_id, tr("installer.flatpak_not_available"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.flatpak_not_available"))
+            self._emit_finished(self.book_id, False)
             return
 
         flatpak_ref = self.book.get('flatpak_ref', '')
         if not flatpak_ref:
-            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.package_name_not_found"))
+            self._emit_finished(self.book_id, False)
             return
 
-        self.status_changed.emit(self.book_id, tr("installer.uninstalling_flatpak"))
+        self._emit_status(self.book_id, tr("installer.uninstalling_flatpak"))
         cmd = ["flatpak", "uninstall", "--user", "--noninteractive", flatpak_ref]
 
         try:
@@ -454,34 +473,34 @@ class InstallerWorker(QThread):
                 bufsize=1
             )
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
 
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_status(self.book_id, tr("installer.uninstall_completed"))
+                self._emit_finished(self.book_id, True)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
     def install_snap(self):
         """Installs a Snap package (requires elevated privileges via pkexec)."""
         if not shutil.which("snap"):
-            self.status_changed.emit(self.book_id, tr("installer.snap_not_available"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.snap_not_available"))
+            self._emit_finished(self.book_id, False)
             return
 
         snap_name = self.book.get('snap_name', '')
         if not snap_name:
-            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.package_name_not_found"))
+            self._emit_finished(self.book_id, False)
             return
 
-        self.status_changed.emit(self.book_id, tr("installer.installing_snap"))
+        self._emit_status(self.book_id, tr("installer.installing_snap"))
         cmd = ["pkexec", "snap", "install", snap_name]
 
         try:
@@ -493,38 +512,38 @@ class InstallerWorker(QThread):
                 bufsize=1
             )
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
 
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, tr("installer.install_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_status(self.book_id, tr("installer.install_completed"))
+                self._emit_finished(self.book_id, True)
             elif process.returncode in (126, 127):
-                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
-                self.auth_failed.emit(self.book_id)
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
     def uninstall_snap(self):
         """Removes a Snap package (requires elevated privileges via pkexec)."""
         if not shutil.which("snap"):
-            self.status_changed.emit(self.book_id, tr("installer.snap_not_available"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.snap_not_available"))
+            self._emit_finished(self.book_id, False)
             return
 
         snap_name = self.book.get('snap_name', '')
         if not snap_name:
-            self.status_changed.emit(self.book_id, tr("installer.package_name_not_found"))
-            self.finished.emit(self.book_id, False)
+            self._emit_status(self.book_id, tr("installer.package_name_not_found"))
+            self._emit_finished(self.book_id, False)
             return
 
-        self.status_changed.emit(self.book_id, tr("installer.uninstalling_snap"))
+        self._emit_status(self.book_id, tr("installer.uninstalling_snap"))
         cmd = ["pkexec", "snap", "remove", snap_name]
 
         try:
@@ -536,23 +555,23 @@ class InstallerWorker(QThread):
                 bufsize=1
             )
             for line in process.stdout:
-                self.output_received.emit(self.book_id, line)
+                self._emit_output(self.book_id, line)
             process.wait()
 
             if process.returncode == 0:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_completed"))
-                self.finished.emit(self.book_id, True)
+                self._emit_status(self.book_id, tr("installer.uninstall_completed"))
+                self._emit_finished(self.book_id, True)
             elif process.returncode in (126, 127):
-                self.status_changed.emit(self.book_id, tr("installer.auth_failed"))
-                self.auth_failed.emit(self.book_id)
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
             else:
-                self.status_changed.emit(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self.finished.emit(self.book_id, False)
+                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
+                self._emit_finished(self.book_id, False)
         except Exception as e:
-            self.output_received.emit(self.book_id, str(e))
-            self.status_changed.emit(self.book_id, tr("ui.error") + f": {str(e)}")
-            self.finished.emit(self.book_id, False)
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
 
 
 def get_all_installed_packages():
