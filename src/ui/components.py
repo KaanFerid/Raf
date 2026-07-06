@@ -108,11 +108,13 @@ class BookRow(Adw.ActionRow):
         
         self.primary_btn = Gtk.Button()
         self.primary_btn.set_valign(Gtk.Align.CENTER)
+        self.primary_btn.set_size_request(100, -1)
         self.primary_btn.connect("clicked", self.on_primary_clicked)
         self.action_box.append(self.primary_btn)
         
         self.secondary_btn = Gtk.Button()
         self.secondary_btn.set_valign(Gtk.Align.CENTER)
+        self.secondary_btn.set_size_request(100, -1)
         self.secondary_btn.add_css_class("destructive-action")
         self.secondary_btn.connect("clicked", self.on_secondary_clicked)
         self.action_box.append(self.secondary_btn)

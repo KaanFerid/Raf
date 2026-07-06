@@ -4,21 +4,24 @@ from src.core.translation import tr
 from src.core.version import __version__ as APP_VERSION
 
 def show_about_window(parent=None):
-    about = Adw.AboutWindow()
+    from gi.repository import Gdk
+    about = Gtk.AboutDialog()
     if parent:
         about.set_transient_for(parent)
         
-    about.set_application_name(tr("ui.app_title"))
+    about.set_program_name(tr("ui.app_title"))
     about.set_version(APP_VERSION)
-    about.set_developer_name("KaanFerid")
     
-    # In GTK4/Adw, the icon must be in the current icon theme or resource.
-    # We will just use a standard system icon for the store/application market.
-    about.set_application_icon("system-software-install")
-        
+    icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "raf.png")
+    if os.path.exists(icon_path):
+        try:
+            texture = Gdk.Texture.new_from_filename(icon_path)
+            about.set_logo(texture)
+        except Exception:
+            pass
+            
     about.set_comments(tr("ui.about_content"))
-    
-    # Check Updates link
-    about.add_link(tr("ui.check_updates"), "https://github.com/KaanFerid/Raf/releases")
+    about.set_website("https://github.com/KaanFerid/Raf/releases")
+    about.set_website_label(tr("ui.check_updates"))
     
     about.present()

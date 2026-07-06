@@ -85,6 +85,12 @@ class MainWindow(Adw.ApplicationWindow):
         self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
         self.header.set_title_widget(self.view_switcher)
 
+        # App Title
+        app_title_lbl = Gtk.Label(label=f"<b>{tr('ui.app_title')}</b>", use_markup=True)
+        app_title_lbl.set_margin_start(12)
+        app_title_lbl.set_margin_end(12)
+        self.header.pack_start(app_title_lbl)
+
         # Search Bar
         self.search_entry = Gtk.SearchEntry()
         self.search_entry.set_size_request(250, -1)
