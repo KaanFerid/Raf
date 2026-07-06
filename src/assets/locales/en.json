@@ -121,6 +121,7 @@
     "toast_uninstall_success": "'{title}' removed from system.",
     "toast_download_error": "Download failed: {error}",
     "toast_install_error": "Installation failed for '{title}'.",
+    "toast_uninstall_error": "Uninstallation failed for '{title}'.",
     "toast_auth_failed": "Authorization cancelled for '{title}'.",
     "auth_failed_status": "Authorization cancelled for {title}.",
     "toast_update_available": "Update v{version} is available! Open Preferences to install.",

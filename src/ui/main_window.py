@@ -93,11 +93,19 @@ class MainWindow(Gtk.ApplicationWindow):
         self.drop_overlay = Gtk.Overlay()
         self.drop_overlay.set_child(main_box)
         
-        self.drop_ui = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
-        self.drop_ui.add_css_class("card")
-        self.drop_ui.set_size_request(400, 200)
+        self.drop_ui = Gtk.Box(halign=Gtk.Align.FILL, valign=Gtk.Align.FILL)
+        self.drop_ui.add_css_class("drop-overlay-bg")
+        
+        card_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
+        card_box.set_hexpand(True)
+        card_box.set_vexpand(True)
+        card_box.add_css_class("card")
+        card_box.set_size_request(400, 200)
+        
         lbl = Gtk.Label(label=tr("ui.drop_files_here", default="<span size='xx-large' font_weight='bold'>Drop Files Here</span>\n.deb, .zip, .appimage, .fernus"), use_markup=True, justify=Gtk.Justification.CENTER)
-        self.drop_ui.append(lbl)
+        card_box.append(lbl)
+        
+        self.drop_ui.append(card_box)
         
         self.drop_overlay.add_overlay(self.drop_ui)
         self.drop_ui.set_visible(False)
@@ -411,6 +419,7 @@ class MainWindow(Gtk.ApplicationWindow):
         print(f"[INSTALLER-{book_id}] {text.strip()}")
 
     def on_installation_finished(self, book_id, success):
+        self.refresh_packages_cache()
         worker = self.active_installations.pop(book_id, None)
         book = worker.book if worker else None
         card = self.card_widgets.get(book_id)
@@ -432,7 +441,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 cache_dir = os.path.expanduser("~/.cache/raf/downloads")
                 try: os.remove(os.path.join(cache_dir, book['file_name']))
                 except: pass
-            self.refresh_packages_cache()
         elif getattr(worker, '_auth_failed', False):
             pass
         else:
@@ -477,6 +485,7 @@ class MainWindow(Gtk.ApplicationWindow):
         worker.start()
 
     def on_uninstallation_finished(self, book_id, success):
+        self.refresh_packages_cache()
         worker = self.active_installations.pop(book_id, None)
         book = worker.book if worker else None
         card = self.card_widgets.get(book_id)
@@ -493,11 +502,10 @@ class MainWindow(Gtk.ApplicationWindow):
             self.show_toast(tr("ui.toast_uninstall_success", title=book['title']))
             if book and book.get('is_local'):
                 self.db.remove_sideloaded_book(book['id'])
-            self.refresh_packages_cache()
         elif getattr(worker, '_auth_failed', False):
             pass
         else:
-            self.show_toast(tr("ui.toast_install_error", title=book['title']))
+            self.show_toast(tr("ui.toast_uninstall_error", title=book['title']))
 
     def on_auth_failed(self, book_id, worker):
         worker._auth_failed = True

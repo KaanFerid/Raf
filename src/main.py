@@ -53,6 +53,12 @@ def main():
                 base_dir = os.path.dirname(os.path.abspath(__file__))
                 icon_theme.add_search_path(os.path.join(base_dir, "assets"))
 
+            # Custom CSS
+            css_provider = Gtk.CssProvider()
+            css_provider.load_from_data(b".drop-overlay-bg { background-color: rgba(0, 0, 0, 0.6); }")
+            if display:
+                Gtk.StyleContext.add_provider_for_display(display, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
             # Setup Preferences Action
             action = Gio.SimpleAction.new("preferences", None)
             action.connect("activate", self.on_preferences_action)

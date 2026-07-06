@@ -121,6 +121,7 @@
     "toast_uninstall_success": "'{title}' sistemden kaldırıldı.",
     "toast_download_error": "İndirme başarısız: {error}",
     "toast_install_error": "'{title}' için yükleme başarısız oldu.",
+    "toast_uninstall_error": "'{title}' için kaldırma başarısız oldu.",
     "toast_auth_failed": "'{title}' için yetkilendirme iptal edildi.",
     "auth_failed_status": "{title} için yetkilendirme iptal edildi.",
     "toast_update_available": "v{version} güncellemesi hazır! Yüklemek için Ayarlar'ı açın.",
