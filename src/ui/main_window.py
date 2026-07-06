@@ -40,6 +40,8 @@ class MainWindow(Gtk.ApplicationWindow):
         drop_target.connect("leave", self.on_drag_leave)
         drop_target.connect("drop", self.on_drop)
         self.add_controller(drop_target)
+        
+        self.set_icon_name("raf")
 
         # Download queue
         self.download_queue = DownloadQueue(max_concurrent=2)
@@ -100,10 +102,14 @@ class MainWindow(Gtk.ApplicationWindow):
         card_box.set_hexpand(True)
         card_box.set_vexpand(True)
         card_box.add_css_class("card")
-        card_box.set_size_request(400, 200)
+        card_box.set_size_request(400, 300)
         
-        lbl = Gtk.Label(label=tr("ui.drop_files_here", default="<span size='xx-large' font_weight='bold'>Drop Files Here</span>\n.deb, .zip, .appimage, .fernus"), use_markup=True, justify=Gtk.Justification.CENTER)
-        card_box.append(lbl)
+        status_page = Adw.StatusPage(
+            title=tr("ui.drop_files_here", default="Drop Files Here"),
+            description=".deb, .zip, .appimage, .fernus",
+            icon_name="folder-download-symbolic"
+        )
+        card_box.append(status_page)
         
         self.drop_ui.append(card_box)
         
