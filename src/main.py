@@ -1,6 +1,9 @@
 import sys
 import os
 
+# Force GTK to use Client-Side Decorations (CSD) to prevent double titlebars on XFCE/X11
+os.environ["GTK_CSD"] = "1"
+
 def main():
     args = sys.argv[1:]
     
