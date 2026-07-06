@@ -7,7 +7,7 @@ class MyApp(Adw.Application):
     def __init__(self):
         super().__init__(application_id='test.app')
     def do_activate(self):
-        win = Adw.ApplicationWindow(application=self)
+        win = Gtk.ApplicationWindow(application=self)
         header = Adw.HeaderBar()
         win.set_titlebar(header)
         win.present()

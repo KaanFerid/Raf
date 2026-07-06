@@ -13,7 +13,7 @@ from src.ui.components import BookRow
 from src.ui.logs_dialog import InstallationLogsDialog
 from src.ui.desktop_editor import show_message
 
-class MainWindow(Adw.ApplicationWindow):
+class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, app, startup_files=None):
         super().__init__(application=app)
         self.startup_files = startup_files or []
@@ -70,7 +70,7 @@ class MainWindow(Adw.ApplicationWindow):
     def init_ui(self):
         # Toast Overlay
         self.toast_overlay = Adw.ToastOverlay()
-        self.set_content(self.toast_overlay)
+        self.set_child(self.toast_overlay)
 
         # Setup Actions
         action_update = Gio.SimpleAction.new("check_update", None)
@@ -81,13 +81,13 @@ class MainWindow(Adw.ApplicationWindow):
         action_req.connect("activate", self.on_request_book_action)
         self.add_action(action_req)
 
-        # Toolbar View
-        toolbar_view = Adw.ToolbarView()
-        self.toast_overlay.set_child(toolbar_view)
+        # Main Box
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.toast_overlay.set_child(main_box)
 
         # HeaderBar
         self.header = Adw.HeaderBar()
-        toolbar_view.add_top_bar(self.header)
+        self.set_titlebar(self.header)
 
         # Title widget (Custom Switcher Box)
         self.tab_box = Gtk.Box(spacing=0)
@@ -146,7 +146,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         # ViewStack
         self.stack = Adw.ViewStack()
-        toolbar_view.set_content(self.stack)
+        main_box.append(self.stack)
 
         # Market Page
         self.market_page, self.market_listbox = self.create_list_page()
