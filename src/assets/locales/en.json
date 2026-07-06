@@ -146,7 +146,7 @@
     "confirm_sideload_title": "Local Packages Found",
     "confirm_sideload_prompt": "You are about to load {count} local packages:\n{files}\n\nDo you want to proceed with the installation?",
     "confirm_install_title": "Ready to Install",
-    "confirm_install_prompt": "The download for '{title}' has finished.\n\nDo you want to proceed with the system installation? This may require an administrator password.",
+    "confirm_install_prompt": "Are you sure you want to download and install '{title}'?\n\nThis may require an administrator password.",
     "confirm_batch_install_prompt": "You are about to download and install {count} books.\n\nDo you want to proceed?"
   },
   "installer": {

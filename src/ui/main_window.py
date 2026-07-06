@@ -721,12 +721,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.batch_uninstall_btn.set_label(tr("ui.uninstall_selected"))
         self.refresh_grid()
 
-    def _on_queue_job_started(self, book_id):
-        job = self.download_queue._last_started
-        if job:
-            book, local_path = job
-            self.download_queue.on_download_started(book_id)
-            GLib.idle_add(lambda: self.start_download(book))
+    def _on_queue_job_started(self, book_id, book, local_path):
+        self.download_queue.on_download_started(book_id)
+        GLib.idle_add(lambda: self.start_download(book))
 
     def _on_queue_changed(self, count):
         GLib.idle_add(lambda: self.queue_badge.set_visible(count > 0))
@@ -816,13 +813,19 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.add_response("ok", tr("ui.ok_btn", default="OK"))
         dialog.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
 
-        entry = Adw.PasswordEntryRow(title=tr("ui.password", default="Password"))
-        entry.connect("apply", lambda *args: dialog.response("ok"))
+        entry = Gtk.PasswordEntry()
+        entry.connect("activate", lambda *args: dialog.emit("response", "ok"))
+        entry.set_hexpand(True)
+        
+        row = Adw.ActionRow(title=tr("ui.password", default="Password"))
+        row.add_suffix(entry)
+        row.set_activatable_widget(entry)
+        
         dialog.set_default_response("ok")
         
         listbox = Gtk.ListBox()
         listbox.add_css_class("boxed-list")
-        listbox.append(entry)
+        listbox.append(row)
         dialog.set_extra_child(listbox)
 
         def on_response(dialog, response):

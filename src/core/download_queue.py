@@ -17,9 +17,9 @@ class DownloadQueue:
         self.on_job_finished = None   # func(book_id)
         self.on_queue_changed = None  # func(pending_count)
 
-    def _emit_started(self, book_id):
+    def _emit_started(self, book_id, book, local_path):
         if self.on_job_started:
-            GLib.idle_add(self.on_job_started, book_id)
+            GLib.idle_add(self.on_job_started, book_id, book, local_path)
 
     def _emit_finished(self, book_id):
         if self.on_job_finished:
@@ -91,8 +91,4 @@ class DownloadQueue:
         while self._pending and len(self._active_ids) < self.max_concurrent:
             book, local_path = self._pending.pop(0)
             self._emit_changed()
-            
-            # Store the args so MainWindow can retrieve them before emitting the signal
-            self._last_started = (book, local_path)
-            
-            self._emit_started(book['id'])
+            self._emit_started(book['id'], book, local_path)
