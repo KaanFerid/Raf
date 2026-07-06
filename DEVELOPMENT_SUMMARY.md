@@ -1,5 +1,9 @@
 # Raf — Development Summary
 
+<div align="right">
+  <a href="DEVELOPMENT_SUMMARY-tr.md"><img src="https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square" alt="Türkçe"></a>
+</div>
+
 This document provides a chronological account of every completed development stage, the rationale behind key design decisions, and a full reference of the application's capabilities. It is intended for maintainers and contributors who need to understand how the project evolved.
 
 ---
