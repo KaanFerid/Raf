@@ -48,17 +48,17 @@ class InstallerWorker(threading.Thread):
         self.on_output_received = None  # func(book_id, console_output)
         self.on_auth_failed = None      # func(book_id)
 
-    def _emit_status(self, msg):
+    def _emit_status(self, book_id, msg):
         if self.on_status_changed:
-            GLib.idle_add(self.on_status_changed, self.book_id, msg)
+            GLib.idle_add(self.on_status_changed, book_id, msg)
             
-    def _emit_finished(self, success):
+    def _emit_finished(self, book_id, success):
         if self.on_finished:
-            GLib.idle_add(self.on_finished, self.book_id, success)
+            GLib.idle_add(self.on_finished, book_id, success)
             
-    def _emit_output(self, output):
+    def _emit_output(self, book_id, output):
         if self.on_output_received:
-            GLib.idle_add(self.on_output_received, self.book_id, output)
+            GLib.idle_add(self.on_output_received, book_id, output)
             
     def _emit_auth_failed(self):
         if self.on_auth_failed:

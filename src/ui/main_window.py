@@ -289,6 +289,22 @@ class MainWindow(Gtk.ApplicationWindow):
         self.active_downloads[book_id] = worker
         worker.start()
 
+    def request_install_book(self, book):
+        def on_response(dialog, response):
+            dialog.close()
+            if response == "yes":
+                self.start_download(book)
+                
+        dialog = Adw.MessageDialog(
+            transient_for=self, 
+            heading=tr("ui.confirm_install_title"), 
+            body=tr("ui.confirm_install_prompt", title=book['title'])
+        )
+        dialog.add_response("cancel", tr("ui.cancel_btn"))
+        dialog.add_response("yes", tr("ui.yes"))
+        dialog.connect("response", on_response)
+        dialog.present()
+
     def on_download_progress(self, book_id, percent, speed_str):
         if book_id in self.card_widgets:
             card = self.card_widgets[book_id]
@@ -298,27 +314,13 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_download_finished(self, book_id, local_file_path):
         """
         Called when a DownloadWorker successfully finishes downloading.
-        Prompts the user to begin installation.
+        Starts the installation process automatically.
         """
         worker = self.active_downloads.pop(book_id, None)
         self.download_queue.on_download_completed(book_id)
 
         book = self.card_widgets[book_id].book
-        def on_response(dialog, response):
-            dialog.close()
-            if response == "yes":
-                self.start_installation(book, local_file_path)
-            else:
-                card = self.card_widgets.get(book_id)
-                if card: card.update_status(is_installed=False)
-                try: os.remove(local_file_path)
-                except: pass
-
-        dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.confirm_install_title"), body=tr("ui.confirm_install_prompt", title=book['title']))
-        dialog.add_response("cancel", tr("ui.no"))
-        dialog.add_response("yes", tr("ui.yes"))
-        dialog.connect("response", on_response)
-        dialog.present()
+        self.start_installation(book, local_file_path)
 
     def on_download_error(self, book_id, err_msg):
         self.active_downloads.pop(book_id, None)
@@ -538,17 +540,34 @@ class MainWindow(Gtk.ApplicationWindow):
     def install_selected(self, btn):
         books = self.db.get_all_books()
         book_map = {b['id']: b for b in books}
-        queued = 0
+        to_install = []
         for book_id in list(self._selected_books):
             card = self.card_widgets.get(book_id)
             if card and not card.is_installed and not card.downloading and not card.is_queued:
                 book = book_map.get(book_id)
                 if book:
+                    to_install.append(book)
+
+        if not to_install:
+            return
+
+        def on_response(dialog, response):
+            dialog.close()
+            if response == "yes":
+                for book in to_install:
                     self.start_download(book)
-                    queued += 1
-        if queued:
-            self.show_toast(tr("ui.batch_queued", count=queued))
-        self.select_mode_btn.set_active(False)
+                self.show_toast(tr("ui.batch_queued", count=len(to_install)))
+            self.select_mode_btn.set_active(False)
+
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=tr("ui.confirm_install_title"),
+            body=tr("ui.confirm_batch_install_prompt", count=len(to_install))
+        )
+        dialog.add_response("cancel", tr("ui.cancel_btn"))
+        dialog.add_response("yes", tr("ui.yes"))
+        dialog.connect("response", on_response)
+        dialog.present()
 
     def uninstall_selected(self, btn):
         installed_ids = [

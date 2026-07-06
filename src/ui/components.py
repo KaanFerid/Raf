@@ -232,7 +232,7 @@ class BookRow(Adw.ActionRow):
             elif self.downloading or self.is_queued:
                 self.main_window.cancel_download(self.book)
             else:
-                self.main_window.start_download(self.book)
+                self.main_window.request_install_book(self.book)
 
     def on_secondary_clicked(self, btn):
         if self.main_window and self.is_installed and not self.downloading:
