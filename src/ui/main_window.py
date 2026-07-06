@@ -85,10 +85,22 @@ class MainWindow(Adw.ApplicationWindow):
         self.header = Adw.HeaderBar()
         main_box.append(self.header)
 
-        # Title widget (View Switcher)
-        self.view_switcher = Adw.ViewSwitcher()
-        self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
-        self.header.set_title_widget(self.view_switcher)
+        # Title widget (Custom Switcher Box)
+        self.tab_box = Gtk.Box(spacing=0)
+        self.tab_box.add_css_class("linked")
+        self.tab_box.set_halign(Gtk.Align.CENTER)
+        self.tab_box.set_valign(Gtk.Align.CENTER)
+
+        self.market_btn = Gtk.ToggleButton(label=tr("ui.market"))
+        self.market_btn.connect("toggled", self.on_tab_btn_toggled, "market")
+        self.tab_box.append(self.market_btn)
+
+        self.library_btn = Gtk.ToggleButton(label=tr("ui.my_library"))
+        self.library_btn.set_group(self.market_btn)
+        self.library_btn.connect("toggled", self.on_tab_btn_toggled, "library")
+        self.tab_box.append(self.library_btn)
+
+        self.header.set_title_widget(self.tab_box)
 
         # App Title
         app_title_lbl = Gtk.Label(label=f"<b>{tr('ui.app_title')}</b>", use_markup=True)
@@ -129,7 +141,6 @@ class MainWindow(Adw.ApplicationWindow):
 
         # ViewStack
         self.stack = Adw.ViewStack()
-        self.view_switcher.set_stack(self.stack)
         main_box.append(self.stack)
 
         # Market Page
@@ -145,6 +156,13 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.add_titled_with_icon(self.library_page, "library", tr("ui.my_library"), "folder-documents-symbolic")
 
         self.stack.connect("notify::visible-child", self.on_tab_changed)
+        
+        # Set initial active button
+        self.market_btn.set_active(True)
+
+    def on_tab_btn_toggled(self, btn, name):
+        if btn.get_active():
+            self.stack.set_visible_child_name(name)
 
     def create_list_page(self):
         scrolled = Gtk.ScrolledWindow()
@@ -161,7 +179,13 @@ class MainWindow(Adw.ApplicationWindow):
         
         return scrolled, listbox
 
-    def on_tab_changed(self, stack, pspec):
+    def on_tab_changed(self, stack, param):
+        visible_name = self.stack.get_visible_child_name()
+        if visible_name == "market":
+            self.market_btn.set_active(True)
+        elif visible_name == "library":
+            self.library_btn.set_active(True)
+            
         self.refresh_grid()
 
     # --- Actions ---
