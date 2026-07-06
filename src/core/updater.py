@@ -169,9 +169,16 @@ class AutoUpdateScheduler:
 
         # Record that we are checking now
         set_last_update_check(time.time())
+        self.check_now(on_available=self._on_update_found)
 
+    def check_now(self, force=False, on_available=None, on_none=None):
+        if force:
+            set_last_update_check(0)
         self._checker = UpdateChecker()
-        self._checker.on_update_available = self._on_update_found
+        if on_available:
+            self._checker.on_update_available = on_available
+        if on_none:
+            self._checker.on_no_update = on_none
         self._checker.start()
 
     def _on_update_found(self, version, download_url, changelog):

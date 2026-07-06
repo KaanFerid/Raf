@@ -22,7 +22,7 @@ def main():
     import gi
     gi.require_version('Gtk', '4.0')
     gi.require_version('Adw', '1')
-    from gi.repository import Gtk, Adw, Gio
+    from gi.repository import Gtk, Adw, Gio, Gdk
     from src.core.translation import tr
 
     print(f"=== {tr('ui.app_title')} ===")
@@ -37,6 +37,13 @@ def main():
             self.connect("open", self.on_open)
 
         def on_startup(self, app):
+            # Setup icon theme
+            display = Gdk.Display.get_default()
+            if display:
+                icon_theme = Gtk.IconTheme.get_for_display(display)
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                icon_theme.add_search_path(os.path.join(base_dir, "assets"))
+
             # Setup Preferences Action
             action = Gio.SimpleAction.new("preferences", None)
             action.connect("activate", self.on_preferences_action)

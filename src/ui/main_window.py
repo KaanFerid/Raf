@@ -72,6 +72,11 @@ class MainWindow(Adw.ApplicationWindow):
         self.toast_overlay = Adw.ToastOverlay()
         self.set_content(self.toast_overlay)
 
+        # Setup Actions
+        action_update = Gio.SimpleAction.new("check_update", None)
+        action_update.connect("activate", self.on_manual_update_check)
+        self.add_action(action_update)
+
         # Main Box
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.toast_overlay.set_child(main_box)
@@ -112,6 +117,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic")
         menu = Gio.Menu()
         menu.append(tr("ui.preferences"), "app.preferences")
+        menu.append(tr("ui.check_updates"), "win.check_update")
         menu.append(tr("ui.about_title"), "app.about")
         menu_btn.set_menu_model(menu)
         self.header.pack_end(menu_btn)
@@ -519,6 +525,12 @@ class MainWindow(Adw.ApplicationWindow):
             dialog.connect("response", on_response)
             dialog.present()
         GLib.idle_add(_show)
+
+    def on_manual_update_check(self, action, param):
+        self.auto_update_scheduler.check_now(force=True, on_available=self.on_update_available, on_none=self.on_no_update_found)
+
+    def on_no_update_found(self):
+        GLib.idle_add(lambda: show_message(self, tr("ui.no_update_title"), tr("ui.no_update_message")))
 
     def start_app_update(self, version, download_url):
         cache_dir = os.path.expanduser("~/.cache/raf/downloads")
