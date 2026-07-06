@@ -17,12 +17,7 @@
 
 ## Gallery (Photos & Videos)
 
-> **Note for Contributors:**
-> You can add photos or video demonstrations of the project here!
-> - To add an image, simply drag and drop the image file into the GitHub editor while editing this README, or place the image in `docs/images/` and use: `![Description](docs/images/your_image.png)`
-> - To add a video, drag and drop the `.mp4` file directly into the GitHub web editor and it will automatically generate a playable video link.
-
-*(Add your screenshots here!)*
+https://github.com/user-attachments/assets/2379643f-7ad8-4e84-af4e-dd01aa27bc12
 
 ---
 
