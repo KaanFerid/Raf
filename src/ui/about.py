@@ -16,5 +16,6 @@ def show_about_window(parent=None):
     about.set_application_icon("raf")
         
     about.set_comments(tr("ui.about_content"))
+    about.set_support_url("mailto:kaanferidaltundas@protonmail.com")
     
     about.present()
