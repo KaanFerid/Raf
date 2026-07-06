@@ -18,7 +18,7 @@ def show_message(parent, title, text, type="info"):
 
 class DesktopEditorDialog(Adw.Window):
     def __init__(self, book, parent=None):
-        super().__init__(transient_for=parent, modal=True)
+        super().__init__()
         self.set_title(tr("ui.desktop_editor_title", title=book['title']))
         self.set_default_size(400, 200)
         self.book = book
