@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Adw, Pango, GLib
+from gi.repository import Gtk, Adw, Pango, GLib, GObject
 from src.core.translation import tr
 
 class PublisherBadge(Gtk.DrawingArea):
@@ -140,7 +140,7 @@ class BookRow(Adw.ActionRow):
 
     def on_select_toggled(self, checkbtn):
         if self.main_window:
-            self.main_window.on_book_selection_changed(self.book_id, checkbtn.get_active())
+            self.main_window.toggle_selection(self.book_id, checkbtn.get_active())
 
     def update_status(self, is_installed, downloading=False, percent=0, speed_str="", is_offline=False):
         self.is_installed = is_installed
@@ -220,15 +220,15 @@ class BookRow(Adw.ActionRow):
     def on_primary_clicked(self, btn):
         if self.main_window:
             if self.is_installed:
-                self.main_window.launch_requested(self.book)
+                self.main_window.launch_book(self.book)
             elif self.downloading or self.is_queued:
-                self.main_window.cancel_requested(self.book)
+                self.main_window.cancel_download(self.book)
             else:
-                self.main_window.install_requested(self.book)
+                self.main_window.start_download(self.book)
 
     def on_secondary_clicked(self, btn):
-        if self.is_installed and not self.downloading and self.main_window:
-            self.main_window.uninstall_requested(self.book)
+        if self.main_window and self.is_installed and not self.downloading:
+            self.main_window.start_uninstallation(self.book)
 
     def on_edit_clicked(self, btn):
         from src.ui.desktop_editor import DesktopEditorDialog

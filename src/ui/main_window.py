@@ -178,11 +178,7 @@ class MainWindow(Adw.ApplicationWindow):
         # Populate
         for b in filtered:
             is_inst = is_book_installed(b, self.installed_packages_cache)
-            row = BookRow(b, is_installed=is_inst)
-            row.connect('install-requested', lambda r, bk: self.start_download(bk))
-            row.connect('uninstall-requested', lambda r, bk: self.start_uninstallation(bk))
-            row.connect('launch-requested', lambda r, bk: self.launch_book(bk))
-            row.connect('cancel-requested', lambda r, bk: self.cancel_download(bk))
+            row = BookRow(b, is_installed=is_inst, main_window=self)
             
             self.card_widgets[b['id']] = row
             listbox.append(row)

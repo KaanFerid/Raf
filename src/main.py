@@ -32,10 +32,11 @@ def main():
         def __init__(self, **kwargs):
             super().__init__(application_id="org.raf.App", flags=Gio.ApplicationFlags.HANDLES_OPEN, **kwargs)
             self.startup_files = startup_files
+            self.connect("startup", self.on_startup)
+            self.connect("activate", self.on_activate)
+            self.connect("open", self.on_open)
 
-        def do_startup(self):
-            Adw.Application.do_startup(self)
-            
+        def on_startup(self, app):
             # Setup Preferences Action
             action = Gio.SimpleAction.new("preferences", None)
             action.connect("activate", self.on_preferences_action)
@@ -57,7 +58,7 @@ def main():
             win = self.props.active_window
             show_about_window(parent=win)
 
-        def do_activate(self):
+        def on_activate(self, app):
             from src.ui.main_window import MainWindow
             print(tr("log.creating_main_window"))
             win = self.props.active_window
@@ -66,10 +67,10 @@ def main():
             win.present()
             print(tr("log.app_ready"))
 
-        def do_open(self, files, n_files, hint):
+        def on_open(self, app, files, n_files, hint):
             self.startup_files.extend([f.get_path() for f in files if f.get_path()])
-            self.do_activate()
-            
+            self.on_activate(app)
+
     app = RafApp()
     # Adw.Application.run parses sys.argv automatically if we just pass None, or we can pass args
     # Wait, passing args directly.
