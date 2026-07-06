@@ -19,7 +19,7 @@ print(" - Sisteminizde HİÇBİR kalıcı değişiklik veya global paket kurulum
 print("==================================================\n")
 
 def check_dependencies():
-    """Checks if requests and PyQt5 are importable."""
+    """Checks if requests and PyGObject are importable."""
     try:
         import requests
     except ImportError:

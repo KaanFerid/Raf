@@ -23,7 +23,7 @@ jobs:
           python-version: '3.10'
           
       - name: Install dependencies
-        run: pip install setuptools requests PySide6
+        run: pip install setuptools requests PyGObject
           
       - name: Build .deb package
         run: python3 scripts/build_deb.py

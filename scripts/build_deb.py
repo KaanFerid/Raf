@@ -173,7 +173,7 @@ Version: {__version__}
 Section: utils
 Priority: optional
 Architecture: all
-Depends: python3, python3-pyside6 | python3-pyqt5, python3-requests, policykit-1
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, python3-requests, policykit-1
 Maintainer: Kaan Ferid Altundaş <kaanferidaltundas@protonmail.com>
 Description: Pardus Akilli Tahta Raf Uygulamasi
  Pardus tabanli akilli tahtalarda interaktif kitap raflarinin
