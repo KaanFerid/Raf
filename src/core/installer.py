@@ -43,7 +43,7 @@ class InstallerWorker(threading.Thread):
         self.action = action  # "install" or "uninstall"
         self.sudo_password = sudo_password
         
-        # Callbacks replacing pyqtSignal
+        # Callbacks
         self.on_status_changed = None   # func(book_id, status_message)
         self.on_finished = None         # func(book_id, success)
         self.on_output_received = None  # func(book_id, console_output)

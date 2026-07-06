@@ -232,7 +232,7 @@
     "unknown_command": "Error: Unknown command '{cmd}'. Type 'raf --help' for help."
   },
   "log": {
-    "qt_api": "Qt API: {api}",
+    "ui_api": "UI API: {api}",
     "error_icon": "Error setting window icon: {error}",
     "creating_main_window": "Creating main window...",
     "showing_main_window": "Showing main window...",

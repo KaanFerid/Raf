@@ -8,7 +8,7 @@ def show_message(parent, title, text, type="info"):
         heading=title,
         body=text
     )
-    dialog.add_response("ok", "OK")
+    dialog.add_response("ok", tr("ui.ok_btn", default="OK"))
     dialog.set_default_response("ok")
     dialog.set_close_response("ok")
     if type == "error":

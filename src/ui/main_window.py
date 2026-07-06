@@ -96,7 +96,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.drop_ui = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
         self.drop_ui.add_css_class("card")
         self.drop_ui.set_size_request(400, 200)
-        lbl = Gtk.Label(label="<span size='xx-large' font_weight='bold'>Drop Files Here</span>\n.deb, .zip, .appimage, .fernus", use_markup=True, justify=Gtk.Justification.CENTER)
+        lbl = Gtk.Label(label=tr("ui.drop_files_here", default="<span size='xx-large' font_weight='bold'>Drop Files Here</span>\n.deb, .zip, .appimage, .fernus"), use_markup=True, justify=Gtk.Justification.CENTER)
         self.drop_ui.append(lbl)
         
         self.drop_overlay.add_overlay(self.drop_ui)
@@ -173,7 +173,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.batch_bar.set_revealed(False)
         main_box.append(self.batch_bar)
 
-        self.batch_count_label = Gtk.Label(label="0 Selected")
+        self.batch_count_label = Gtk.Label(label=tr("ui.selected_count", count=0))
         self.batch_bar.pack_start(self.batch_count_label)
 
         self.batch_install_btn = Gtk.Button(label=tr("ui.install_selected"))
@@ -688,6 +688,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def retranslate_ui(self):
         self.set_title(tr("ui.app_title"))
+        self.batch_count_label.set_label(tr("ui.selected_count", count=len(self._selected_books)))
         self.market_btn.set_label(tr("ui.market"))
         self.library_btn.set_label(tr("ui.my_library"))
         self.stack.get_page(self.market_page).set_title(tr("ui.market"))
@@ -740,7 +741,7 @@ class MainWindow(Gtk.ApplicationWindow):
         GLib.idle_add(lambda: show_message(self, tr("ui.no_update_title"), tr("ui.no_update_message")))
 
     def on_request_book_action(self, action, param):
-        Gtk.show_uri(self, "https://forms.gle/8JSptwwyJMAgWPHb7", Gdk.CURRENT_TIME)
+        Gio.AppInfo.launch_default_for_uri("https://forms.gle/8JSptwwyJMAgWPHb7", None)
 
     def start_app_update(self, version, download_url):
         cache_dir = os.path.expanduser("~/.cache/raf/downloads")

@@ -29,7 +29,7 @@ def main():
     from src.core.translation import tr
 
     print(f"=== {tr('ui.app_title')} ===")
-    print(tr("log.qt_api", api="GTK4 (Libadwaita)"))
+    print(tr("log.ui_api", api="GTK4 (Libadwaita)"))
     
     class RafApp(Adw.Application):
         def __init__(self, **kwargs):

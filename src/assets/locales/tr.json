@@ -229,7 +229,7 @@
     "unknown_command": "Hata: Bilinmeyen komut '{cmd}'. Yardım için 'raf --help' yazın."
   },
   "log": {
-    "qt_api": "Qt API: {api}",
+    "ui_api": "UI API: {api}",
     "error_icon": "Pencere ikonu ayarlama hatası: {error}",
     "creating_main_window": "Ana pencere oluşturuluyor...",
     "showing_main_window": "Ana pencere gösteriliyor...",
