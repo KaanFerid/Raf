@@ -77,6 +77,10 @@ class MainWindow(Adw.ApplicationWindow):
         action_update.connect("activate", self.on_manual_update_check)
         self.add_action(action_update)
 
+        action_req = Gio.SimpleAction.new("request_book", None)
+        action_req.connect("activate", self.on_request_book_action)
+        self.add_action(action_req)
+
         # Main Box
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.toast_overlay.set_child(main_box)
@@ -130,6 +134,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu = Gio.Menu()
         menu.append(tr("ui.preferences"), "app.preferences")
         menu.append(tr("ui.check_updates"), "win.check_update")
+        menu.append(tr("ui.request_book"), "win.request_book")
         menu.append(tr("ui.about_title"), "app.about")
         menu_btn.set_menu_model(menu)
         self.header.pack_end(menu_btn)
@@ -145,7 +150,14 @@ class MainWindow(Adw.ApplicationWindow):
 
         # Market Page
         self.market_page, self.market_listbox = self.create_list_page()
-        m_placeholder = Adw.StatusPage(title=tr("ui.no_books_found"), icon_name="system-search-symbolic")
+        m_placeholder = Adw.StatusPage(title=tr("ui.no_books_found"), icon_name="system-search-symbolic", description=tr("ui.request_book_desc"))
+        request_btn = Gtk.Button(label=tr("ui.request_book"))
+        request_btn.add_css_class("pill")
+        request_btn.add_css_class("suggested-action")
+        request_btn.set_halign(Gtk.Align.CENTER)
+        request_btn.set_margin_top(12)
+        request_btn.connect("clicked", lambda *args: self.on_request_book_action(None, None))
+        m_placeholder.set_child(request_btn)
         self.market_listbox.set_placeholder(m_placeholder)
         self.stack.add_titled_with_icon(self.market_page, "market", tr("ui.market"), "emblem-system-symbolic")
 
@@ -555,6 +567,9 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_no_update_found(self):
         GLib.idle_add(lambda: show_message(self, tr("ui.no_update_title"), tr("ui.no_update_message")))
+
+    def on_request_book_action(self, action, param):
+        Gtk.show_uri(self, "https://forms.gle/8JSptwwyJMAgWPHb7", Gdk.CURRENT_TIME)
 
     def start_app_update(self, version, download_url):
         cache_dir = os.path.expanduser("~/.cache/raf/downloads")
