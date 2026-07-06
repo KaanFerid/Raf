@@ -12,11 +12,11 @@ def show_about_window(parent=None):
     about.set_version(APP_VERSION)
     about.set_developer_name("KaanFerid")
     
-    icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "raf.png")
-    if os.path.exists(icon_path):
-        about.set_application_icon("education") # Fallback to standard icon
+    # In GTK4/Adw, the icon must be in the current icon theme or resource.
+    # We will just use a standard system icon for the store/application market.
+    about.set_application_icon("system-software-install")
         
-    about.set_comments(tr("ui.about_content", version=APP_VERSION).replace("<br>", "\n").replace("<b>", "").replace("</b>", ""))
+    about.set_comments(tr("ui.about_content"))
     
     # Check Updates link
     about.add_link(tr("ui.check_updates"), "https://github.com/KaanFerid/Raf/releases")

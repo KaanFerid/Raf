@@ -98,7 +98,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.header.pack_start(self.queue_badge)
 
         # Select Mode Toggle
-        self.select_mode_btn = Gtk.ToggleButton(icon_name="selection-mode-symbolic")
+        self.select_mode_btn = Gtk.ToggleButton(icon_name="edit-select-all-symbolic")
         self.select_mode_btn.connect("toggled", self.toggle_selection_mode)
         self.header.pack_start(self.select_mode_btn)
 
@@ -122,10 +122,14 @@ class MainWindow(Adw.ApplicationWindow):
 
         # Market Page
         self.market_page, self.market_listbox = self.create_list_page()
+        m_placeholder = Adw.StatusPage(title=tr("ui.no_books_found"), icon_name="system-search-symbolic")
+        self.market_listbox.set_placeholder(m_placeholder)
         self.stack.add_titled_with_icon(self.market_page, "market", tr("ui.market"), "emblem-system-symbolic")
 
         # Library Page
         self.library_page, self.library_listbox = self.create_list_page()
+        l_placeholder = Adw.StatusPage(title=tr("ui.no_installed_books_found"), icon_name="folder-documents-symbolic")
+        self.library_listbox.set_placeholder(l_placeholder)
         self.stack.add_titled_with_icon(self.library_page, "library", tr("ui.my_library"), "folder-documents-symbolic")
 
         self.stack.connect("notify::visible-child", self.on_tab_changed)
