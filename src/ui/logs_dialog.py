@@ -6,6 +6,7 @@ class InstallationLogsDialog(Adw.Window):
         super().__init__(transient_for=parent, modal=False)
         self.set_title(tr("ui.installation_logs_title", default="Installation Logs"))
         self.set_default_size(600, 400)
+        self.set_decorated(False)
         
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.set_content(box)

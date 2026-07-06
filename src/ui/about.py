@@ -11,6 +11,7 @@ def show_about_window(parent=None):
     about.set_application_name(tr("ui.app_title"))
     about.set_version(APP_VERSION)
     about.set_developer_name("KaanFerid")
+    about.set_decorated(False)
     
     # We added src/assets to the icon theme search path in main.py
     about.set_application_icon("raf")

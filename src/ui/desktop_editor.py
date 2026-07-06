@@ -8,6 +8,7 @@ def show_message(parent, title, text, type="info"):
         heading=title,
         body=text
     )
+    dialog.set_decorated(False)
     dialog.add_response("ok", tr("ui.ok_btn", default="OK"))
     dialog.set_default_response("ok")
     dialog.set_close_response("ok")
@@ -21,6 +22,7 @@ class DesktopEditorDialog(Adw.Window):
         super().__init__(transient_for=parent, modal=True)
         self.set_title(tr("ui.desktop_editor_title", title=book['title']))
         self.set_default_size(400, 200)
+        self.set_decorated(False)
         self.book = book
         self.book_id = book['id']
         
