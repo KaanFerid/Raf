@@ -1,6 +1,6 @@
 import os
 import subprocess
-from gi.repository import Gtk, Adw, GLib, Gio
+from gi.repository import Gtk, Adw, GLib, Gio, Gdk
 from src.core.translation import tr, on_language_change, remove_language_listener
 from src.core.database import Database
 from src.core.downloader import DownloadWorker
@@ -10,8 +10,6 @@ from src.core.download_queue import DownloadQueue
 from src.core.sync import DatabaseSyncWorker
 from src.core.config import load_config
 from src.ui.components import BookRow
-from src.ui.preferences import PreferencesWindow
-from src.ui.about import AboutWindow
 from src.ui.logs_dialog import InstallationLogsDialog
 from src.ui.desktop_editor import show_message
 
@@ -89,7 +87,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         # Search Bar
         self.search_entry = Gtk.SearchEntry()
-        self.search_entry.set_width_request(250)
+        self.search_entry.set_size_request(250, -1)
         self.search_entry.connect("search-changed", self.on_search_changed)
         self.header.pack_start(self.search_entry)
 
@@ -123,12 +121,12 @@ class MainWindow(Adw.ApplicationWindow):
         main_box.append(self.stack)
 
         # Market Page
-        self.market_page = self.create_list_page()
-        self.stack.add_titled(self.market_page, "market", tr("ui.market"), "emblem-system-symbolic")
+        self.market_page, self.market_listbox = self.create_list_page()
+        self.stack.add_titled_with_icon(self.market_page, "market", tr("ui.market"), "emblem-system-symbolic")
 
         # Library Page
-        self.library_page = self.create_list_page()
-        self.stack.add_titled(self.library_page, "library", tr("ui.my_library"), "folder-documents-symbolic")
+        self.library_page, self.library_listbox = self.create_list_page()
+        self.stack.add_titled_with_icon(self.library_page, "library", tr("ui.my_library"), "folder-documents-symbolic")
 
         self.stack.connect("notify::visible-child", self.on_tab_changed)
 
@@ -145,9 +143,7 @@ class MainWindow(Adw.ApplicationWindow):
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         clamp.set_child(listbox)
         
-        # We will share this listbox reference in self.listbox and swap it when tab changes, or just rebuild it.
-        # Actually, let's keep one listbox and repopulate it on tab switch to save memory.
-        return scrolled
+        return scrolled, listbox
 
     def on_tab_changed(self, stack, pspec):
         self.refresh_grid()
@@ -158,10 +154,7 @@ class MainWindow(Adw.ApplicationWindow):
         visible_name = self.stack.get_visible_child_name()
         
         # Get active listbox
-        active_scrolled = self.stack.get_visible_child()
-        if not active_scrolled: return
-        clamp = active_scrolled.get_child()
-        listbox = clamp.get_child()
+        listbox = self.market_listbox if visible_name == "market" else self.library_listbox
 
         # Clear existing
         while child := listbox.get_first_child():

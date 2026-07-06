@@ -33,12 +33,36 @@ def main():
             super().__init__(application_id="org.raf.App", flags=Gio.ApplicationFlags.HANDLES_OPEN, **kwargs)
             self.startup_files = startup_files
 
+        def do_startup(self):
+            Adw.Application.do_startup(self)
+            
+            # Setup Preferences Action
+            action = Gio.SimpleAction.new("preferences", None)
+            action.connect("activate", self.on_preferences_action)
+            self.add_action(action)
+            
+            # Setup About Action
+            action = Gio.SimpleAction.new("about", None)
+            action.connect("activate", self.on_about_action)
+            self.add_action(action)
+
+        def on_preferences_action(self, action, param):
+            from src.ui.preferences import PreferencesWindow
+            win = self.props.active_window
+            pref_win = PreferencesWindow(parent=win)
+            pref_win.present()
+
+        def on_about_action(self, action, param):
+            from src.ui.about import show_about_window
+            win = self.props.active_window
+            show_about_window(parent=win)
+
         def do_activate(self):
             from src.ui.main_window import MainWindow
             print(tr("log.creating_main_window"))
             win = self.props.active_window
             if not win:
-                win = MainWindow(application=self, startup_files=self.startup_files)
+                win = MainWindow(app=self, startup_files=self.startup_files)
             win.present()
             print(tr("log.app_ready"))
 
