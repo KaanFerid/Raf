@@ -81,13 +81,13 @@ class MainWindow(Adw.ApplicationWindow):
         action_req.connect("activate", self.on_request_book_action)
         self.add_action(action_req)
 
-        # Main Box
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.toast_overlay.set_child(main_box)
+        # Toolbar View
+        toolbar_view = Adw.ToolbarView()
+        self.toast_overlay.set_child(toolbar_view)
 
         # HeaderBar
         self.header = Adw.HeaderBar()
-        main_box.append(self.header)
+        toolbar_view.add_top_bar(self.header)
 
         # Title widget (Custom Switcher Box)
         self.tab_box = Gtk.Box(spacing=0)
@@ -146,7 +146,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         # ViewStack
         self.stack = Adw.ViewStack()
-        main_box.append(self.stack)
+        toolbar_view.set_content(self.stack)
 
         # Market Page
         self.market_page, self.market_listbox = self.create_list_page()
