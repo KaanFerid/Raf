@@ -5,6 +5,7 @@ from src.core.version import __version__ as APP_VERSION
 
 def show_about_window(parent=None):
     about = Adw.AboutWindow(transient_for=parent) if parent else Adw.AboutWindow()
+    about.set_modal(True)
         
     about.set_application_name(tr("ui.app_title"))
     about.set_version(APP_VERSION)

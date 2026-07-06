@@ -49,7 +49,11 @@ def get_cache_size():
 
 class PreferencesWindow(Adw.PreferencesWindow):
     def __init__(self, parent=None):
-        super().__init__()
+        if parent:
+            super().__init__(transient_for=parent)
+        else:
+            super().__init__()
+        self.set_modal(True)
         self.set_title(tr("ui.preferences"))
         self.set_default_size(450, 500)
         
