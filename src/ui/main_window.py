@@ -428,10 +428,10 @@ class MainWindow(Gtk.ApplicationWindow):
 
         if card:
             card.primary_btn.set_sensitive(True)
-            installed = is_book_installed(book, self.installed_packages_cache)
+            installed = is_book_installed(book, None)
             card.update_status(installed)
         
-        installed = is_book_installed(book, self.installed_packages_cache) if book else success
+        installed = is_book_installed(book, None) if book else success
         
         if installed:
             self.show_toast(tr("ui.toast_install_success", title=book['title']))
@@ -493,10 +493,10 @@ class MainWindow(Gtk.ApplicationWindow):
 
         if card:
             card.primary_btn.set_sensitive(True)
-            installed = is_book_installed(book, self.installed_packages_cache)
+            installed = is_book_installed(book, None)
             card.update_status(installed)
         
-        installed = is_book_installed(book, self.installed_packages_cache) if book else not success
+        installed = is_book_installed(book, None) if book else not success
         
         if not installed:
             self.show_toast(tr("ui.toast_uninstall_success", title=book['title']))
