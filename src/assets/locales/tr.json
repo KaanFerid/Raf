@@ -132,8 +132,11 @@
     "clear_logs_btn": "Temizle",
     "close_btn": "Kapat",
     "drop_files_here": "Yüklemek için dosyaları buraya sürükleyin...",
-    "confirm_sideload_title": "Kurulumu Onayla",
-    "confirm_sideload_prompt": "Aşağıdaki {count} paketi kurmak istediğinize emin misiniz?\n\n{files}"
+    "confirm_sideload_title": "Yerel Paketler Bulundu",
+    "confirm_sideload_prompt": "{count} adet yerel paket yüklemek üzeresiniz:\n{files}\n\nKuruluma devam etmek istiyor musunuz?",
+    "confirm_install_title": "Kuruluma Hazır",
+    "confirm_install_prompt": "'{title}' indirmesi tamamlandı.\n\nSistem kurulumuna devam etmek istiyor musunuz? Bu işlem yönetici şifresi gerektirebilir.",
+    "confirm_batch_install_prompt": "{count} adet kitap indirip kurmak üzeresiniz.\n\nDevam etmek istiyor musunuz?"
   },
   "installer": {
     "sim_installing": "Simülasyon: '{title}' kuruluyor...",

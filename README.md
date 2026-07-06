@@ -40,6 +40,7 @@
 ### Performance & Security
 - 🏎️ **Asynchronous Architecture** — System package queries (`dpkg`) and installations happen on separate background threads to ensure the UI never freezes.
 - 🔐 **Secure Subprocesses** — All system interactions use safe array execution, preventing shell injection vulnerabilities.
+- 🛡️ **Pre-Install Confirmation** — Intercepts the installation flow right before system authentication, explicitly showing the user what package is about to be installed to prevent unexpected `pkexec` popups.
 - 📋 **Live Logs Viewer** — A dedicated Logs dialog for debugging installation outputs in real time.
 
 ### Queue & Progress

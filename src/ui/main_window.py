@@ -924,14 +924,33 @@ class MainWindow(QMainWindow):
         """Queues downloads for all selected uninstalled books."""
         books = self.db.get_all_books()
         book_map = {b['id']: b for b in books}
-        queued = 0
+        to_install = []
         for book_id in list(self._selected_books):
             card = self.card_widgets.get(book_id)
             if card and not card.is_installed and not card.downloading and not card.is_queued:
-                book = book_map.get(book_id)
-                if book:
-                    self._enqueue_book(book)
-                    queued += 1
+                to_install.append(book_id)
+                
+        if not to_install:
+            self.toggle_selection_mode(False)
+            return
+            
+        reply = RafMessageBox.question(
+            self,
+            tr("ui.confirm_install_title", default="Ready to Install"),
+            tr("ui.confirm_batch_install_prompt", count=len(to_install)),
+            default_no=True
+        )
+        
+        if not reply:
+            return
+            
+        queued = 0
+        for book_id in to_install:
+            book = book_map.get(book_id)
+            if book:
+                self._enqueue_book(book)
+                queued += 1
+                
         if queued:
             self.toast_manager.show_toast(
                 tr("ui.batch_queued", count=queued), "info"
@@ -1373,7 +1392,27 @@ class MainWindow(QMainWindow):
         self._update_title_progress()
 
         book = self.card_widgets[book_id].book
-        self.start_installation(book, local_file_path)
+        
+        reply = RafMessageBox.question(
+            self,
+            tr("ui.confirm_install_title", default="Ready to Install"),
+            tr("ui.confirm_install_prompt", title=book['title']),
+            default_no=True
+        )
+        
+        if reply:
+            self.start_installation(book, local_file_path)
+        else:
+            if book_id in self.card_widgets:
+                card = self.card_widgets[book_id]
+                card.update_status(is_installed=False)
+            self.statusBar.showMessage(tr("ui.cancelling_download"), 3000)
+            try:
+                import os
+                if os.path.exists(local_file_path):
+                    os.remove(local_file_path)
+            except Exception:
+                pass
 
     def on_download_error(self, book_id, err_msg):
         worker = self.active_downloads.pop(book_id, None)

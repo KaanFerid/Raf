@@ -129,13 +129,13 @@ Seven new features were designed, implemented, and integrated:
 - `MainWindow` responds to `queue_changed` to update the header badge
 - Clicking Cancel on a queued (not yet downloading) card calls `DownloadQueue.dequeue()` — instant removal, no download started
 
-#### 7.2 Toast Notifications (`src/ui/toast.py`)
+#### 7.2 Toast Notifications & Prompts (`src/ui/toast.py`, `src/ui/dialogs.py`)
 
 - `ToastNotification` — a frameless overlay `QWidget` with `QPropertyAnimation` opacity fade-in
 - `ToastManager` — stacks active toasts in the bottom-right corner, repositions on dismiss and window resize
 - Four types with distinct colors: `info` (blue), `success` (green), `warning` (amber), `error` (red)
 - Toasts are shown for: install success/error, uninstall success/error, download error, update available, database sync success
-- All blocking `QMessageBox.critical()` dialogs for non-critical errors replaced with toasts
+- **Pre-Install Confirmation:** Added an intercepting modal prompt that asks users to confirm before escalating privileges via `pkexec`. This prompt appears immediately after a download completes but before `start_installation` is executed, preventing accidental root authentication popups.
 
 #### 7.3 Title Bar Progress
 
