@@ -134,11 +134,17 @@ class BookRow(Adw.ActionRow):
         self.add_suffix(self.action_box)
 
         self.update_status(self.is_installed)
+        self.connect("activated", self.on_row_activated)
 
     def set_selection_mode(self, active):
         self.select_check.set_visible(active)
+        self.set_activatable(active)
         if not active:
             self.select_check.set_active(False)
+
+    def on_row_activated(self, *args):
+        if self.select_check.get_visible():
+            self.select_check.set_active(not self.select_check.get_active())
 
     def on_select_toggled(self, checkbtn):
         if self.main_window:
