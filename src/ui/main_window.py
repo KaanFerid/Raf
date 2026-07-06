@@ -36,6 +36,8 @@ class MainWindow(Gtk.ApplicationWindow):
         # Drop Target
         drop_target = Gtk.DropTarget(actions=Gdk.DragAction.COPY)
         drop_target.set_gtypes([Gio.File.__gtype__])
+        drop_target.connect("enter", self.on_drag_enter)
+        drop_target.connect("leave", self.on_drag_leave)
         drop_target.connect("drop", self.on_drop)
         self.add_controller(drop_target)
 
@@ -68,6 +70,9 @@ class MainWindow(Gtk.ApplicationWindow):
         GLib.timeout_add_seconds(15, self.refresh_all_statuses)
         on_language_change(self.retranslate_ui)
 
+        if self.startup_files:
+            GLib.idle_add(lambda: self.process_local_files(self.startup_files))
+
     def init_ui(self):
         # Toast Overlay
         self.toast_overlay = Adw.ToastOverlay()
@@ -82,9 +87,22 @@ class MainWindow(Gtk.ApplicationWindow):
         action_req.connect("activate", self.on_request_book_action)
         self.add_action(action_req)
 
-        # Main Box
+        # Main Box and Drop Overlay
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.toast_overlay.set_child(main_box)
+        
+        self.drop_overlay = Gtk.Overlay()
+        self.drop_overlay.set_child(main_box)
+        
+        self.drop_ui = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
+        self.drop_ui.add_css_class("card")
+        self.drop_ui.set_size_request(400, 200)
+        lbl = Gtk.Label(label="<span size='xx-large' font_weight='bold'>Drop Files Here</span>\n.deb, .zip, .appimage, .fernus", use_markup=True, justify=Gtk.Justification.CENTER)
+        self.drop_ui.append(lbl)
+        
+        self.drop_overlay.add_overlay(self.drop_ui)
+        self.drop_ui.set_visible(False)
+        
+        self.toast_overlay.set_child(self.drop_overlay)
 
         # HeaderBar
         self.header = Adw.HeaderBar()
@@ -606,23 +624,34 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.present()
 
     def on_install_local_clicked(self, btn):
-        def on_response(dialog, response, file):
+        def on_response(dialog, response):
             if response == Gtk.ResponseType.ACCEPT:
-                path = file.get_path()
-                if path: self.process_local_files([path])
+                file = dialog.get_file()
+                if file:
+                    path = file.get_path()
+                    if path: self.process_local_files([path])
+            self._file_chooser = None
         
-        dialog = Gtk.FileChooserNative(title=tr("ui.select_local_files"), transient_for=self, action=Gtk.FileChooserAction.OPEN)
+        self._file_chooser = Gtk.FileChooserNative(title=tr("ui.select_local_files"), transient_for=self, action=Gtk.FileChooserAction.OPEN)
         filter_all = Gtk.FileFilter()
         filter_all.set_name(tr("ui.supported_files"))
         filter_all.add_pattern("*.deb")
         filter_all.add_pattern("*.zip")
         filter_all.add_pattern("*.appimage")
         filter_all.add_pattern("*.fernus")
-        dialog.add_filter(filter_all)
-        dialog.connect("response", on_response)
-        dialog.show()
+        self._file_chooser.add_filter(filter_all)
+        self._file_chooser.connect("response", on_response)
+        self._file_chooser.show()
+
+    def on_drag_enter(self, target, x, y):
+        self.drop_ui.set_visible(True)
+        return Gdk.DragAction.COPY
+
+    def on_drag_leave(self, target):
+        self.drop_ui.set_visible(False)
 
     def on_drop(self, target, value, x, y):
+        self.drop_ui.set_visible(False)
         path = value.get_path()
         if path and path.lower().endswith(('.deb', '.zip', '.appimage', '.fernus')):
             self.process_local_files([path])
@@ -659,9 +688,13 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def retranslate_ui(self):
         self.set_title(tr("ui.app_title"))
+        self.market_btn.set_label(tr("ui.market"))
+        self.library_btn.set_label(tr("ui.my_library"))
         self.stack.get_page(self.market_page).set_title(tr("ui.market"))
         self.stack.get_page(self.library_page).set_title(tr("ui.my_library"))
         self.local_install_btn.set_label(tr("ui.install_local_files"))
+        self.batch_install_btn.set_label(tr("ui.install_selected"))
+        self.batch_uninstall_btn.set_label(tr("ui.uninstall_selected"))
         self.refresh_grid()
 
     def _on_queue_job_started(self, book_id):
