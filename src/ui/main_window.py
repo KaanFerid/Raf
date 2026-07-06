@@ -40,8 +40,6 @@ class MainWindow(Gtk.ApplicationWindow):
         drop_target.connect("leave", self.on_drag_leave)
         drop_target.connect("drop", self.on_drop)
         self.add_controller(drop_target)
-        
-        self.set_icon_name("raf")
 
         # Download queue
         self.download_queue = DownloadQueue(max_concurrent=2)

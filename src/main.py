@@ -52,6 +52,8 @@ def main():
                 icon_theme = Gtk.IconTheme.get_for_display(display)
                 base_dir = os.path.dirname(os.path.abspath(__file__))
                 icon_theme.add_search_path(os.path.join(base_dir, "assets"))
+            
+            Gtk.Window.set_default_icon_name("raf")
 
             # Custom CSS
             css_provider = Gtk.CssProvider()
