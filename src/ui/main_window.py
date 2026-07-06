@@ -281,6 +281,9 @@ class MainWindow(Gtk.ApplicationWindow):
         for b in filtered:
             is_inst = is_book_installed(b, self.installed_packages_cache)
             row = BookRow(b, is_installed=is_inst, main_window=self)
+            row.set_selection_mode(self._selection_mode)
+            if b['id'] in self._selected_books:
+                row.select_check.set_active(True)
             
             self.card_widgets[b['id']] = row
             listbox.append(row)
