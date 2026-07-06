@@ -52,7 +52,6 @@ class PreferencesWindow(Adw.PreferencesWindow):
         super().__init__(transient_for=parent)
         self.set_title(tr("ui.preferences"))
         self.set_default_size(450, 500)
-        self.set_decorated(False)
         
         self.config = load_config()
         self.init_ui()

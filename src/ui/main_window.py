@@ -331,7 +331,6 @@ class MainWindow(Gtk.ApplicationWindow):
             heading=tr("ui.confirm_install_title"), 
             body=tr("ui.confirm_install_prompt", title=book['title'])
         )
-        dialog.set_decorated(False)
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("yes", tr("ui.yes"))
         dialog.connect("response", on_response)
@@ -462,7 +461,6 @@ class MainWindow(Gtk.ApplicationWindow):
             heading=tr("ui.uninstall_library_title"),
             body=tr("ui.confirm_uninstall", book=book['title'])
         )
-        dialog.set_decorated(False)
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("yes", tr("ui.uninstall_btn"))
         dialog.set_response_appearance("yes", Adw.ResponseAppearance.DESTRUCTIVE)
@@ -619,7 +617,6 @@ class MainWindow(Gtk.ApplicationWindow):
             heading=tr("ui.confirm_install_title"),
             body=tr("ui.confirm_batch_install_prompt", count=len(to_install))
         )
-        dialog.set_decorated(False)
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("yes", tr("ui.yes"))
         dialog.connect("response", on_response)
@@ -651,7 +648,6 @@ class MainWindow(Gtk.ApplicationWindow):
             heading=tr("ui.uninstall_library_title"),
             body=tr("ui.batch_confirm_uninstall", count=len(installed_ids))
         )
-        dialog.set_decorated(False)
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("uninstall", tr("ui.uninstall_btn"))
         dialog.set_response_appearance("uninstall", Adw.ResponseAppearance.DESTRUCTIVE)
@@ -716,7 +712,6 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.start_installation(mock_book, path)
         
         dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.confirm_sideload_title"), body=tr("ui.confirm_sideload_prompt", count=len(mock_books), files=file_list_str.strip()))
-        dialog.set_decorated(False)
         dialog.add_response("cancel", tr("ui.no"))
         dialog.add_response("yes", tr("ui.yes"))
         dialog.connect("response", on_response)
@@ -761,7 +756,6 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.start_app_update(ver, url)
             
             dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.new_update_available"), body=tr("ui.update_prompt", version=ver, changelog=changelog))
-            dialog.set_decorated(False)
             dialog.add_response("cancel", tr("ui.no"))
             dialog.add_response("yes", tr("ui.yes"))
             dialog.connect("response", on_response)
@@ -823,7 +817,6 @@ class MainWindow(Gtk.ApplicationWindow):
             heading=tr("ui.auth_required_title", default="Authentication Required"), 
             body=tr("ui.auth_required_prompt", default="Please enter your password to perform this action.")
         )
-        dialog.set_decorated(False)
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("ok", tr("ui.ok_btn", default="OK"))
         dialog.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
