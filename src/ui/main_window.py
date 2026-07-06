@@ -259,8 +259,12 @@ class MainWindow(Gtk.ApplicationWindow):
         listbox = self.market_listbox if visible_name == "market" else self.library_listbox
 
         # Clear existing
-        while child := listbox.get_first_child():
-            listbox.remove(child)
+        child = listbox.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            if not isinstance(child, Adw.StatusPage):
+                listbox.remove(child)
+            child = next_child
 
         self.card_widgets.clear()
         
