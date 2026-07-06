@@ -122,15 +122,18 @@ class InstallerWorker(threading.Thread):
             self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
             self._emit_finished(self.book_id, False)
 
+    INSTALL_LOCK = threading.Lock()
+
     def run(self):
-        if os.environ.get("RAF_DEV") == "1":
-            self.run_mock()
-            return
-            
-        if self.action == "install":
-            self.install()
-        elif self.action == "uninstall":
-            self.uninstall()
+        with self.INSTALL_LOCK:
+            if os.environ.get("RAF_DEV") == "1":
+                self.run_mock()
+                return
+                
+            if self.action == "install":
+                self.install()
+            elif self.action == "uninstall":
+                self.uninstall()
 
     def run_mock(self):
         if self.action == "install":

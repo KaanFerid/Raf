@@ -90,6 +90,8 @@
     "password": "Password",
     "yes": "Yes",
     "no": "No",
+    "select_local_files": "Select Local Files",
+    "supported_files": "Supported Files",
     "installed_btn": "Installed",
     "run_btn": "Run",
     "not_installed_btn": "Not Installed",

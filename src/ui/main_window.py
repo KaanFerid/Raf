@@ -312,7 +312,11 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
-                self.require_sudo_password(lambda: self.start_download(book))
+                def do_install():
+                    self.download_queue.enqueue(book, None)
+                    card = self.card_widgets.get(book['id'])
+                    if card: card.set_queued(True)
+                self.require_sudo_password(do_install)
                 
         dialog = Adw.MessageDialog(
             transient_for=self, 
@@ -405,7 +409,7 @@ class MainWindow(Gtk.ApplicationWindow):
         
         installed = is_book_installed(book, self.installed_packages_cache) if book else success
         
-        if success and installed:
+        if installed:
             self.show_toast(tr("ui.toast_install_success", title=book['title']))
             if book and book.get('is_local'):
                 self.db.add_sideloaded_book(book)
@@ -468,7 +472,7 @@ class MainWindow(Gtk.ApplicationWindow):
         
         installed = is_book_installed(book, self.installed_packages_cache) if book else not success
         
-        if success and not installed:
+        if not installed:
             self.show_toast(tr("ui.toast_uninstall_success", title=book['title']))
             if book and book.get('is_local'):
                 self.db.remove_sideloaded_book(book['id'])
@@ -576,7 +580,9 @@ class MainWindow(Gtk.ApplicationWindow):
             if response == "yes":
                 def do_batch_install():
                     for book in to_install:
-                        self.start_download(book)
+                        self.download_queue.enqueue(book, None)
+                        card = self.card_widgets.get(book['id'])
+                        if card: card.set_queued(True)
                     self.show_toast(tr("ui.batch_queued", count=len(to_install)))
                 self.require_sudo_password(do_batch_install)
             self.select_mode_btn.set_active(False)
@@ -791,6 +797,9 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
 
         entry = Adw.PasswordEntryRow(title=tr("ui.password", default="Password"))
+        entry.connect("apply", lambda *args: dialog.response("ok"))
+        dialog.set_default_response("ok")
+        
         listbox = Gtk.ListBox()
         listbox.add_css_class("boxed-list")
         listbox.append(entry)
