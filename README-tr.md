@@ -3,6 +3,9 @@
 [![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](README.md)
 
 [![Build Debian Package](https://github.com/KaanFerid/Raf/actions/workflows/build.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/build.yml)
+[![Release](https://github.com/KaanFerid/Raf/actions/workflows/release.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/release.yml)
+
+> **[📖 Raf Wiki Sayfasına Git](wiki/Home-tr.md)** — CLI referansları, mimari diyagramlar ve paketleme rehberleri dahil tüm dokümantasyonu keşfetmek için.
 
 **Raf**, öğretmenlerin ve öğrencilerin tek bir tıklamayla etkileşimli kitap kütüphanelerini aramasını, indirmesini, kurmasını, başlatmasını ve kaldırmasını sağlayan Pardus tabanlı ETAP (akıllı tahta) sistemleri için modern bir masaüstü uygulamasıdır. Global karanlık/aydınlık tema motoruna sahip şık bir Libadwaita tarzı arayüz, bağımlılık içermeyen özel bir i18n çeviri sistemi, sürükle-bırak ve "Birlikte Aç" kurulumları için yerel işletim sistemi entegrasyonu, komut satırı arayüzü ve otomatik güncelleme sistemi sunar.
 

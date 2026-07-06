@@ -3,6 +3,9 @@
 [![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](README-tr.md)
 
 [![Build Debian Package](https://github.com/KaanFerid/Raf/actions/workflows/build.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/build.yml)
+[![Release](https://github.com/KaanFerid/Raf/actions/workflows/release.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/release.yml)
+
+> **[📖 Visit the Raf Wiki](wiki/Home.md)** to explore all documentation, including CLI references, architecture diagrams, and packaging guides.
 
 **Raf** is a modern desktop application for Pardus-based ETAP (smart board) systems that allows teachers and students to search, download, install, launch, and remove interactive book libraries with a single click. It features a polished Libadwaita-style interface with a global dark/light theme engine, a custom zero-dependency i18n translation system, native OS integration for drag & drop and "Open With" sideloading, a command-line interface, and an auto-update system.
 
