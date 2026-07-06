@@ -333,6 +333,16 @@ class MainWindow(Gtk.ApplicationWindow):
             card = self.card_widgets[book_id]
             pct = percent if percent >= 0 else 50
             card.update_status(is_installed=False, downloading=True, percent=pct, speed_str=speed_str)
+        self.update_window_title()
+
+    def update_window_title(self):
+        title = tr("ui.app_title")
+        if self.active_downloads:
+            total = sum(w.last_percent for w in self.active_downloads.values())
+            avg = total // len(self.active_downloads)
+            if avg > 0:
+                title += f" - %{avg}"
+        self.set_title(title)
 
     def on_download_finished(self, book_id, local_file_path):
         """
@@ -341,6 +351,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         worker = self.active_downloads.pop(book_id, None)
         self.download_queue.on_download_completed(book_id)
+        self.update_window_title()
 
         book = self.card_widgets[book_id].book
         self.start_installation(book, local_file_path)
@@ -348,6 +359,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_download_error(self, book_id, err_msg):
         self.active_downloads.pop(book_id, None)
         self.download_queue.on_download_completed(book_id)
+        self.update_window_title()
         
         if book_id in self.card_widgets:
             self.card_widgets[book_id].update_status(is_installed=False)
@@ -382,6 +394,8 @@ class MainWindow(Gtk.ApplicationWindow):
             card.primary_btn.set_sensitive(False)
             card.primary_btn.set_label(tr("ui.installing_btn"))
             card.status_label.set_text(tr("ui.installing_btn"))
+            
+        print(f"[INSTALLER] Starting installation for {book['title']} ({book_id})")
         
         worker = InstallerWorker(book, local_file_path, action="install", sudo_password=self.sudo_password)
         worker.on_finished = self.on_installation_finished
@@ -394,6 +408,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def on_install_output(self, book_id, text):
         self.logs_dialog.append_log(f"[{book_id}] {text.strip()}")
+        print(f"[INSTALLER-{book_id}] {text.strip()}")
 
     def on_installation_finished(self, book_id, success):
         worker = self.active_installations.pop(book_id, None)
@@ -450,6 +465,8 @@ class MainWindow(Gtk.ApplicationWindow):
             card.primary_btn.set_sensitive(False)
             card.secondary_btn.set_sensitive(False)
             card.primary_btn.set_label(tr("ui.uninstalling_btn"))
+            
+        print(f"[INSTALLER] Starting uninstallation for {book['title']} ({book_id})")
         
         worker = InstallerWorker(book, None, action="uninstall", sudo_password=self.sudo_password)
         worker.on_finished = self.on_uninstallation_finished
@@ -693,7 +710,7 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.present()
 
     def retranslate_ui(self):
-        self.set_title(tr("ui.app_title"))
+        self.update_window_title()
         self.batch_count_label.set_label(tr("ui.selected_count", count=len(self._selected_books)))
         self.market_btn.set_label(tr("ui.market"))
         self.library_btn.set_label(tr("ui.my_library"))
@@ -783,7 +800,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 return p.returncode == 0
             except: return False
 
+        print("[AUTH] Requesting sudo password from user...")
+
         if self.sudo_password and check_password(self.sudo_password):
+            print("[AUTH] Using previously cached password.")
             callback()
             return
 
@@ -805,15 +825,20 @@ class MainWindow(Gtk.ApplicationWindow):
         listbox.append(entry)
         dialog.set_extra_child(listbox)
 
-        def on_response(dlg, response):
-            dlg.close()
+        def on_response(dialog, response):
+            dialog.close()
             if response == "ok":
                 pwd = entry.get_text()
+                print("[AUTH] Checking provided password...")
                 if check_password(pwd):
+                    print("[AUTH] Password accepted.")
                     self.sudo_password = pwd
                     callback()
                 else:
-                    self.show_toast(tr("ui.auth_failed", default="Authentication failed! Invalid password."))
+                    print("[AUTH] Password rejected.")
+                    self.show_toast(tr("ui.invalid_password", default="Invalid password."))
+            else:
+                print("[AUTH] Password prompt cancelled.")
                     
         dialog.connect("response", on_response)
         dialog.present()

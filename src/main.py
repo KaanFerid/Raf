@@ -28,9 +28,7 @@ def main():
     from gi.repository import Gtk, Adw, Gio, Gdk
     from src.core.translation import tr
 
-    print(f"=== {tr('ui.app_title')} ===")
-    print(tr("log.ui_api", api="GTK4 (Libadwaita)"))
-    
+    from src.core.translation import tr
     class RafApp(Adw.Application):
         def __init__(self, **kwargs):
             super().__init__(application_id="org.raf.App", flags=Gio.ApplicationFlags.HANDLES_OPEN, **kwargs)
@@ -78,12 +76,10 @@ def main():
 
         def on_activate(self, app):
             from src.ui.main_window import MainWindow
-            print(tr("log.creating_main_window"))
             win = self.props.active_window
             if not win:
                 win = MainWindow(app=self, startup_files=self.startup_files)
             win.present()
-            print(tr("log.app_ready"))
 
         def on_open(self, app, files, n_files, hint):
             self.startup_files.extend([f.get_path() for f in files if f.get_path()])

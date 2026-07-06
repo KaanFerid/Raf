@@ -29,10 +29,12 @@ class DownloadWorker(threading.Thread):
             GLib.idle_add(self.on_progress_changed, self.book_id, percent, speed_str)
             
     def _emit_finished(self, path):
+        print(f"[DOWNLOADER] Download finished for {self.book_id}")
         if self.on_finished:
             GLib.idle_add(self.on_finished, self.book_id, path)
             
     def _emit_error(self, err_msg):
+        print(f"[DOWNLOADER] Download failed for {self.book_id}: {err_msg}")
         if self.on_error:
             GLib.idle_add(self.on_error, self.book_id, err_msg)
 
@@ -43,6 +45,8 @@ class DownloadWorker(threading.Thread):
         dest_dir = os.path.dirname(self.dest_path)
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir, exist_ok=True)
+
+        print(f"[DOWNLOADER] Starting download for {self.book_id}")
 
         try:
             # We must use a Session to handle cookies and download in chunks
