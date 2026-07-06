@@ -1,8 +1,6 @@
 # Raf — Geliştirme Özeti
 
-<div align="right">
-  <a href="DEVELOPMENT_SUMMARY.md"><img src="https://img.shields.io/badge/Language-English-blue?style=flat-square" alt="English"></a>
-</div>
+[![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](DEVELOPMENT_SUMMARY.md)
 
 Bu belge, tamamlanan her geliştirme aşamasının kronolojik bir dökümünü, temel tasarım kararlarının arkasındaki mantığı ve uygulamanın yeteneklerinin tam bir referansını sunar. Projenin nasıl geliştiğini anlaması gereken sürdürücüler ve katkıda bulunanlar için tasarlanmıştır.
 

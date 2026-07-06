@@ -1,8 +1,6 @@
 # Raf — Etkileşimli Kitap Kütüphanesi
 
-<div align="right">
-  <a href="README.md"><img src="https://img.shields.io/badge/Language-English-blue?style=flat-square" alt="English"></a>
-</div>
+[![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](README.md)
 
 [![Build Debian Package](https://github.com/KaanFerid/Raf/actions/workflows/build.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/build.yml)
 
