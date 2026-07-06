@@ -1,11 +1,10 @@
 import os
 import sys
 
-# Set headless mode for Qt
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
+# Disable GTK Window initialization warnings for CLI
+os.environ["GTK_A11Y"] = "none"
 
-from PyQt5.QtCore import QEventLoop
-from PyQt5.QtWidgets import QApplication
+from gi.repository import GLib
 from src.core.database import Database
 from src.core.installer import InstallerWorker, is_book_installed, get_all_installed_packages
 from src.core.downloader import DownloadWorker
@@ -19,9 +18,6 @@ def print_progress_bar(percent, speed_str):
     sys.stdout.flush()
 
 def handle_cli():
-    # Make sure app context is initialized
-    app = QApplication.instance() or QApplication(sys.argv)
-    
     db = Database()
     
     args = sys.argv[1:]
@@ -114,8 +110,8 @@ def handle_cli():
         file_path = os.path.join(cache_dir, book['file_name'])
         print(tr("cli.installing_book", title=book['title']))
         
-        # We start the download worker using QEventLoop
-        loop = QEventLoop()
+        # We start the download worker using GLib.MainLoop
+        loop = GLib.MainLoop()
         worker = DownloadWorker(book_id, book['download_url'], file_path)
         
         download_success = [False]
@@ -131,12 +127,12 @@ def handle_cli():
             print("\n" + tr("cli.download_error", error=msg))
             loop.quit()
             
-        worker.progress_changed.connect(on_progress)
-        worker.finished.connect(on_finished)
-        worker.error.connect(on_error)
+        worker.on_progress_changed = on_progress
+        worker.on_finished = on_finished
+        worker.on_error = on_error
         
         worker.start()
-        loop.exec() if hasattr(loop, 'exec') else loop.exec_()
+        loop.run()
         
         if not download_success[0]:
             print(tr("cli.install_failed_download"))
@@ -144,19 +140,19 @@ def handle_cli():
             
         # Install step
         print(tr("cli.installing_package"))
-        install_loop = QEventLoop()
+        install_loop = GLib.MainLoop()
         install_success = [False]
         
         inst_worker = InstallerWorker(book, file_path, action="install")
-        inst_worker.status_changed.connect(lambda bid, msg: print(tr("cli.status_prefix", status=msg)))
+        inst_worker.on_status_changed = lambda bid, msg: print(tr("cli.status_prefix", status=msg))
         
         def on_inst_finished(bid, success):
             install_success[0] = success
             install_loop.quit()
             
-        inst_worker.finished.connect(on_inst_finished)
+        inst_worker.on_finished = on_inst_finished
         inst_worker.start()
-        install_loop.exec() if hasattr(install_loop, 'exec') else install_loop.exec_()
+        install_loop.run()
         
         if install_success[0]:
             print("\n" + tr("cli.install_completed_success", title=book['title']))
@@ -191,17 +187,17 @@ def handle_cli():
         # Install sequentially
         for book in valid_books:
             print(f"\n{tr('cli.installing_book', title=book['title'])}")
-            install_loop = QEventLoop()
+            install_loop = GLib.MainLoop()
             
             inst_worker = InstallerWorker(book, book['absolute_path'], action="install")
-            inst_worker.status_changed.connect(lambda bid, msg: print(tr("cli.status_prefix", status=msg)))
+            inst_worker.on_status_changed = lambda bid, msg: print(tr("cli.status_prefix", status=msg))
             
             def on_inst_finished(bid, success):
                 install_loop.quit()
                 
-            inst_worker.finished.connect(on_inst_finished)
+            inst_worker.on_finished = on_inst_finished
             inst_worker.start()
-            install_loop.exec() if hasattr(install_loop, 'exec') else install_loop.exec_()
+            install_loop.run()
 
     elif cmd == "uninstall":
         if len(args) < 2:
@@ -220,19 +216,19 @@ def handle_cli():
             sys.exit(0)
             
         print(tr("cli.uninstalling_book", title=book['title']))
-        uninstall_loop = QEventLoop()
+        uninstall_loop = GLib.MainLoop()
         uninstall_success = [False]
         
         inst_worker = InstallerWorker(book, None, action="uninstall")
-        inst_worker.status_changed.connect(lambda bid, msg: print(tr("cli.status_prefix", status=msg)))
+        inst_worker.on_status_changed = lambda bid, msg: print(tr("cli.status_prefix", status=msg))
         
         def on_uninst_finished(bid, success):
             uninstall_success[0] = success
             uninstall_loop.quit()
             
-        inst_worker.finished.connect(on_uninst_finished)
+        inst_worker.on_finished = on_uninst_finished
         inst_worker.start()
-        uninstall_loop.exec() if hasattr(uninstall_loop, 'exec') else uninstall_loop.exec_()
+        uninstall_loop.run()
         
         if uninstall_success[0]:
             print("\n" + tr("cli.uninstall_completed_success", title=book['title']))

@@ -202,6 +202,10 @@ class MainWindow(Adw.ApplicationWindow):
 
     # --- Actions ---
     def refresh_grid(self):
+        """
+        Clears and repopulates the active view (Market or Library) with books.
+        Applies search filters and installed-status checks to determine visibility.
+        """
         # Determine current tab
         visible_name = self.stack.get_visible_child_name()
         
@@ -236,6 +240,10 @@ class MainWindow(Adw.ApplicationWindow):
             listbox.append(row)
 
     def start_download(self, book):
+        """
+        Initiates an asynchronous download for a given book.
+        Sets up the destination paths and spawns a DownloadWorker.
+        """
         book_id = book['id']
         if book_id in self.active_downloads:
             return
@@ -269,6 +277,10 @@ class MainWindow(Adw.ApplicationWindow):
             card.update_status(is_installed=False, downloading=True, percent=pct, speed_str=speed_str)
 
     def on_download_finished(self, book_id, local_file_path):
+        """
+        Called when a DownloadWorker successfully finishes downloading.
+        Prompts the user to begin installation.
+        """
         worker = self.active_downloads.pop(book_id, None)
         self.download_queue.on_download_completed(book_id)
 
@@ -313,6 +325,10 @@ class MainWindow(Adw.ApplicationWindow):
             self.active_downloads[book_id].cancel()
 
     def start_installation(self, book, local_file_path):
+        """
+        Spawns an InstallerWorker to install the downloaded package.
+        Updates the UI to reflect the 'Installing' state.
+        """
         book_id = book['id']
         if book_id in self.active_installations:
             return

@@ -16,7 +16,7 @@ class DownloadWorker(threading.Thread):
         self._is_cancelled = False
         self.last_percent = 0  # tracked for title bar progress display
         
-        # Callbacks replacing pyqtSignal
+        # Callbacks (events)
         self.on_progress_changed = None # func(book_id, percentage, speed_str)
         self.on_finished = None         # func(book_id, local_file_path)
         self.on_error = None            # func(book_id, error_message)

@@ -64,6 +64,39 @@ class InstallerWorker(threading.Thread):
         if self.on_auth_failed:
             GLib.idle_add(self.on_auth_failed, self.book_id)
 
+    def _run_subprocess(self, cmd, start_log_msg, success_status_msg, success_log_msg):
+        self._emit_output(self.book_id, start_log_msg)
+        self._emit_output(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
+        
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            for line in process.stdout:
+                self._emit_output(self.book_id, line)
+            process.wait()
+            
+            if process.returncode == 0:
+                self._emit_output(self.book_id, success_log_msg)
+                self._emit_status(self.book_id, success_status_msg)
+                self._emit_finished(self.book_id, True)
+            elif process.returncode in (126, 127):
+                self._emit_status(self.book_id, tr("installer.auth_failed"))
+                self._emit_auth_failed(self.book_id)
+                self._emit_finished(self.book_id, False)
+            else:
+                fail_key = "installer.install_failed" if self.action == "install" else "installer.uninstall_failed"
+                self._emit_status(self.book_id, tr(fail_key, code=process.returncode))
+                self._emit_finished(self.book_id, False)
+        except Exception as e:
+            self._emit_output(self.book_id, str(e))
+            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
+            self._emit_finished(self.book_id, False)
+
     def run(self):
         if os.environ.get("RAF_DEV") == "1":
             self.run_mock()
@@ -153,38 +186,12 @@ class InstallerWorker(threading.Thread):
         # This will pop up a PolicyKit password prompt for security.
         cmd = ["pkexec", "apt-get", "install", "-y", self.file_path]
         
-        self._emit_output(self.book_id, tr("log.start_deb_install", title=self.book.get('title'), default=f"--- Starting DEB installation of {self.book.get('title')} ---"))
-        self._emit_output(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
-        
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-                
-            process.wait()
-            
-            if process.returncode == 0:
-                self._emit_output(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
-                self._emit_status(self.book_id, tr("installer.install_completed"))
-                self._emit_finished(self.book_id, True)
-            elif process.returncode in (126, 127):
-                self._emit_status(self.book_id, tr("installer.auth_failed"))
-                self._emit_auth_failed(self.book_id)
-                self._emit_finished(self.book_id, False)
-            else:
-                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
-        except Exception as e:
-            self._emit_output(self.book_id, str(e))
-            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
-            self._emit_finished(self.book_id, False)
+        self._run_subprocess(
+            cmd,
+            start_log_msg=tr("log.start_deb_install", title=self.book.get('title'), default=f"--- Starting DEB installation of {self.book.get('title')} ---"),
+            success_status_msg=tr("installer.install_completed"),
+            success_log_msg=tr("log.install_completed", default="--- Installation completed successfully ---")
+        )
 
     def uninstall_deb(self):
         self._emit_status(self.book_id, tr("installer.uninstalling_system_package"))
@@ -197,37 +204,12 @@ class InstallerWorker(threading.Thread):
 
         cmd = ["pkexec", "apt-get", "remove", "-y", package_name]
         
-        self._emit_output(self.book_id, tr("log.start_deb_uninstall", title=self.book.get('title'), default=f"--- Starting DEB uninstallation of {self.book.get('title')} ---"))
-        self._emit_output(self.book_id, tr("log.executing_cmd", cmd=' '.join(cmd), default=f"Executing: {' '.join(cmd)}"))
-        
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-                
-            process.wait()
-            
-            if process.returncode == 0:
-                self._emit_status(self.book_id, tr("installer.uninstall_completed"))
-                self._emit_finished(self.book_id, True)
-            elif process.returncode in (126, 127):
-                self._emit_status(self.book_id, tr("installer.auth_failed"))
-                self._emit_auth_failed(self.book_id)
-                self._emit_finished(self.book_id, False)
-            else:
-                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
-        except Exception as e:
-            self._emit_output(self.book_id, str(e))
-            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
-            self._emit_finished(self.book_id, False)
+        self._run_subprocess(
+            cmd,
+            start_log_msg=tr("log.start_deb_uninstall", title=self.book.get('title'), default=f"--- Starting DEB uninstallation of {self.book.get('title')} ---"),
+            success_status_msg=tr("installer.uninstall_completed"),
+            success_log_msg=tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---")
+        )
 
     def install_zip(self):
         self._emit_status(self.book_id, tr("installer.extracting_files"))
@@ -281,27 +263,18 @@ class InstallerWorker(threading.Thread):
                 tmp_desktop_path,
                 f"/usr/share/applications/raf-{self.book_id}.desktop"
             ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-            
-            if process.returncode == 0:
-                self._emit_output(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
-                self._emit_status(self.book_id, tr("installer.install_completed"))
-                self._emit_finished(self.book_id, True)
-            elif process.returncode in (126, 127):
-                self._emit_status(self.book_id, tr("installer.auth_failed"))
-                self._emit_auth_failed(self.book_id)
-                self._emit_finished(self.book_id, False)
-            else:
-                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
+            self._run_subprocess(
+                cmd,
+                start_log_msg=tr("log.start_zip_install", title=self.book.get('title'), default=f"--- Starting ZIP/AppImage installation of {self.book.get('title')} ---"),
+                success_status_msg=tr("installer.install_completed"),
+                success_log_msg=tr("log.install_completed", default="--- Installation completed successfully ---")
+            )
 
         except Exception as e:
             self._emit_output(self.book_id, str(e))
             self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
             self._emit_finished(self.book_id, False)
+        finally:
             try: shutil.rmtree(tmp_dir)
             except: pass
 
@@ -324,22 +297,12 @@ class InstallerWorker(threading.Thread):
                 apps_dir,
                 desktop_file
             ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-                
-            if process.returncode == 0:
-                self._emit_output(self.book_id, tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---"))
-                self._emit_status(self.book_id, tr("installer.library_uninstalled"))
-                self._emit_finished(self.book_id, True)
-            elif process.returncode in (126, 127):
-                self._emit_status(self.book_id, tr("installer.auth_failed"))
-                self._emit_auth_failed(self.book_id)
-                self._emit_finished(self.book_id, False)
-            else:
-                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
+            self._run_subprocess(
+                cmd,
+                start_log_msg=tr("log.start_zip_uninstall", title=self.book.get('title'), default=f"--- Starting ZIP/AppImage uninstallation of {self.book.get('title')} ---"),
+                success_status_msg=tr("installer.library_uninstalled"),
+                success_log_msg=tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---")
+            )
         except Exception as e:
             self._emit_output(self.book_id, str(e))
             self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
@@ -384,18 +347,12 @@ class InstallerWorker(threading.Thread):
                 f"/usr/share/applications/raf-{self.book_id}.desktop",
                 tmp_dir
             ]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-            
-            if process.returncode == 0:
-                self._emit_output(self.book_id, tr("log.install_completed", default="--- Installation completed successfully ---"))
-                self._emit_status(self.book_id, tr("installer.install_completed"))
-                self._emit_finished(self.book_id, True)
-            else:
-                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
+            self._run_subprocess(
+                cmd,
+                start_log_msg=tr("log.start_standalone_install", title=self.book.get('title'), default=f"--- Starting AppImage/Standalone installation of {self.book.get('title')} ---"),
+                success_status_msg=tr("installer.install_completed"),
+                success_log_msg=tr("log.install_completed", default="--- Installation completed successfully ---")
+            )
                 
         except Exception as e:
             self._emit_output(self.book_id, str(e))
@@ -422,31 +379,13 @@ class InstallerWorker(threading.Thread):
             self._emit_finished(self.book_id, False)
             return
 
-        self._emit_status(self.book_id, tr("installer.installing_flatpak"))
         cmd = ["flatpak", "install", "--user", "--noninteractive", flatpak_ref]
-
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-
-            if process.returncode == 0:
-                self._emit_status(self.book_id, tr("installer.install_completed"))
-                self._emit_finished(self.book_id, True)
-            else:
-                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
-        except Exception as e:
-            self._emit_output(self.book_id, str(e))
-            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
-            self._emit_finished(self.book_id, False)
+        self._run_subprocess(
+            cmd,
+            start_log_msg=tr("log.start_flatpak_install", title=self.book.get('title'), default=f"--- Starting Flatpak installation of {self.book.get('title')} ---"),
+            success_status_msg=tr("installer.install_completed"),
+            success_log_msg=tr("log.install_completed", default="--- Installation completed successfully ---")
+        )
 
     def uninstall_flatpak(self):
         """Removes a Flatpak application for the current user."""
@@ -461,31 +400,13 @@ class InstallerWorker(threading.Thread):
             self._emit_finished(self.book_id, False)
             return
 
-        self._emit_status(self.book_id, tr("installer.uninstalling_flatpak"))
         cmd = ["flatpak", "uninstall", "--user", "--noninteractive", flatpak_ref]
-
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-
-            if process.returncode == 0:
-                self._emit_status(self.book_id, tr("installer.uninstall_completed"))
-                self._emit_finished(self.book_id, True)
-            else:
-                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
-        except Exception as e:
-            self._emit_output(self.book_id, str(e))
-            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
-            self._emit_finished(self.book_id, False)
+        self._run_subprocess(
+            cmd,
+            start_log_msg=tr("log.start_flatpak_uninstall", title=self.book.get('title'), default=f"--- Starting Flatpak uninstallation of {self.book.get('title')} ---"),
+            success_status_msg=tr("installer.uninstall_completed"),
+            success_log_msg=tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---")
+        )
 
     def install_snap(self):
         """Installs a Snap package (requires elevated privileges via pkexec)."""
@@ -500,35 +421,13 @@ class InstallerWorker(threading.Thread):
             self._emit_finished(self.book_id, False)
             return
 
-        self._emit_status(self.book_id, tr("installer.installing_snap"))
         cmd = ["pkexec", "snap", "install", snap_name]
-
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-
-            if process.returncode == 0:
-                self._emit_status(self.book_id, tr("installer.install_completed"))
-                self._emit_finished(self.book_id, True)
-            elif process.returncode in (126, 127):
-                self._emit_status(self.book_id, tr("installer.auth_failed"))
-                self._emit_auth_failed(self.book_id)
-                self._emit_finished(self.book_id, False)
-            else:
-                self._emit_status(self.book_id, tr("installer.install_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
-        except Exception as e:
-            self._emit_output(self.book_id, str(e))
-            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
-            self._emit_finished(self.book_id, False)
+        self._run_subprocess(
+            cmd,
+            start_log_msg=tr("log.start_snap_install", title=self.book.get('title'), default=f"--- Starting Snap installation of {self.book.get('title')} ---"),
+            success_status_msg=tr("installer.install_completed"),
+            success_log_msg=tr("log.install_completed", default="--- Installation completed successfully ---")
+        )
 
     def uninstall_snap(self):
         """Removes a Snap package (requires elevated privileges via pkexec)."""
@@ -543,35 +442,13 @@ class InstallerWorker(threading.Thread):
             self._emit_finished(self.book_id, False)
             return
 
-        self._emit_status(self.book_id, tr("installer.uninstalling_snap"))
         cmd = ["pkexec", "snap", "remove", snap_name]
-
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            for line in process.stdout:
-                self._emit_output(self.book_id, line)
-            process.wait()
-
-            if process.returncode == 0:
-                self._emit_status(self.book_id, tr("installer.uninstall_completed"))
-                self._emit_finished(self.book_id, True)
-            elif process.returncode in (126, 127):
-                self._emit_status(self.book_id, tr("installer.auth_failed"))
-                self._emit_auth_failed(self.book_id)
-                self._emit_finished(self.book_id, False)
-            else:
-                self._emit_status(self.book_id, tr("installer.uninstall_failed", code=process.returncode))
-                self._emit_finished(self.book_id, False)
-        except Exception as e:
-            self._emit_output(self.book_id, str(e))
-            self._emit_status(self.book_id, tr("ui.error") + f": {str(e)}")
-            self._emit_finished(self.book_id, False)
+        self._run_subprocess(
+            cmd,
+            start_log_msg=tr("log.start_snap_uninstall", title=self.book.get('title'), default=f"--- Starting Snap uninstallation of {self.book.get('title')} ---"),
+            success_status_msg=tr("installer.uninstall_completed"),
+            success_log_msg=tr("log.uninstall_completed", default="--- Uninstallation completed successfully ---")
+        )
 
 
 def get_all_installed_packages():

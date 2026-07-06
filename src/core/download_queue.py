@@ -12,7 +12,7 @@ class DownloadQueue:
         self._pending = []       # list of (book, local_path) in FIFO order
         self._active_ids = set() # book_ids currently downloading
         
-        # Callbacks replacing pyqtSignal
+        # Callbacks (events)
         self.on_job_started = None    # func(book_id)
         self.on_job_finished = None   # func(book_id)
         self.on_queue_changed = None  # func(pending_count)
