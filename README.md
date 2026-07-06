@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/assets/raf.png" width="128" alt="Raf Logo">
+</p>
+
 # Raf — Interactive Book Library
 
 [![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](README-tr.md)
@@ -8,6 +12,17 @@
 > **[📖 Visit the Raf Wiki](wiki/Home.md)** to explore all documentation, including CLI references, architecture diagrams, and packaging guides.
 
 **Raf** is a modern desktop application for Pardus-based ETAP (smart board) systems that allows teachers and students to search, download, install, launch, and remove interactive book libraries with a single click. It features a polished Libadwaita-style interface with a global dark/light theme engine, a custom zero-dependency i18n translation system, native OS integration for drag & drop and "Open With" sideloading, a command-line interface, and an auto-update system.
+
+---
+
+## Gallery (Photos & Videos)
+
+> **Note for Contributors:**
+> You can add photos or video demonstrations of the project here!
+> - To add an image, simply drag and drop the image file into the GitHub editor while editing this README, or place the image in `docs/images/` and use: `![Description](docs/images/your_image.png)`
+> - To add a video, drag and drop the `.mp4` file directly into the GitHub web editor and it will automatically generate a playable video link.
+
+*(Add your screenshots here!)*
 
 ---
 

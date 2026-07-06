@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/assets/raf.png" width="128" alt="Raf Logo">
+</p>
+
 # Raf — Etkileşimli Kitap Kütüphanesi
 
 [![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](README.md)
@@ -8,6 +12,17 @@
 > **[📖 Raf Wiki Sayfasına Git](wiki/Home-tr.md)** — CLI referansları, mimari diyagramlar ve paketleme rehberleri dahil tüm dokümantasyonu keşfetmek için.
 
 **Raf**, öğretmenlerin ve öğrencilerin tek bir tıklamayla etkileşimli kitap kütüphanelerini aramasını, indirmesini, kurmasını, başlatmasını ve kaldırmasını sağlayan Pardus tabanlı ETAP (akıllı tahta) sistemleri için modern bir masaüstü uygulamasıdır. Global karanlık/aydınlık tema motoruna sahip şık bir Libadwaita tarzı arayüz, bağımlılık içermeyen özel bir i18n çeviri sistemi, sürükle-bırak ve "Birlikte Aç" kurulumları için yerel işletim sistemi entegrasyonu, komut satırı arayüzü ve otomatik güncelleme sistemi sunar.
+
+---
+
+## Galeri (Fotoğraflar & Videolar)
+
+> **Katkıda Bulunanlar İçin Not:**
+> Projeye ait fotoğraf veya tanıtım videolarını buraya ekleyebilirsiniz!
+> - Görsel eklemek için: Düzenleme ekranında resmi sürükleyip bırakabilir veya `docs/images/` klasörüne yükledikten sonra `![Açıklama](docs/images/resim.png)` şeklinde kullanabilirsiniz.
+> - Video eklemek için: `.mp4` formatındaki videonuzu GitHub web düzenleyicisinde doğrudan buraya sürükleyip bırakırsanız, oynatılabilir bir video bağlantısı otomatik olarak oluşturulacaktır.
+
+*(Ekran görüntülerinizi buraya ekleyin!)*
 
 ---
 
