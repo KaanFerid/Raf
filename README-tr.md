@@ -17,12 +17,7 @@
 
 ## Galeri (Fotoğraflar & Videolar)
 
-> **Katkıda Bulunanlar İçin Not:**
-> Projeye ait fotoğraf veya tanıtım videolarını buraya ekleyebilirsiniz!
-> - Görsel eklemek için: Düzenleme ekranında resmi sürükleyip bırakabilir veya `docs/images/` klasörüne yükledikten sonra `![Açıklama](docs/images/resim.png)` şeklinde kullanabilirsiniz.
-> - Video eklemek için: `.mp4` formatındaki videonuzu GitHub web düzenleyicisinde doğrudan buraya sürükleyip bırakırsanız, oynatılabilir bir video bağlantısı otomatik olarak oluşturulacaktır.
-
-*(Ekran görüntülerinizi buraya ekleyin!)*
+https://github.com/user-attachments/assets/2379643f-7ad8-4e84-af4e-dd01aa27bc12
 
 ---
 
