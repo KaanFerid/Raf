@@ -40,6 +40,14 @@ def main():
             self.connect("open", self.on_open)
 
         def on_startup(self, app):
+            from src.core.config import load_config
+            config = load_config()
+            mode = config.get("theme_mode", "system")
+            manager = Adw.StyleManager.get_default()
+            if mode == "system": manager.set_color_scheme(Adw.ColorScheme.DEFAULT)
+            elif mode == "light": manager.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
+            elif mode == "dark": manager.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+
             # Setup icon theme
             display = Gdk.Display.get_default()
             if display:
