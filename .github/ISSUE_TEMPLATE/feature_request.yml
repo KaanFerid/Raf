@@ -1,0 +1,30 @@
+name: ✨ Feature Request (Özellik İsteği)
+description: Suggest an idea for this project / Bu proje için bir fikir önerin
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a feature! / Yeni bir özellik önermeye vakit ayırdığınız için teşekkürler!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem? / İsteğiniz bir problemle mi ilgili?
+      description: A clear and concise description of what the problem is. Ex. I'm always frustrated when [...] / Problemin ne olduğuna dair açık ve öz bir açıklama.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like / İstediğiniz çözümü açıklayın
+      description: A clear and concise description of what you want to happen. / Olmasını istediğiniz şeyin açık ve öz bir açıklaması.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered / Düşündüğünüz alternatifleri açıklayın
+      description: A clear and concise description of any alternative solutions or features you've considered. / Düşündüğünüz alternatif çözümlerin veya özelliklerin açıklaması.
+    validations:
+      required: false

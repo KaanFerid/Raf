@@ -1,0 +1,49 @@
+name: 🐛 Bug Report (Hata Bildirimi)
+description: Create a report to help us improve / Bizi geliştirmemize yardımcı olmak için bir hata bildirin
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! / Bu hata bildirimini doldurmaya vakit ayırdığınız için teşekkürler!
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug / Hatayı açıklayın
+      description: A clear and concise description of what the bug is. / Hatanın ne olduğuna dair açık ve öz bir açıklama.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce / Tekrar etme adımları
+      description: How can we reproduce this bug? / Bu hatayı nasıl tekrar edebiliriz?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Beklenen davranış
+      description: A clear and concise description of what you expected to happen. / Olmasını beklediğiniz şeyin açık ve öz bir açıklaması.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating System / İşletim Sistemi
+      description: E.g. Pardus ETAP 19, Ubuntu 22.04
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Raf Version / Raf Sürümü
+      description: Which version of Raf are you using? (e.g., 2.1.0)
+    validations:
+      required: true
