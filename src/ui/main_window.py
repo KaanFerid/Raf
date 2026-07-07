@@ -1,11 +1,16 @@
 import os
 import subprocess
 from gi.repository import Gtk, Adw, GLib, Gio, Gdk
-from src.core.translation import tr, on_language_change, remove_language_listener
+from src.core.translation import tr, on_language_change
 from src.core.database import Database
 from src.core.downloader import DownloadWorker
-from src.core.installer import InstallerWorker, is_book_installed, get_deb_package_name, get_all_installed_packages
-from src.core.updater import UpdateChecker, UpdateInstaller, AutoUpdateScheduler
+from src.core.installer import (
+    InstallerWorker,
+    is_book_installed,
+    get_deb_package_name,
+    get_all_installed_packages,
+)
+from src.core.updater import UpdateInstaller, AutoUpdateScheduler
 from src.core.download_queue import DownloadQueue
 from src.core.sync import DatabaseSyncWorker
 from src.core.config import load_config
@@ -13,26 +18,27 @@ from src.ui.components import BookRow
 from src.ui.logs_dialog import InstallationLogsDialog
 from src.ui.desktop_editor import show_message
 
+
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, app, startup_files=None):
         super().__init__(application=app)
         self.startup_files = startup_files or []
         self.set_title(tr("ui.app_title"))
         self.set_default_size(1100, 700)
-        
+
         # State tracking
-        self.active_downloads = {}      # book_id -> DownloadWorker
+        self.active_downloads = {}  # book_id -> DownloadWorker
         self.active_installations = {}  # book_id -> InstallerWorker
         self.logs_dialog = InstallationLogsDialog(self)
-        self.card_widgets = {}          # book_id -> BookRow
-        self._selection_mode = False    # Batch selection mode active
-        self._selected_books = set()    # book_ids selected in batch mode
+        self.card_widgets = {}  # book_id -> BookRow
+        self._selection_mode = False  # Batch selection mode active
+        self._selected_books = set()  # book_ids selected in batch mode
         self.is_offline = False
         self.sudo_password = None
-        
+
         self.db = Database()
         self.installed_packages_cache = set()
-        
+
         # Drop Target
         drop_target = Gtk.DropTarget(actions=Gdk.DragAction.COPY)
         drop_target.set_gtypes([Gio.File.__gtype__])
@@ -47,7 +53,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.download_queue.on_queue_changed = self._on_queue_changed
 
         self.init_ui()
-        
+
         # Auto-update scheduler
         self.auto_update_scheduler = AutoUpdateScheduler()
         self.auto_update_scheduler.on_update_toast_requested = self._on_update_toast
@@ -59,7 +65,7 @@ class MainWindow(Gtk.ApplicationWindow):
         db_url = config.get("database_url", "").strip()
         if not db_url:
             db_url = "https://raw.githubusercontent.com/KaanFerid/Raf/main/database/"
-        
+
         if db_url and not self.is_offline:
             self.sync_worker = DatabaseSyncWorker(db_url, self.db.database_dir)
             self.sync_worker.on_sync_finished = self._on_sync_finished
@@ -89,31 +95,35 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Main Box and Drop Overlay
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        
+
         self.drop_overlay = Gtk.Overlay()
         self.drop_overlay.set_child(main_box)
-        
+
         self.drop_ui = Gtk.Box(halign=Gtk.Align.FILL, valign=Gtk.Align.FILL)
         self.drop_ui.add_css_class("drop-overlay-bg")
-        
-        card_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
+
+        card_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            halign=Gtk.Align.CENTER,
+            valign=Gtk.Align.CENTER,
+        )
         card_box.set_hexpand(True)
         card_box.set_vexpand(True)
         card_box.add_css_class("card")
         card_box.set_size_request(400, 300)
-        
+
         status_page = Adw.StatusPage(
             title=tr("ui.drop_files_here", default="Drop Files Here"),
             description=".deb, .zip, .appimage, .fernus",
-            icon_name="folder-download-symbolic"
+            icon_name="folder-download-symbolic",
         )
         card_box.append(status_page)
-        
+
         self.drop_ui.append(card_box)
-        
+
         self.drop_overlay.add_overlay(self.drop_ui)
         self.drop_ui.set_visible(False)
-        
+
         self.toast_overlay.set_child(self.drop_overlay)
 
         # HeaderBar
@@ -200,25 +210,41 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Market Page
         self.market_page, self.market_listbox = self.create_list_page()
-        m_placeholder = Adw.StatusPage(title=tr("ui.no_books_found"), icon_name="system-search-symbolic", description=tr("ui.request_book_desc"))
+        m_placeholder = Adw.StatusPage(
+            title=tr("ui.no_books_found"),
+            icon_name="system-search-symbolic",
+            description=tr("ui.request_book_desc"),
+        )
         request_btn = Gtk.Button(label=tr("ui.request_book"))
         request_btn.add_css_class("pill")
         request_btn.add_css_class("suggested-action")
         request_btn.set_halign(Gtk.Align.CENTER)
         request_btn.set_margin_top(12)
-        request_btn.connect("clicked", lambda *args: self.on_request_book_action(None, None))
+        request_btn.connect(
+            "clicked", lambda *args: self.on_request_book_action(None, None)
+        )
         m_placeholder.set_child(request_btn)
         self.market_listbox.set_placeholder(m_placeholder)
-        self.stack.add_titled_with_icon(self.market_page, "market", tr("ui.market"), "emblem-system-symbolic")
+        self.stack.add_titled_with_icon(
+            self.market_page, "market", tr("ui.market"), "emblem-system-symbolic"
+        )
 
         # Library Page
         self.library_page, self.library_listbox = self.create_list_page()
-        l_placeholder = Adw.StatusPage(title=tr("ui.no_installed_books_found"), icon_name="folder-documents-symbolic")
+        l_placeholder = Adw.StatusPage(
+            title=tr("ui.no_installed_books_found"),
+            icon_name="folder-documents-symbolic",
+        )
         self.library_listbox.set_placeholder(l_placeholder)
-        self.stack.add_titled_with_icon(self.library_page, "library", tr("ui.my_library"), "folder-documents-symbolic")
+        self.stack.add_titled_with_icon(
+            self.library_page,
+            "library",
+            tr("ui.my_library"),
+            "folder-documents-symbolic",
+        )
 
         self.stack.connect("notify::visible-child", self.on_tab_changed)
-        
+
         # Set initial active button
         self.market_btn.set_active(True)
 
@@ -229,16 +255,16 @@ class MainWindow(Gtk.ApplicationWindow):
     def create_list_page(self):
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_vexpand(True)
-        
+
         clamp = Adw.Clamp()
         clamp.set_maximum_size(800)
         scrolled.set_child(clamp)
-        
+
         listbox = Gtk.ListBox()
         listbox.add_css_class("boxed-list")
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         clamp.set_child(listbox)
-        
+
         return scrolled, listbox
 
     def on_tab_changed(self, stack, param):
@@ -247,7 +273,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.market_btn.set_active(True)
         elif visible_name == "library":
             self.library_btn.set_active(True)
-            
+
         self.refresh_grid()
 
     # --- Actions ---
@@ -258,9 +284,11 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         # Determine current tab
         visible_name = self.stack.get_visible_child_name()
-        
+
         # Get active listbox
-        listbox = self.market_listbox if visible_name == "market" else self.library_listbox
+        listbox = (
+            self.market_listbox if visible_name == "market" else self.library_listbox
+        )
 
         # Clear existing
         child = listbox.get_first_child()
@@ -271,14 +299,18 @@ class MainWindow(Gtk.ApplicationWindow):
             child = next_child
 
         self.card_widgets.clear()
-        
+
         query = self.search_entry.get_text().lower().strip()
         all_books = self.db.get_all_books()
-        
+
         # Filter
         filtered = []
         for b in all_books:
-            if query and query not in b['title'].lower() and query not in b.get('publisher', '').lower():
+            if (
+                query
+                and query not in b["title"].lower()
+                and query not in b.get("publisher", "").lower()
+            ):
                 continue
             is_inst = is_book_installed(b, self.installed_packages_cache)
             if visible_name == "library" and not is_inst:
@@ -290,10 +322,10 @@ class MainWindow(Gtk.ApplicationWindow):
             is_inst = is_book_installed(b, self.installed_packages_cache)
             row = BookRow(b, is_installed=is_inst, main_window=self)
             row.set_selection_mode(self._selection_mode)
-            if b['id'] in self._selected_books:
+            if b["id"] in self._selected_books:
                 row.select_check.set_active(True)
-            
-            self.card_widgets[b['id']] = row
+
+            self.card_widgets[b["id"]] = row
             listbox.append(row)
 
     def start_download(self, book):
@@ -301,29 +333,37 @@ class MainWindow(Gtk.ApplicationWindow):
         Initiates an asynchronous download for a given book.
         Sets up the destination paths and spawns a DownloadWorker.
         """
-        book_id = book['id']
+        book_id = book["id"]
         if book_id in self.active_downloads:
             return
 
-        file_name = book['file_name']
+        file_name = book["file_name"]
         if os.environ.get("RAF_DEV") == "1":
-            cache_dir = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-                "mock_system", "cache"
-            ))
+            cache_dir = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                    "mock_system",
+                    "cache",
+                )
+            )
         else:
             cache_dir = os.path.expanduser("~/.cache/raf/downloads")
         local_file_path = os.path.join(cache_dir, file_name)
 
         card = self.card_widgets.get(book_id)
         if card:
-            card.update_status(is_installed=False, downloading=True, percent=0, speed_str=tr("ui.download_preparing"))
+            card.update_status(
+                is_installed=False,
+                downloading=True,
+                percent=0,
+                speed_str=tr("ui.download_preparing"),
+            )
 
-        worker = DownloadWorker(book_id, book['download_url'], local_file_path)
+        worker = DownloadWorker(book_id, book["download_url"], local_file_path)
         worker.on_progress_changed = self.on_download_progress
         worker.on_finished = self.on_download_finished
         worker.on_error = self.on_download_error
-        
+
         self.active_downloads[book_id] = worker
         worker.start()
 
@@ -331,16 +371,19 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
+
                 def do_install():
                     self.download_queue.enqueue(book, None)
-                    card = self.card_widgets.get(book['id'])
-                    if card: card.set_queued(True)
+                    card = self.card_widgets.get(book["id"])
+                    if card:
+                        card.set_queued(True)
+
                 self.require_sudo_password(do_install)
-                
+
         dialog = Adw.MessageDialog(
-            transient_for=self, 
-            heading=tr("ui.confirm_install_title"), 
-            body=tr("ui.confirm_install_prompt", title=book['title'])
+            transient_for=self,
+            heading=tr("ui.confirm_install_title"),
+            body=tr("ui.confirm_install_prompt", title=book["title"]),
         )
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("yes", tr("ui.yes"))
@@ -351,7 +394,9 @@ class MainWindow(Gtk.ApplicationWindow):
         if book_id in self.card_widgets:
             card = self.card_widgets[book_id]
             pct = percent if percent >= 0 else 50
-            card.update_status(is_installed=False, downloading=True, percent=pct, speed_str=speed_str)
+            card.update_status(
+                is_installed=False, downloading=True, percent=pct, speed_str=speed_str
+            )
         self.update_window_title()
 
     def update_window_title(self):
@@ -379,15 +424,15 @@ class MainWindow(Gtk.ApplicationWindow):
         self.active_downloads.pop(book_id, None)
         self.download_queue.on_download_completed(book_id)
         self.update_window_title()
-        
+
         if book_id in self.card_widgets:
             self.card_widgets[book_id].update_status(is_installed=False)
-            
+
         if "cancel" not in err_msg.lower():
             self.show_toast(tr("ui.toast_download_error", error=err_msg[:60]))
 
     def cancel_download(self, book):
-        book_id = book['id']
+        book_id = book["id"]
         if self.download_queue.is_queued(book_id):
             self.download_queue.dequeue(book_id)
             card = self.card_widgets.get(book_id)
@@ -395,7 +440,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 card.set_queued(False)
                 card.update_status(card.is_installed)
             return
-            
+
         if book_id in self.active_downloads:
             self.active_downloads[book_id].cancel()
 
@@ -404,7 +449,7 @@ class MainWindow(Gtk.ApplicationWindow):
         Spawns an InstallerWorker to install the downloaded package.
         Updates the UI to reflect the 'Installing' state.
         """
-        book_id = book['id']
+        book_id = book["id"]
         if book_id in self.active_installations:
             return
 
@@ -413,15 +458,19 @@ class MainWindow(Gtk.ApplicationWindow):
             card.primary_btn.set_sensitive(False)
             card.primary_btn.set_label(tr("ui.installing_btn"))
             card.status_label.set_text(tr("ui.installing_btn"))
-            
+
         print(f"[INSTALLER] Starting installation for {book['title']} ({book_id})")
-        
-        worker = InstallerWorker(book, local_file_path, action="install", sudo_password=self.sudo_password)
+
+        worker = InstallerWorker(
+            book, local_file_path, action="install", sudo_password=self.sudo_password
+        )
         worker.on_finished = self.on_installation_finished
-        worker.on_status_changed = lambda bid, msg: self.on_install_output(bid, f"[{bid}] Status: {msg}")
+        worker.on_status_changed = lambda bid, msg: self.on_install_output(
+            bid, f"[{bid}] Status: {msg}"
+        )
         worker.on_output_received = self.on_install_output
         worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
-        
+
         self.active_installations[book_id] = worker
         worker.start()
 
@@ -434,43 +483,48 @@ class MainWindow(Gtk.ApplicationWindow):
         worker = self.active_installations.pop(book_id, None)
         book = worker.book if worker else None
         card = self.card_widgets.get(book_id)
-        
-        if not book and card: book = card.book
+
+        if not book and card:
+            book = card.book
 
         if card:
             card.primary_btn.set_sensitive(True)
             installed = is_book_installed(book, None)
             card.update_status(installed)
-        
+
         installed = is_book_installed(book, None) if book else success
-        
+
         if installed:
-            self.show_toast(tr("ui.toast_install_success", title=book['title']))
-            if book and book.get('is_local'):
+            self.show_toast(tr("ui.toast_install_success", title=book["title"]))
+            if book and book.get("is_local"):
                 self.db.add_sideloaded_book(book)
-            if book.get('file_type') == 'deb':
+            if book.get("file_type") == "deb":
                 cache_dir = os.path.expanduser("~/.cache/raf/downloads")
-                try: os.remove(os.path.join(cache_dir, book['file_name']))
-                except: pass
-        elif getattr(worker, '_auth_failed', False):
+                try:
+                    os.remove(os.path.join(cache_dir, book["file_name"]))
+                except:
+                    pass
+        elif getattr(worker, "_auth_failed", False):
             pass
         else:
-            self.show_toast(tr("ui.toast_install_error", title=book['title']))
+            self.show_toast(tr("ui.toast_install_error", title=book["title"]))
 
     def start_uninstallation(self, book):
-        book_id = book['id']
+        book_id = book["id"]
         if book_id in self.active_installations:
             return
 
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
-                self.require_sudo_password(lambda: self._execute_uninstallation(book_id, book))
+                self.require_sudo_password(
+                    lambda: self._execute_uninstallation(book_id, book)
+                )
 
         dialog = Adw.MessageDialog(
             transient_for=self,
             heading=tr("ui.uninstall_library_title"),
-            body=tr("ui.confirm_uninstall", book=book['title'])
+            body=tr("ui.confirm_uninstall", book=book["title"]),
         )
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("yes", tr("ui.uninstall_btn"))
@@ -484,14 +538,16 @@ class MainWindow(Gtk.ApplicationWindow):
             card.primary_btn.set_sensitive(False)
             card.secondary_btn.set_sensitive(False)
             card.primary_btn.set_label(tr("ui.uninstalling_btn"))
-            
+
         print(f"[INSTALLER] Starting uninstallation for {book['title']} ({book_id})")
-        
-        worker = InstallerWorker(book, None, action="uninstall", sudo_password=self.sudo_password)
+
+        worker = InstallerWorker(
+            book, None, action="uninstall", sudo_password=self.sudo_password
+        )
         worker.on_finished = self.on_uninstallation_finished
         worker.on_output_received = self.on_install_output
         worker.on_auth_failed = lambda bid: self.on_auth_failed(bid, worker)
-        
+
         self.active_installations[book_id] = worker
         worker.start()
 
@@ -500,58 +556,89 @@ class MainWindow(Gtk.ApplicationWindow):
         worker = self.active_installations.pop(book_id, None)
         book = worker.book if worker else None
         card = self.card_widgets.get(book_id)
-        if not book and card: book = card.book
+        if not book and card:
+            book = card.book
 
         if card:
             card.primary_btn.set_sensitive(True)
             installed = is_book_installed(book, None)
             card.update_status(installed)
-        
+
         installed = is_book_installed(book, None) if book else not success
-        
+
         if not installed:
-            self.show_toast(tr("ui.toast_uninstall_success", title=book['title']))
-            if book and book.get('is_local'):
-                self.db.remove_sideloaded_book(book['id'])
-        elif getattr(worker, '_auth_failed', False):
+            self.show_toast(tr("ui.toast_uninstall_success", title=book["title"]))
+            if book and book.get("is_local"):
+                self.db.remove_sideloaded_book(book["id"])
+        elif getattr(worker, "_auth_failed", False):
             pass
         else:
-            self.show_toast(tr("ui.toast_uninstall_error", title=book['title']))
+            self.show_toast(tr("ui.toast_uninstall_error", title=book["title"]))
 
     def on_auth_failed(self, book_id, worker):
         worker._auth_failed = True
-        title = worker.book['title'] if worker.book else ""
+        title = worker.book["title"] if worker.book else ""
         self.show_toast(tr("ui.toast_auth_failed", title=title))
 
     def launch_book(self, book):
         if os.environ.get("RAF_DEV") == "1":
-            show_message(self, tr("ui.book_launched_sim_title"), tr("ui.book_launched_sim_message", title=book['title'], publisher=book['publisher'], filename=book['file_name']))
+            show_message(
+                self,
+                tr("ui.book_launched_sim_title"),
+                tr(
+                    "ui.book_launched_sim_message",
+                    title=book["title"],
+                    publisher=book["publisher"],
+                    filename=book["file_name"],
+                ),
+            )
             return
-        
-        file_type = book.get('file_type', 'deb')
-        
-        if file_type == 'deb':
+
+        file_type = book.get("file_type", "deb")
+
+        if file_type == "deb":
             package_name = get_deb_package_name(book)
             cmd = ["gtk-launch", package_name]
             try:
-                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen(
+                    cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
             except Exception:
-                try: subprocess.Popen([package_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                try:
+                    subprocess.Popen(
+                        [package_name],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
                 except Exception as e:
-                    show_message(self, tr("ui.app_launch_failed_title"), tr("ui.app_launch_failed_message", error=str(e)), type="error")
+                    show_message(
+                        self,
+                        tr("ui.app_launch_failed_title"),
+                        tr("ui.app_launch_failed_message", error=str(e)),
+                        type="error",
+                    )
         else:
             desktop_name = f"raf-{book['id']}"
             cmd = ["gtk-launch", desktop_name]
             try:
-                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen(
+                    cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
             except Exception as e:
-                show_message(self, tr("ui.app_launch_failed_title"), tr("ui.book_launch_failed_message", error=str(e)), type="error")
+                show_message(
+                    self,
+                    tr("ui.app_launch_failed_title"),
+                    tr("ui.book_launch_failed_message", error=str(e)),
+                    type="error",
+                )
 
     def refresh_packages_cache(self):
         def _get_pkgs():
             pkgs = get_all_installed_packages()
             GLib.idle_add(lambda: self._on_packages_loaded(pkgs))
+
         import threading
+
         threading.Thread(target=_get_pkgs, daemon=True).start()
 
     def _on_packages_loaded(self, pkgs):
@@ -583,7 +670,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def _update_batch_bar(self):
         count = len(self._selected_books)
         self.batch_count_label.set_label(tr("ui.selected_count", count=count))
-        
+
         has_installed = False
         has_uninstalled = False
         for bid in self._selected_books:
@@ -593,17 +680,24 @@ class MainWindow(Gtk.ApplicationWindow):
                     has_installed = True
                 else:
                     has_uninstalled = True
-                    
-        self.batch_install_btn.set_sensitive(count > 0 and has_uninstalled and not self.is_offline)
+
+        self.batch_install_btn.set_sensitive(
+            count > 0 and has_uninstalled and not self.is_offline
+        )
         self.batch_uninstall_btn.set_sensitive(count > 0 and has_installed)
 
     def install_selected(self, btn):
         books = self.db.get_all_books()
-        book_map = {b['id']: b for b in books}
+        book_map = {b["id"]: b for b in books}
         to_install = []
         for book_id in list(self._selected_books):
             card = self.card_widgets.get(book_id)
-            if card and not card.is_installed and not card.downloading and not card.is_queued:
+            if (
+                card
+                and not card.is_installed
+                and not card.downloading
+                and not card.is_queued
+            ):
                 book = book_map.get(book_id)
                 if book:
                     to_install.append(book)
@@ -614,19 +708,22 @@ class MainWindow(Gtk.ApplicationWindow):
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
+
                 def do_batch_install():
                     for book in to_install:
                         self.download_queue.enqueue(book, None)
-                        card = self.card_widgets.get(book['id'])
-                        if card: card.set_queued(True)
+                        card = self.card_widgets.get(book["id"])
+                        if card:
+                            card.set_queued(True)
                     self.show_toast(tr("ui.batch_queued", count=len(to_install)))
+
                 self.require_sudo_password(do_batch_install)
             self.select_mode_btn.set_active(False)
 
         dialog = Adw.MessageDialog(
             transient_for=self,
             heading=tr("ui.confirm_install_title"),
-            body=tr("ui.confirm_batch_install_prompt", count=len(to_install))
+            body=tr("ui.confirm_batch_install_prompt", count=len(to_install)),
         )
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("yes", tr("ui.yes"))
@@ -635,29 +732,32 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def uninstall_selected(self, btn):
         installed_ids = [
-            bid for bid in self._selected_books
+            bid
+            for bid in self._selected_books
             if bid in self.card_widgets and self.card_widgets[bid].is_installed
         ]
         if not installed_ids:
             return
-            
+
         def on_response(dialog, response):
             dialog.close()
             if response == "uninstall":
+
                 def do_batch_uninstall():
                     books = self.db.get_all_books()
-                    book_map = {b['id']: b for b in books}
+                    book_map = {b["id"]: b for b in books}
                     for book_id in installed_ids:
                         book = book_map.get(book_id)
                         if book:
                             self._execute_uninstallation(book_id, book)
+
                 self.require_sudo_password(do_batch_uninstall)
             self.select_mode_btn.set_active(False)
 
         dialog = Adw.MessageDialog(
             transient_for=self,
             heading=tr("ui.uninstall_library_title"),
-            body=tr("ui.batch_confirm_uninstall", count=len(installed_ids))
+            body=tr("ui.batch_confirm_uninstall", count=len(installed_ids)),
         )
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("uninstall", tr("ui.uninstall_btn"))
@@ -671,10 +771,15 @@ class MainWindow(Gtk.ApplicationWindow):
                 file = dialog.get_file()
                 if file:
                     path = file.get_path()
-                    if path: self.process_local_files([path])
+                    if path:
+                        self.process_local_files([path])
             self._file_chooser = None
-        
-        self._file_chooser = Gtk.FileChooserNative(title=tr("ui.select_local_files"), transient_for=self, action=Gtk.FileChooserAction.OPEN)
+
+        self._file_chooser = Gtk.FileChooserNative(
+            title=tr("ui.select_local_files"),
+            transient_for=self,
+            action=Gtk.FileChooserAction.OPEN,
+        )
         filter_all = Gtk.FileFilter()
         filter_all.set_name(tr("ui.supported_files"))
         filter_all.add_pattern("*.deb")
@@ -695,7 +800,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_drop(self, target, value, x, y):
         self.drop_ui.set_visible(False)
         path = value.get_path()
-        if path and path.lower().endswith(('.deb', '.zip', '.appimage', '.fernus')):
+        if path and path.lower().endswith((".deb", ".zip", ".appimage", ".fernus")):
             self.process_local_files([path])
         return True
 
@@ -709,20 +814,28 @@ class MainWindow(Gtk.ApplicationWindow):
                 "title": os.path.splitext(filename)[0],
                 "publisher": tr("cli.local_publisher"),
                 "file_name": filename,
-                "file_type": os.path.splitext(filename)[1].lstrip('.'),
+                "file_type": os.path.splitext(filename)[1].lstrip("."),
                 "is_local": True,
-                "absolute_path": path
+                "absolute_path": path,
             }
             mock_books.append((mock_book, path))
             file_list_str += f"• {filename}\n"
-            
+
         def on_response(dialog, response):
             dialog.close()
             if response == "yes":
                 for mock_book, path in mock_books:
                     self.start_installation(mock_book, path)
-        
-        dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.confirm_sideload_title"), body=tr("ui.confirm_sideload_prompt", count=len(mock_books), files=file_list_str.strip()))
+
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=tr("ui.confirm_sideload_title"),
+            body=tr(
+                "ui.confirm_sideload_prompt",
+                count=len(mock_books),
+                files=file_list_str.strip(),
+            ),
+        )
         dialog.add_response("cancel", tr("ui.no"))
         dialog.add_response("yes", tr("ui.yes"))
         dialog.connect("response", on_response)
@@ -730,7 +843,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def retranslate_ui(self):
         self.update_window_title()
-        self.batch_count_label.set_label(tr("ui.selected_count", count=len(self._selected_books)))
+        self.batch_count_label.set_label(
+            tr("ui.selected_count", count=len(self._selected_books))
+        )
         self.market_btn.set_label(tr("ui.market"))
         self.library_btn.set_label(tr("ui.my_library"))
         self.stack.get_page(self.market_page).set_title(tr("ui.market"))
@@ -746,7 +861,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _on_queue_changed(self, count):
         GLib.idle_add(lambda: self.queue_badge.set_visible(count > 0))
-        GLib.idle_add(lambda: self.queue_badge.set_text(tr("ui.queue_count", count=count)))
+        GLib.idle_add(
+            lambda: self.queue_badge.set_text(tr("ui.queue_count", count=count))
+        )
 
     def _on_sync_finished(self, count):
         self.db.load_books()
@@ -757,7 +874,9 @@ class MainWindow(Gtk.ApplicationWindow):
         print(f"Database sync failed: {err}")
 
     def _on_update_toast(self, ver):
-        GLib.idle_add(lambda: self.show_toast(tr("ui.toast_update_available", version=ver)))
+        GLib.idle_add(
+            lambda: self.show_toast(tr("ui.toast_update_available", version=ver))
+        )
 
     def on_update_available(self, ver, url, changelog):
         def _show():
@@ -765,19 +884,32 @@ class MainWindow(Gtk.ApplicationWindow):
                 dialog.close()
                 if response == "yes":
                     self.start_app_update(ver, url)
-            
-            dialog = Adw.MessageDialog(transient_for=self, heading=tr("ui.new_update_available"), body=tr("ui.update_prompt", version=ver, changelog=changelog))
+
+            dialog = Adw.MessageDialog(
+                transient_for=self,
+                heading=tr("ui.new_update_available"),
+                body=tr("ui.update_prompt", version=ver, changelog=changelog),
+            )
             dialog.add_response("cancel", tr("ui.no"))
             dialog.add_response("yes", tr("ui.yes"))
             dialog.connect("response", on_response)
             dialog.present()
+
         GLib.idle_add(_show)
 
     def on_manual_update_check(self, action, param):
-        self.auto_update_scheduler.check_now(force=True, on_available=self.on_update_available, on_none=self.on_no_update_found)
+        self.auto_update_scheduler.check_now(
+            force=True,
+            on_available=self.on_update_available,
+            on_none=self.on_no_update_found,
+        )
 
     def on_no_update_found(self):
-        GLib.idle_add(lambda: show_message(self, tr("ui.no_update_title"), tr("ui.no_update_message")))
+        GLib.idle_add(
+            lambda: show_message(
+                self, tr("ui.no_update_title"), tr("ui.no_update_message")
+            )
+        )
 
     def on_request_book_action(self, action, param):
         Gio.AppInfo.launch_default_for_uri("https://forms.gle/8JSptwwyJMAgWPHb7", None)
@@ -785,22 +917,34 @@ class MainWindow(Gtk.ApplicationWindow):
     def start_app_update(self, version, download_url):
         cache_dir = os.path.expanduser("~/.cache/raf/downloads")
         file_path = os.path.join(cache_dir, f"raf_{version}_update.deb")
-        self.update_download_worker = DownloadWorker("app_update", download_url, file_path)
-        
+        self.update_download_worker = DownloadWorker(
+            "app_update", download_url, file_path
+        )
+
         def on_finished(bid, path):
             self.update_installer_worker = UpdateInstaller(path)
             self.update_installer_worker.on_finished = self.on_update_install_finished
             self.update_installer_worker.start()
-            
+
         self.update_download_worker.on_finished = on_finished
         self.update_download_worker.start()
 
     def on_update_install_finished(self, success):
         def _show():
             if success:
-                show_message(self, tr("ui.update_successful_title"), tr("ui.update_successful_message"))
+                show_message(
+                    self,
+                    tr("ui.update_successful_title"),
+                    tr("ui.update_successful_message"),
+                )
             else:
-                show_message(self, tr("ui.update_error_title"), tr("ui.update_error_message"), type="error")
+                show_message(
+                    self,
+                    tr("ui.update_error_title"),
+                    tr("ui.update_error_message"),
+                    type="error",
+                )
+
         GLib.idle_add(_show)
 
     def show_toast(self, msg):
@@ -809,12 +953,20 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def require_sudo_password(self, callback):
         import subprocess
+
         def check_password(pwd):
             try:
-                p = subprocess.Popen(["sudo", "-S", "-k", "true"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                p = subprocess.Popen(
+                    ["sudo", "-S", "-k", "true"],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
                 p.communicate(pwd + "\n")
                 return p.returncode == 0
-            except: return False
+            except:
+                return False
 
         print("[AUTH] Requesting sudo password from user...")
 
@@ -824,9 +976,12 @@ class MainWindow(Gtk.ApplicationWindow):
             return
 
         dialog = Adw.MessageDialog(
-            transient_for=self, 
-            heading=tr("ui.auth_required_title", default="Authentication Required"), 
-            body=tr("ui.auth_required_prompt", default="Please enter your password to perform this action.")
+            transient_for=self,
+            heading=tr("ui.auth_required_title", default="Authentication Required"),
+            body=tr(
+                "ui.auth_required_prompt",
+                default="Please enter your password to perform this action.",
+            ),
         )
         dialog.add_response("cancel", tr("ui.cancel_btn"))
         dialog.add_response("ok", tr("ui.ok_btn", default="OK"))
@@ -835,13 +990,13 @@ class MainWindow(Gtk.ApplicationWindow):
         entry = Gtk.PasswordEntry()
         entry.connect("activate", lambda *args: dialog.emit("response", "ok"))
         entry.set_hexpand(True)
-        
+
         row = Adw.ActionRow(title=tr("ui.password", default="Password"))
         row.add_suffix(entry)
         row.set_activatable_widget(entry)
-        
+
         dialog.set_default_response("ok")
-        
+
         listbox = Gtk.ListBox()
         listbox.add_css_class("boxed-list")
         listbox.append(row)
@@ -858,9 +1013,11 @@ class MainWindow(Gtk.ApplicationWindow):
                     callback()
                 else:
                     print("[AUTH] Password rejected.")
-                    self.show_toast(tr("ui.invalid_password", default="Invalid password."))
+                    self.show_toast(
+                        tr("ui.invalid_password", default="Invalid password.")
+                    )
             else:
                 print("[AUTH] Password prompt cancelled.")
-                    
+
         dialog.connect("response", on_response)
         dialog.present()

@@ -1,5 +1,6 @@
 from gi.repository import GLib
 
+
 class DownloadQueue:
     """
     FIFO download queue with configurable concurrency.
@@ -9,12 +10,12 @@ class DownloadQueue:
 
     def __init__(self, max_concurrent=2):
         self.max_concurrent = max_concurrent
-        self._pending = []       # list of (book, local_path) in FIFO order
-        self._active_ids = set() # book_ids currently downloading
-        
+        self._pending = []  # list of (book, local_path) in FIFO order
+        self._active_ids = set()  # book_ids currently downloading
+
         # Callbacks (events)
-        self.on_job_started = None    # func(book_id)
-        self.on_job_finished = None   # func(book_id)
+        self.on_job_started = None  # func(book_id)
+        self.on_job_finished = None  # func(book_id)
         self.on_queue_changed = None  # func(pending_count)
 
     def _emit_started(self, book_id, book, local_path):
@@ -38,7 +39,7 @@ class DownloadQueue:
         Add a download job to the queue.
         Returns True if enqueued, False if already queued or active.
         """
-        book_id = book['id']
+        book_id = book["id"]
         if self.is_queued(book_id) or self.is_active(book_id):
             return False
         self._pending.append((book, local_path))
@@ -49,13 +50,13 @@ class DownloadQueue:
     def dequeue(self, book_id):
         """Remove a pending job from the queue (does not cancel active downloads)."""
         before = len(self._pending)
-        self._pending = [(b, p) for (b, p) in self._pending if b['id'] != book_id]
+        self._pending = [(b, p) for (b, p) in self._pending if b["id"] != book_id]
         if len(self._pending) != before:
             self._emit_changed()
 
     def is_queued(self, book_id):
         """Returns True if the book is waiting in the pending queue."""
-        return any(b['id'] == book_id for (b, _) in self._pending)
+        return any(b["id"] == book_id for (b, _) in self._pending)
 
     def is_active(self, book_id):
         """Returns True if the book is currently downloading."""
@@ -91,4 +92,4 @@ class DownloadQueue:
         while self._pending and len(self._active_ids) < self.max_concurrent:
             book, local_path = self._pending.pop(0)
             self._emit_changed()
-            self._emit_started(book['id'], book, local_path)
+            self._emit_started(book["id"], book, local_path)

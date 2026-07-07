@@ -16,7 +16,7 @@ setup(
             "assets/locales/*.json",
             "assets/raf.png",
             "assets/raf.ico",
-            "assets/raf.svg"
+            "assets/raf.svg",
         ],
     },
     install_requires=[

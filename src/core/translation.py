@@ -31,10 +31,17 @@ def _load(lang_code: str) -> dict:
         return _cache[lang_code]
 
     path = _I18N_DIR / f"{lang_code}.json"
-    
+
     # Fallback if file doesn't exist
     if not path.exists():
-        print(tr("log.lang_not_found", lang=lang_code, path=path, default=f"[i18n] '{lang_code}' language file not found: {path}"))
+        print(
+            tr(
+                "log.lang_not_found",
+                lang=lang_code,
+                path=path,
+                default=f"[i18n] '{lang_code}' language file not found: {path}",
+            )
+        )
         return _cache.get("en", {})
 
     # Read language file
@@ -42,7 +49,14 @@ def _load(lang_code: str) -> dict:
         with open(path, "r", encoding="utf-8") as f:
             raw = json.load(f)
     except Exception as e:
-        print(tr("log.lang_load_error", path=path, error=e, default=f"[i18n] Error loading {path}: {e}"))
+        print(
+            tr(
+                "log.lang_load_error",
+                path=path,
+                error=e,
+                default=f"[i18n] Error loading {path}: {e}",
+            )
+        )
         return _cache.get("en", {})
 
     # Flatten nested dicts to dot notation (e.g. section.key)
@@ -71,7 +85,7 @@ def tr(key: str, **kwargs) -> str:
     # Fallback to English if translation is missing in the active language
     if val is None:
         fallback = _load("en")
-        val = fallback.get(key, key) # Return key itself if completely missing
+        val = fallback.get(key, key)  # Return key itself if completely missing
 
     # Format message dynamically if kwargs are passed
     if kwargs:
@@ -109,7 +123,13 @@ def set_language(lang_code: str, save: bool = True) -> bool:
         try:
             cb()
         except Exception as e:
-            print(tr("log.lang_listener_error", error=e, default=f"[i18n] Listener update error: {e}"))
+            print(
+                tr(
+                    "log.lang_listener_error",
+                    error=e,
+                    default=f"[i18n] Listener update error: {e}",
+                )
+            )
 
     return True
 
@@ -126,7 +146,7 @@ def available_languages() -> dict[str, str]:
     langs = {}
     if not _I18N_DIR.exists():
         return langs
-        
+
     # Scan dictionary JSON files
     for f in sorted(_I18N_DIR.glob("*.json")):
         code = f.stem
@@ -139,7 +159,7 @@ def available_languages() -> dict[str, str]:
             langs[code] = name
         except Exception:
             langs[code] = code.upper()
-            
+
     # Ensure predictable sort order (tr first if available)
     sorted_keys = sorted(langs.keys())
     if "tr" in langs:
@@ -168,9 +188,10 @@ def remove_language_listener(callback):
 def _init_language():
     config = load_config()
     lang = config.get("language")
-    
+
     if not lang:
         import locale
+
         try:
             sys_lang, _ = locale.getlocale()
             if sys_lang and sys_lang.startswith("tr"):
@@ -179,8 +200,9 @@ def _init_language():
                 lang = "en"
         except Exception:
             lang = "tr"
-            
+
     set_language(lang, save=False)
+
 
 _init_language()
 
@@ -189,13 +211,18 @@ _init_language()
 class _TranslationManagerStub:
     def register_listener(self, cb):
         on_language_change(cb)
+
     def unregister_listener(self, cb):
         remove_language_listener(cb)
+
     def get_language(self):
         return get_language()
+
     def get_available_languages(self):
         return available_languages()
+
     def set_language(self, lang, save=True):
         set_language(lang, save)
+
 
 translation_manager = _TranslationManagerStub()

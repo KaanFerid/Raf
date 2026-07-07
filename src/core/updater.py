@@ -25,7 +25,7 @@ class UpdateChecker(threading.Thread):
         super().__init__()
         self.daemon = True
         self.on_update_available = None  # func(version, download_url, changelog)
-        self.on_no_update = None         # func()
+        self.on_no_update = None  # func()
 
     def _emit_available(self, version, download_url, changelog):
         if self.on_update_available:
@@ -39,14 +39,16 @@ class UpdateChecker(threading.Thread):
         # Determine data source
         data = None
         if os.environ.get("RAF_DEV") == "1":
-            mock_path = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "mock_system",
-                "update_mock.json"
-            ))
+            mock_path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                    "mock_system",
+                    "update_mock.json",
+                )
+            )
             if os.path.exists(mock_path):
                 try:
-                    with open(mock_path, 'r', encoding='utf-8') as f:
+                    with open(mock_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
                 except Exception as e:
                     print(tr("log.error_reading_update", error=e))
@@ -58,31 +60,31 @@ class UpdateChecker(threading.Thread):
                     data = response.json()
             except Exception:
                 pass
-                
+
         if not data:
             self._emit_none()
             return
-            
+
         # Parse GitHub Release format
         tag_name = data.get("tag_name", "")
         latest_version = tag_name.lstrip("v") if tag_name else "1.0.0"
         changelog = data.get("body", "")
-        
+
         # Find the .deb asset download URL
         download_url = ""
         for asset in data.get("assets", []):
             if asset.get("name", "").endswith(".deb"):
                 download_url = asset.get("browser_download_url", "")
                 break
-                
+
         if not download_url:
             self._emit_none()
             return
-        
+
         # Numeric comparison
-        local_parts = [int(x) for x in APP_VERSION.split('.')]
-        latest_parts = [int(x) for x in latest_version.split('.')]
-        
+        local_parts = [int(x) for x in APP_VERSION.split(".")]
+        latest_parts = [int(x) for x in latest_version.split(".")]
+
         if latest_parts > local_parts:
             self._emit_available(latest_version, download_url, changelog)
         else:
@@ -97,7 +99,7 @@ class UpdateInstaller(threading.Thread):
         self.daemon = True
         self.file_path = file_path
         self.on_status_changed = None  # func(status_message)
-        self.on_finished = None        # func(success)
+        self.on_finished = None  # func(success)
 
     def _emit_status(self, msg):
         if self.on_status_changed:
@@ -119,7 +121,13 @@ class UpdateInstaller(threading.Thread):
         self._emit_status(tr("updater.system_updating"))
         cmd = ["pkexec", "apt-get", "install", "--reinstall", "-y", self.file_path]
         try:
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120)
+            res = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=120,
+            )
             if res.returncode == 0:
                 self._emit_finished(True)
             else:
@@ -133,10 +141,11 @@ class AutoUpdateScheduler:
     """
     Runs periodic background update checks based on the user's policy setting.
     """
+
     def __init__(self):
         self._checker = None
         self._timeout_id = None
-        
+
         self.on_update_toast_requested = None  # func(version)
         self.on_auto_install_requested = None  # func(version, url, changelog)
 
@@ -144,7 +153,9 @@ class AutoUpdateScheduler:
         """Starts the scheduler timer."""
         # Run once immediately on startup
         self._maybe_check()
-        self._timeout_id = GLib.timeout_add_seconds(AUTO_CHECK_INTERVAL_SEC, self._maybe_check_loop)
+        self._timeout_id = GLib.timeout_add_seconds(
+            AUTO_CHECK_INTERVAL_SEC, self._maybe_check_loop
+        )
 
     def stop(self):
         if self._timeout_id:
