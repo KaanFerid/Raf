@@ -2,8 +2,6 @@
 
 This document explains a highly efficient, zero-dependency localization system designed for Python applications (especially GUI frameworks like PyQt/PySide, Tkinter, or CustomTkinter).
 
-You can give this document directly to an AI to implement in your other project.
-
 ## Overview
 Unlike heavy tools such as `gettext` (.mo/.po files) or Qt Linguist (.qm files), this engine uses standard JSON files and requires **no compilation**. It features:
 

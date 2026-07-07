@@ -5,11 +5,11 @@ Welcome to the official Raf Wiki! This is the central hub for all project docume
 ## User Guides
 - [📚 English README](../README.md)
 - [📚 Türkçe README](../README-tr.md)
-- [💻 Command-Line Interface (CLI) Reference](../docs/cli.md)
+- [💻 Command-Line Interface (CLI) Reference](./cli.md)
 
 ## Developer Documentation
-- [🏗️ Architecture & Design](../docs/architecture.md)
-- [📦 Packaging & Distribution](../docs/packaging.md)
-- [🤝 Contributing Guide](../docs/contributing.md)
-- [📜 Development Summary](../DEVELOPMENT_SUMMARY.md)
-- [📜 Geliştirme Özeti (TR)](../DEVELOPMENT_SUMMARY-tr.md)
+- [🏗️ Architecture & Design](./architecture.md)
+- [📦 Packaging & Distribution](./packaging.md)
+- [🤝 Contributing Guide](./contributing.md)
+- [📜 Development Summary](./DEVELOPMENT_SUMMARY.md)
+- [📜 Geliştirme Özeti (TR)](./DEVELOPMENT_SUMMARY-tr.md)
