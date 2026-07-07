@@ -5,7 +5,8 @@
 # Raf — Etkileşimli Kitap Kütüphanesi
 
 [![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](README.md)
-
+[![License: GPL v3](https://img.shields.io/github/license/KaanFerid/Raf?color=blue)](https://github.com/KaanFerid/Raf/blob/main/LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/KaanFerid/Raf)](https://github.com/KaanFerid/Raf/releases)
 [![Build Debian Package](https://github.com/KaanFerid/Raf/actions/workflows/build.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/build.yml)
 [![Release](https://github.com/KaanFerid/Raf/actions/workflows/release.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/release.yml)
 
