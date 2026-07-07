@@ -5,8 +5,8 @@
 # Raf — Interactive Book Library
 
 [![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](README-tr.md)
-[![License: GPL v3](https://img.shields.io/github/license/KaanFerid/Raf?color=blue&v=1)](https://github.com/KaanFerid/Raf/blob/main/LICENSE)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/KaanFerid/Raf?v=1)](https://github.com/KaanFerid/Raf/releases)
+[![License: GPL v3](https://img.shields.io/github/license/KaanFerid/Raf?color=blue)](https://github.com/KaanFerid/Raf/blob/main/LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/KaanFerid/Raf)](https://github.com/KaanFerid/Raf/releases)
 [![Build Debian Package](https://github.com/KaanFerid/Raf/actions/workflows/build.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/build.yml)
 [![Release](https://github.com/KaanFerid/Raf/actions/workflows/release.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/release.yml)
 
