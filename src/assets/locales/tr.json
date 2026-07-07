@@ -138,6 +138,7 @@
     "no_update_message": "Zaten en son sürümü kullanıyorsunuz.",
     "request_book": "Kitap İsteğinde Bulun",
     "request_book_desc": "Aradığınız kitabı bulamadınız mı? Bize bildirin.",
+    "sync": "Senkronize Et",
     "logs_menu": "Kayıtlar",
     "installation_logs_title": "Kurulum Kayıtları",
     "clear_logs_btn": "Temizle",
