@@ -109,7 +109,7 @@ pip install -r requirements.txt
 
 ```bash
 # Install the pre-built .deb package:
-sudo apt install ./raf_1.0.3_all.deb
+sudo apt install ./raf_1.0.0_all.deb
 ```
 
 Or via the software centre by double-clicking the `.deb` file.

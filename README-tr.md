@@ -109,7 +109,7 @@ pip install -r requirements.txt
 
 ```bash
 # Önceden derlenmiş .deb paketini kurun:
-sudo apt install ./raf_1.0.3_all.deb
+sudo apt install ./raf_1.0.0_all.deb
 ```
 
 Veya `.deb` dosyasına çift tıklayarak yazılım merkezi üzerinden kurabilirsiniz.
