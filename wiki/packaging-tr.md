@@ -238,7 +238,7 @@ sudo apt purge raf
 ## 7. Sürüm Yönetimi
 
 Sürüm numarası şuralarda tanımlanır:
-- `src/core/version.py` — `__version__ = "1.0.3"` (uygulama ve CLI tarafından kullanılır)
+- `src/core/version.py` — `__version__ = "1.0.0"` (uygulama ve CLI tarafından kullanılır)
 - `debian/changelog` — Sürüm ve tarihi içeren Debian değişiklik günlüğü (changelog) girdisi
 
 Yeni bir sürüm yayınlanırken:

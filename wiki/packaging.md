@@ -238,7 +238,7 @@ sudo apt purge raf
 ## 7. Version Management
 
 The version number is defined in:
-- `src/core/version.py` — `__version__ = "1.0.3"` (used by the app and CLI)
+- `src/core/version.py` — `__version__ = "1.0.0"` (used by the app and CLI)
 - `debian/changelog` — Debian changelog entry with version and date
 
 When releasing a new version:

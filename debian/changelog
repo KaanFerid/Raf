@@ -1,4 +1,4 @@
-raf (1.5.0-1) stable; urgency=medium
+raf (1.0.0-2) stable; urgency=medium
 
   * feat: Download queue with configurable concurrency (max 2 concurrent)
   * feat: Toast notification system for install, uninstall, update, and sync events

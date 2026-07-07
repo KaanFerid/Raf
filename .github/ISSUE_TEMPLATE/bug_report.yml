@@ -44,6 +44,6 @@ body:
     id: version
     attributes:
       label: Raf Version / Raf Sürümü
-      description: Which version of Raf are you using? (e.g., 2.1.0)
+      description: Which version of Raf are you using? (e.g., 1.0.0)
     validations:
       required: true
