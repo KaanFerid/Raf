@@ -107,6 +107,7 @@
     "install_selected": "Install Selected",
     "uninstall_selected": "Uninstall Selected",
     "batch_confirm_uninstall": "Are you sure you want to uninstall {count} books from the system?",
+    "confirm_uninstall": "Are you sure you want to uninstall '{book}' from the system?",
     "batch_queued": "{count} books added to download queue.",
     "database_url": "Book Database URL",
     "database_url_hint": "Leave empty to use the built-in book library.",

@@ -107,6 +107,7 @@
     "install_selected": "Seçilenleri Kur",
     "uninstall_selected": "Seçilenleri Kaldır",
     "batch_confirm_uninstall": "{count} kitabı sistemden kaldırmak istediğinize emin misiniz?",
+    "confirm_uninstall": "'{book}' kütüphanesini sistemden kaldırmak istediğinize emin misiniz?",
     "batch_queued": "{count} kitap indirme sırasına eklendi.",
     "database_url": "Kitap Veritabanı URL'si",
     "database_url_hint": "Yerleşik kitap kütüphanesini kullanmak için boş bırakın.",
