@@ -1024,4 +1024,5 @@ class MainWindow(Gtk.ApplicationWindow):
                 print("[AUTH] Password prompt cancelled.")
 
         dialog.connect("response", on_response)
+        entry.grab_focus()
         dialog.present()
