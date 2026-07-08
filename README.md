@@ -2,94 +2,94 @@
   <img src="src/assets/raf.png" width="128" alt="Raf Logo">
 </p>
 
-# Raf — Interactive Book Library
+# Raf — Etkileşimli Kitap Kütüphanesi
 
-[![Türkçe](https://img.shields.io/badge/Dil-T%C3%BCrk%C3%A7e-red?style=flat-square)](README-tr.md)
+[![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](README-en.md)
 [![License: GPL v3](https://img.shields.io/github/license/KaanFerid/Raf?color=blue)](https://github.com/KaanFerid/Raf/blob/main/LICENSE)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/KaanFerid/Raf)](https://github.com/KaanFerid/Raf/releases)
 [![Build Debian Package](https://github.com/KaanFerid/Raf/actions/workflows/build.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/build.yml)
 [![Release](https://github.com/KaanFerid/Raf/actions/workflows/release.yml/badge.svg)](https://github.com/KaanFerid/Raf/actions/workflows/release.yml)
 
-> **[📖 Visit the Raf Wiki](wiki/Home.md)** to explore all documentation, including CLI references, architecture diagrams, and packaging guides.
+> **[📖 Raf Wiki Sayfasına Git](wiki/Home-tr.md)** — CLI referansları, mimari diyagramlar ve paketleme rehberleri dahil tüm dokümantasyonu keşfetmek için.
 
-**Raf** is a modern desktop application for Pardus-based ETAP (smart board) systems that allows teachers and students to search, download, install, launch, and remove interactive book libraries with a single click. It features a polished Libadwaita-style interface with a global dark/light theme engine, a custom zero-dependency i18n translation system, native OS integration for drag & drop and "Open With" sideloading, a command-line interface, and an auto-update system.
+**Raf**, öğretmenlerin ve öğrencilerin tek bir tıklamayla etkileşimli kitap kütüphanelerini aramasını, indirmesini, kurmasını, başlatmasını ve kaldırmasını sağlayan Pardus tabanlı ETAP (akıllı tahta) sistemleri için modern bir masaüstü uygulamasıdır. Global karanlık/aydınlık tema motoruna sahip şık bir Libadwaita tarzı arayüz, bağımlılık içermeyen özel bir i18n çeviri sistemi, sürükle-bırak ve "Birlikte Aç" kurulumları için yerel işletim sistemi entegrasyonu, komut satırı arayüzü ve otomatik güncelleme sistemi sunar.
 
-> **📢 For Publishers:** Want to add your digital libraries to the Raf ecosystem? Please see our [Contributing](CONTRIBUTING.md) page to get in touch!
+> **📢 Yayınevleri İçin:** Dijital kütüphanelerinizi Raf ekosistemine eklemek ister misiniz? İletişime geçmek için lütfen [Katkıda Bulunma](CONTRIBUTING.md) sayfamızı inceleyin!
 
 ---
 
-## Gallery (Photos & Videos)
+## Galeri (Fotoğraflar & Videolar)
 
 https://github.com/user-attachments/assets/2379643f-7ad8-4e84-af4e-dd01aa27bc12
 
 ---
 
-## Table of Contents
+## İçindekiler
 
-1. [Features](#features)
-2. [Requirements](#requirements)
-3. [Installation](#installation)
-4. [Running the Application](#running-the-application)
-5. [Command-Line Interface (CLI)](#command-line-interface-cli)
-6. [Using the GUI](#using-the-gui)
-7. [Preferences & Settings](#preferences--settings)
-8. [Building the .deb Package](#building-the-deb-package)
-9. [Developer Mode](#developer-mode)
-10. [Project Structure](#project-structure)
-11. [Running Tests](#running-tests)
-12. [License & Credits](#license--credits)
-
----
-
-## Features
-
-### Core
-- 🔍 **Real-time search** across book titles, publishers, and descriptions with 300ms debouncing for peak GUI performance.
-- ⬇️ **Resumable downloads** with HTTP `Range` header support and Google Drive bypass.
-- 📦 **Multi-format installation** — `.deb`, `.zip`/`.fernus`, `.appimage`, Flatpak, Snap.
-- 🚀 **Launch installed books** directly from the app.
-- 🗑️ **Uninstall** any installed library cleanly.
-
-### Sideloading & OS Integration
-- 📥 **Drag & Drop** — Drag files directly into the window to install them.
-- 📂 **Open With...** — Right-click packages in your file manager and open them with Raf.
-- 🛡️ **Confirmation Dialog** — Aggregates all local packages into a review window before requesting administrator passwords.
-
-### Performance & Security
-- 🏎️ **Asynchronous Architecture** — System package queries (`dpkg`) and installations happen on separate background threads to ensure the UI never freezes.
-- 🔐 **Secure Subprocesses** — All system interactions use safe array execution, preventing shell injection vulnerabilities.
-- 🛡️ **Pre-Install Confirmation** — Intercepts the installation flow right before system authentication, explicitly showing the user what package is about to be installed to prevent unexpected `pkexec` popups.
-- 📋 **Live Logs Viewer** — A dedicated Logs dialog for debugging installation outputs in real time.
-
-### Queue & Progress
-- 📋 **Download queue** — add multiple books; max 2 run concurrently, rest wait in order.
-- 📊 **Title bar progress** — window title shows `[▼ BookName — 67%]` during downloads.
-- 🔔 **Toast notifications** — elegant, auto-dismissing alerts for install/uninstall/update events.
-
-### Connectivity & Sync
-- 📡 **Remote database sync** — fetch an updated `books.json` from any URL on startup.
-- 🌐 **Offline mode detection** — disables downloads and shows a badge when no network is available.
-
-### Interface & Theming
-- 🎨 **Centralized Theme Engine** — Instantly flips between Light and Dark styles across the entire application (including message boxes and popups) by utilizing native GTK4/Libadwaita color schemes.
-- 🌍 **Custom Zero-Dependency i18n Engine** — Built from scratch with flattened JSON traversal, auto-discovery of languages via `_meta` blocks, English fallback prevention, and live-UI updating without app restarts!
-- 🔔 **System theme sync** — follows desktop dark/light preference via D-Bus.
+1. [Özellikler](#özellikler)
+2. [Gereksinimler](#gereksinimler)
+3. [Kurulum](#kurulum)
+4. [Uygulamayı Çalıştırma](#uygulamayı-çalıştırma)
+5. [Komut Satırı Arayüzü (CLI)](#komut-satırı-arayüzü-cli)
+6. [GUI Kullanımı](#gui-kullanımı)
+7. [Tercihler ve Ayarlar](#tercihler-ve-ayarlar)
+8. [.deb Paketi Oluşturma](#deb-paketi-oluşturma)
+9. [Geliştirici Modu](#geliştirici-modu)
+10. [Proje Yapısı](#proje-yapısı)
+11. [Testleri Çalıştırma](#testleri-çalıştırma)
+12. [Lisans ve Teşekkür](#lisans-ve-teşekkür)
 
 ---
 
-## Requirements
+## Özellikler
 
-### System (Production — Pardus/Debian/Ubuntu)
+### Temel Özellikler
+- 🔍 **Gerçek zamanlı arama:** En yüksek GUI performansı için 300 ms gecikme (debounce) ile kitap adları, yayıncılar ve açıklamalar içinde anında arama.
+- ⬇️ **Devam ettirilebilir indirmeler:** HTTP `Range` başlığı desteği ve Google Drive indirme uyarılarını aşma.
+- 📦 **Çok formatlı kurulum** — `.deb`, `.zip`/`.fernus`, `.appimage`, Flatpak, Snap formatlarını destekler.
+- 🚀 **Kurulu kitapları başlatma:** Doğrudan uygulama içerisinden kitapları açabilirsiniz.
+- 🗑️ **Kaldırma:** Kurulu herhangi bir kütüphaneyi temiz bir şekilde kaldırabilirsiniz.
 
-| Dependency | Purpose |
+### Dışarıdan Yükleme ve İşletim Sistemi Entegrasyonu
+- 📥 **Sürükle & Bırak** — Kurulum yapmak için dosyaları doğrudan uygulama penceresine sürükleyin.
+- 📂 **Birlikte Aç...** — Dosya yöneticinizde paketlere sağ tıklayın ve Raf ile açın.
+- 🛡️ **Onay İletişim Kutusu** — Yönetici parolası istemeden önce tüm yerel paketleri gözden geçirme ekranında toplar.
+
+### Performans ve Güvenlik
+- 🏎️ **Asenkron Mimari** — Sistem paketi sorguları (`dpkg`) ve kurulumlar arka plan iş parçacıklarında (threads) gerçekleşir, böylece kullanıcı arayüzü asla donmaz.
+- 🔐 **Güvenli Alt Süreçler** — Tüm sistem etkileşimleri güvenli dizi (array) yürütmesi kullanır ve kabuk enjeksiyonu (shell injection) açıklarını önler.
+- 🛡️ **Kurulum Öncesi Onay** — Sistem kimlik doğrulamasından hemen önce kurulum akışını durdurur ve kullanıcının beklenmedik `pkexec` isteklerini önlemek için kurulacak paketi açıkça görmesini sağlar.
+- 📋 **Canlı Log Görüntüleyici** — Kurulum çıktılarını gerçek zamanlı olarak ayıklamak (debug) için özel bir Log (Günlük) iletişim kutusu.
+
+### Kuyruk ve İlerleme
+- 📋 **İndirme kuyruğu** — Birden fazla kitap ekleyebilirsiniz; aynı anda en fazla 2 indirme çalışır, diğerleri sırayla bekler.
+- 📊 **Başlık çubuğunda ilerleme** — İndirme sırasında pencere başlığında ilerleme durumu gösterilir (ör. `[▼ KitapAdı — %67]`).
+- 🔔 **Toast bildirimleri** — Kurulum/kaldırma/güncelleme etkinlikleri için şık, otomatik kapanan bildirimler.
+
+### Bağlantı ve Senkronizasyon
+- 📡 **Uzak veritabanı senkronizasyonu** — Uygulama başlangıcında herhangi bir URL'den güncel `books.json` dosyasını getirir.
+- 🌐 **Çevrimdışı mod tespiti** — Ağ bağlantısı olmadığında indirmeleri devre dışı bırakır ve bir uyarı gösterir.
+
+### Arayüz ve Temalandırma
+- 🎨 **Merkezi Tema Motoru** — Uygulama genelinde (mesaj kutuları ve pop-up'lar dahil) Aydınlık ve Karanlık stiller arasında `QApplication` düzeyinde stil dosyaları kullanarak anında geçiş yapar.
+- 🌍 **Özel Bağımlılıksız i18n Motoru** — Düzleştirilmiş (flattened) JSON okuma, `_meta` blokları ile dilleri otomatik keşfetme, İngilizce yedek dil desteği ve uygulamayı yeniden başlatmadan anında UI güncellemesi ile sıfırdan oluşturulmuştur!
+- 🔔 **Sistem teması senkronizasyonu** — D-Bus üzerinden masaüstü karanlık/aydınlık tercihini takip eder.
+
+---
+
+## Gereksinimler
+
+### Sistem (Üretim — Pardus/Debian/Ubuntu)
+
+| Bağımlılık | Amaç |
 |---|---|
-| `python3` (≥ 3.9) | Runtime |
-| `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1` | GTK4 / Libadwaita GUI framework |
-| `python3-requests` | HTTP downloads |
-| `policykit-1` | Elevated package operations (`pkexec`) |
-| `dpkg` / `apt-get` | `.deb` package installation |
+| `python3` (≥ 3.9) | Çalışma zamanı |
+| `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1` | GTK4 / Libadwaita GUI çerçevesi |
+| `python3-requests` | HTTP indirmeleri |
+| `policykit-1` | Yetkili paket işlemleri (`pkexec`) |
+| `dpkg` / `apt-get` | `.deb` paketi kurulumu |
 
-### Developer Machine (any Linux/macOS)
+### Geliştirici Makinesi (Herhangi bir Linux/macOS)
 
 ```text
 PyGObject >= 3.42.0
@@ -97,33 +97,33 @@ requests >= 2.25.0
 urllib3 >= 1.26.0
 ```
 
-Install with:
+Kurulum için:
 ```bash
 pip install -r requirements.txt
 ```
 
-> **Note:** `run_dev.py` handles venv creation and dependency installation automatically.
+> **Not:** `run_dev.py` sanal ortam (venv) oluşturmayı ve bağımlılık kurulumunu otomatik olarak halleder.
 
 ---
 
-## Installation
+## Kurulum
 
-### From .deb Package (Recommended for Pardus)
+### .deb Paketinden (Pardus İçin Önerilen)
 
 ```bash
-# Install the pre-built .deb package:
+# Önceden derlenmiş .deb paketini kurun:
 sudo apt install ./raf_1.0.0_all.deb
 ```
 
-Or via the software centre by double-clicking the `.deb` file.
+Veya `.deb` dosyasına çift tıklayarak yazılım merkezi üzerinden kurabilirsiniz.
 
-After installation, Raf is available system-wide as:
+Kurulumdan sonra, Raf sistem genelinde şu şekilde kullanılabilir:
 ```bash
-raf           # Launch the GUI
-raf list      # Run CLI commands
+raf           # GUI'yi başlatır
+raf list      # CLI komutlarını çalıştırır
 ```
 
-### From Source
+### Kaynak Koddan
 
 ```bash
 git clone https://github.com/KaanFerid/Raf.git
@@ -134,185 +134,185 @@ python3 -m src.main
 
 ---
 
-## Running the Application
+## Uygulamayı Çalıştırma
 
-### Production Mode (Pardus / Debian)
+### Üretim Modu (Pardus / Debian)
 
-Runs with full system privileges for installing `.deb` packages:
+`.deb` paketlerini kurmak için tam sistem ayrıcalıklarıyla çalışır:
 
 ```bash
 python3 -m src.main
 ```
 
-Or if installed from the `.deb` package:
+Veya `.deb` paketinden kurulduysa:
 
 ```bash
 raf
 ```
 
-### Developer / Simulator Mode
+### Geliştirici / Simülatör Modu
 
-The `run_dev.py` script launches the app in a fully sandboxed simulation environment. It makes **zero permanent changes** to your system:
+`run_dev.py` betiği, uygulamayı tamamen korumalı (sandboxed) bir simülasyon ortamında başlatır. Sisteminizde **kalıcı hiçbir değişiklik yapmaz**:
 
-- Downloads are saved to `mock_system/cache/`
-- Installs are tracked in `mock_system/installed.json`
-- PolicyKit popups are skipped (simulated)
+- İndirmeler `mock_system/cache/` klasörüne kaydedilir
+- Kurulumlar `mock_system/installed.json` içinde takip edilir
+- PolicyKit şifre istekleri atlanır (simüle edilir)
 
 ```bash
 ./run_dev.py
 ```
 
-If `PyGObject` or `requests` are missing, the script automatically creates a `.venv` virtual environment and installs them before launching.
+Eğer `PyGObject` veya `requests` kurulu değilse, betik başlatılmadan önce otomatik olarak bir `.venv` sanal ortamı oluşturur ve kütüphaneleri kurar.
 
 ---
 
-## Command-Line Interface (CLI)
+## Komut Satırı Arayüzü (CLI)
 
-Raf includes a full-featured CLI for headless/terminal use. All commands work in both production and developer mode.
+Raf, başsız/terminal kullanımı için tam özellikli bir CLI içerir. Tüm komutlar hem üretim hem de geliştirici modunda çalışır.
 
-### Usage
+### Kullanım
 
 ```bash
-raf <command> [arguments]
-# or in developer/source mode:
-./run_dev.py <command> [arguments]
-# or directly:
-python3 -m src.main <command> [arguments]
+raf <komut> [argümanlar]
+# veya geliştirici/kaynak modunda:
+./run_dev.py <komut> [argümanlar]
+# veya doğrudan:
+python3 -m src.main <komut> [argümanlar]
 ```
 
-### Commands
+### Komutlar
 
-#### `list` — List all available books
+#### `list` — Tüm mevcut kitapları listele
 ```bash
 raf list
 ```
-Prints a formatted table of all books in the database.
+Veritabanındaki tüm kitapların biçimlendirilmiş bir tablosunu yazdırır.
 
 ---
 
-#### `list-installed` — List installed books
+#### `list-installed` — Kurulu kitapları listele
 ```bash
 raf list-installed
 ```
-Shows only books currently installed on the system.
+Sadece sisteme kurulu olan kitapları gösterir.
 
 ---
 
-#### `search <term>` — Search the book database
+#### `search <terim>` — Kitap veritabanında arama yap
 ```bash
 raf search ankara
 ```
-Searches across book titles, publishers, and descriptions. Case-insensitive.
+Kitap adları, yayıncılar ve açıklamalar içinde arama yapar. Büyük/küçük harfe duyarlı değildir.
 
 ---
 
-#### `install <book_id>` — Download and install a book
+#### `install <kitap_id>` — Kitap indir ve kur
 ```bash
 raf install akademikbasariyayinlarikutuphane
 ```
-This command downloads the package (with a real-time progress bar) and installs it via `pkexec apt-get install` (for `.deb`) or extracts it (for `.zip`).
+Bu komut paketi indirir (gerçek zamanlı ilerleme çubuğu ile) ve `pkexec apt-get install` (`.deb` için) ile kurar veya `.zip` için klasöre çıkartır.
 
 ---
 
-#### `uninstall <book_id>` — Uninstall a book
+#### `uninstall <kitap_id>` — Kitabı kaldır
 ```bash
 raf uninstall akademikbasariyayinlarikutuphane
 ```
-Removes the package from the system using `pkexec apt-get remove` for `.deb` packages, or deletes the extracted directory and `.desktop` launcher for `.zip` packages.
+Paketi `.deb` için `pkexec apt-get remove` kullanarak sistemden kaldırır veya `.zip` paketleri için çıkarılan dizini ve `.desktop` başlatıcısını siler.
 
 ---
 
-#### `clean` — Clear download cache
+#### `clean` — İndirme önbelleğini temizle
 ```bash
 raf clean
 ```
-Deletes all cached `.deb` and `.zip` files from `~/.cache/raf/downloads/`. Reports the number of deleted files.
+Önbelleğe alınmış tüm `.deb` ve `.zip` dosyalarını `~/.cache/raf/downloads/` klasöründen siler. Silinen dosya sayısını raporlar.
 
 ---
 
-#### `--help` / `-h` — Show help
+#### `--help` / `-h` — Yardımı göster
 ```bash
 raf --help
 ```
-Prints a summary of all available commands.
+Tüm mevcut komutların özetini yazdırır.
 
 ---
 
-### CLI Exit Codes
+### CLI Çıkış Kodları
 
-| Code | Meaning |
+| Kod | Anlamı |
 |---|---|
-| `0` | Success |
-| `1` | Error (missing argument, book not found, download failed, etc.) |
+| `0` | Başarılı |
+| `1` | Hata (eksik argüman, kitap bulunamadı, indirme başarısız vb.) |
 
 ---
 
-## Using the GUI
+## GUI Kullanımı
 
-### Sideloading (Drag & Drop / Open With)
-You don't need to manually browse for files. Simply **Drag & Drop** any supported package directly onto the main window. The app will instantly display a beautiful blue drop-overlay indicating it is ready to receive your files.
-Alternatively, right-click any `.deb`, `.zip`, `.appimage`, or `.fernus` file in your Linux file manager and choose **Open With > Raf**. Both methods will prompt an elegant aggregation dialog reviewing what is about to be installed before requesting admin privileges.
+### Dışarıdan Yükleme (Sürükle & Bırak / Birlikte Aç)
+Dosyalara manuel olarak göz atmanıza gerek yok. Desteklenen herhangi bir paketi doğrudan ana pencereye **Sürükleyip Bırakmanız** yeterlidir. Uygulama, dosyalarınızı almaya hazır olduğunu belirten güzel bir mavi bırakma ekranı gösterecektir.
+Alternatif olarak, Linux dosya yöneticinizdeki herhangi bir `.deb`, `.zip`, `.appimage` veya `.fernus` dosyasına sağ tıklayıp **Birlikte Aç > Raf**'ı seçebilirsiniz. Her iki yöntem de yönetici ayrıcalıkları istemeden önce ne kurulacağını gözden geçiren şık bir onay penceresi açacaktır.
 
-### Search
-Type in the search bar to filter books in real time. The search utilizes a 300ms debouncer, ensuring your smart board never freezes or drops frames while recalculating complex UI layouts as you type.
+### Arama
+Kitapları gerçek zamanlı filtrelemek için arama çubuğuna yazın. Arama, 300 ms'lik bir geciktirici (debouncer) kullanır ve siz yazarken karmaşık kullanıcı arayüzü düzenlerini yeniden hesaplarken akıllı tahtanızın asla donmamasını veya kare düşürmemesini sağlar.
 
-### Download Queue
-When you click Install on multiple books quickly, or use **Batch → Install Selected**, books are added to the download queue. At most **2 downloads** run at the same time; the rest show `Queued` status and start automatically as slots open.
+### İndirme Kuyruğu
+Birden fazla kitapta hızlıca Yükle'ye tıkladığınızda veya **Toplu İşlemler → Seçilenleri Yükle**'yi kullandığınızda kitaplar indirme kuyruğuna eklenir. Aynı anda en fazla **2 indirme** çalışır; geri kalanı `Sırada` durumunu gösterir ve yer açıldıkça otomatik olarak başlar.
 
-### Logs Viewer
-At any point during the application lifecycle, you can click the "Logs" button in the header bar. This will open a dynamic, dark-themed terminal viewer tracking live output (`stdout`/`stderr`) from active sub-processes like `dpkg`, `apt`, and `unzip`. 
+### Log Görüntüleyici
+Uygulama açıkken herhangi bir zamanda başlık çubuğundaki "Loglar" düğmesine tıklayabilirsiniz. Bu işlem, `dpkg`, `apt` ve `unzip` gibi aktif alt süreçlerden gelen canlı çıktıları (`stdout`/`stderr`) izleyen dinamik, karanlık temalı bir terminal görüntüleyici açar.
 
 ---
 
-## Preferences & Settings
+## Tercihler ve Ayarlar
 
-Open **Preferences** from the header bar. Changes take effect immediately after clicking **Save**.
+Başlık çubuğundan **Ayarlar**'ı açın. Değişiklikler, **Kaydet**'e tıklandıktan hemen sonra geçerli olur.
 
-### Appearance
-| Option | Description |
+### Görünüm
+| Seçenek | Açıklama |
 |---|---|
-| **System Theme (Automatic)** | Follows the OS dark/light preference via D-Bus |
-| **Light Theme** | Forces the light Libadwaita palette |
-| **Dark Theme** | Forces the dark Libadwaita palette |
+| **Sistem Teması (Otomatik)** | D-Bus üzerinden işletim sisteminin karanlık/aydınlık tercihini izler |
+| **Aydınlık Tema** | Aydınlık Libadwaita paletini zorlar |
+| **Karanlık Tema** | Karanlık Libadwaita paletini zorlar |
 
-Due to the new centralized engine, native GTK4/Libadwaita color schemes are used, meaning every modal, window, and toast notification instantly changes color accurately based on desktop or user preferences.
+Yeni merkezi motor sayesinde yerel GTK4/Libadwaita renk şemaları kullanılır; bu da her modülün, pencerenin ve toast bildiriminin renklerinin anında masaüstü veya kullanıcı ayarlarına göre doğru bir şekilde değişmesi anlamına gelir.
 
-### Language
-Choose between **Turkish** and **English**. The UI updates instantly without restarting, powered by the custom JSON-based `_meta` i18n observer engine.
+### Dil
+**Türkçe** ve **İngilizce** arasında seçim yapın. Kullanıcı arayüzü, yeniden başlatma gerektirmeden, özel JSON tabanlı `_meta` i18n gözlemci motoru sayesinde anında güncellenir.
 
 ---
 
-## Building the .deb Package
+## .deb Paketi Oluşturma
 
-### Quick Build
+### Hızlı Derleme
 
 ```bash
 ./scripts/build_deb.sh
 ```
 
-This script:
-1. Creates a temporary `build/raf-pkg/` staging directory
-2. Copies source files to `usr/lib/raf/` within the staging tree
-3. Writes the `DEBIAN/control` file
-4. Computers MD5 checksums for all files → `DEBIAN/md5sums`
-5. Copies the `database/` directory to ensure newly shipped apps include the absolute latest catalog.
+Bu betik:
+1. Geçici bir `build/raf-pkg/` derleme dizini oluşturur
+2. Kaynak dosyalarını dizin hiyerarşisi içerisindeki `usr/lib/raf/` hedefine kopyalar
+3. `DEBIAN/control` dosyasını yazar
+4. Tüm dosyalar için MD5 sağlama toplamlarını hesaplar → `DEBIAN/md5sums`
+5. Yeni paketlenmiş uygulamaların en güncel kataloğu içerdiğinden emin olmak için `database/` dizinini kopyalar.
 
-Output: `raf_<version>_all.deb` in the project root.
+Çıktı: Proje kök dizininde `raf_<versiyon>_all.deb` oluşturulur.
 
 ---
 
-## Developer Mode
+## Geliştirici Modu
 
-### Launching in Developer Mode
+### Geliştirici Modunda Başlatma
 
 ```bash
-# GUI mode
+# GUI modu
 ./run_dev.py
 ```
 
-### Simulating an Update
+### Güncellemeyi Simüle Etme
 
-Edit `mock_system/update_mock.json`:
+`mock_system/update_mock.json` dosyasını düzenleyin:
 ```json
 {
   "version": "99.0.0",
@@ -321,79 +321,83 @@ Edit `mock_system/update_mock.json`:
 }
 ```
 
-Launch the app — the update dialog will appear automatically.
+Uygulamayı başlatın — güncelleme iletişim kutusu otomatik olarak görünecektir.
 
 ---
 
-## Project Structure
+## Proje Yapısı
 
 ```
 raf/
-├── src/                          # Application source code
-│   ├── main.py                   # Entry point — GUI or CLI dispatch
+├── src/                          # Uygulama kaynak kodu
+│   ├── main.py                   # Giriş noktası — GUI veya CLI yönlendirmesi
 │   ├── core/
-│   │   ├── database.py           # Book database loader (local JSON + remote sync)
-│   │   ├── downloader.py         # DownloadWorker — chunked HTTP download thread
-│   │   ├── download_queue.py     # DownloadQueue — FIFO queue, concurrency control
-│   │   ├── installer.py          # InstallerWorker — deb/zip/flatpak/snap install
-│   │   ├── updater.py            # UpdateChecker, UpdateInstaller, AutoUpdateScheduler
-│   │   ├── sync.py               # DatabaseSyncWorker — remote books.json fetcher
-│   │   ├── config.py             # User config read/write (~/.config/raf/config.json)
-│   │   ├── translation.py        # Custom zero-dependency i18n translation engine
-│   │   ├── cli.py                # CLI command handler
-│   │   └── version.py            # App version string
+│   │   ├── database.py           # Kitap veritabanı yükleyicisi (yerel JSON + uzak senk.)
+│   │   ├── downloader.py         # DownloadWorker — parçalı HTTP indirme iş parçacığı
+│   │   ├── download_queue.py     # DownloadQueue — FIFO kuyruğu, eşzamanlılık kontrolü
+│   │   ├── installer.py          # InstallerWorker — deb/zip/flatpak/snap kurulumu
+│   │   ├── updater.py            # Güncelleme Kontrolcüsü, Kurucusu ve Otomatik Zamanlayıcı
+│   │   ├── sync.py               # DatabaseSyncWorker — uzak books.json çekicisi
+│   │   ├── config.py             # Kullanıcı ayarları (~/.config/raf/config.json)
+│   │   ├── translation.py        # Özel i18n çeviri motoru
+│   │   ├── cli.py                # CLI komut yöneticisi
+│   │   └── version.py            # Uygulama versiyon numarası
 │   ├── ui/
-│   │   ├── main_window.py        # MainWindow
-│   │   ├── components.py         # BookRow, PublisherBadge widgets
-│   │   ├── preferences.py        # Native PreferencesWindow
-│   │   ├── about.py              # Native AboutWindow
-│   │   ├── toast.py              # Toast notification overlay system
-│   │   └── logs_dialog.py        # Real-time installation subprocess logger
+│   │   ├── main_window.py        # Ana Pencere (MainWindow) + Ayarlar (PreferencesDialog)
+│   │   ├── components.py         # BookCard, PublisherBadge araçları
+│   │   ├── styles.py             # LIGHT_STYLE, DARK_STYLE QSS stil dosyaları
+│   │   ├── toast.py              # ToastNotification, ToastManager bildirim sistemi
+│   │   └── logs_dialog.py        # Gerçek zamanlı alt süreç günlükleyici
 │   └── assets/
-│       ├── raf.png               # Application icon
+│       ├── raf.png               # Uygulama simgesi
 │       └── locales/
-│           ├── en.json           # English strings + _meta data
-│           └── tr.json           # Turkish strings + _meta data
+│           ├── en.json           # İngilizce metinler + _meta verisi
+│           └── tr.json           # Türkçe metinler + _meta verisi
 │
-├── database/                     # Default JSON library catalogs shipped via .deb
-├── debian/                       # Debian package configuration
+├── database/                     # .deb ile paketlenen varsayılan JSON katalogları
+├── debian/                       # Debian paketleme konfigürasyonları
 ├── scripts/
-│   ├── build_deb.sh              # Build script (uses dpkg-deb if available)
-│   ├── build_deb.py              # Pure-Python .deb builder (no dpkg needed)
-│   └── inspect_deb.py            # .deb structure validator
+│   ├── build_deb.sh              # Derleme betiği (varsa dpkg-deb kullanır)
+│   ├── build_deb.py              # Saf Python .deb oluşturucu (dpkg gerekmez)
+│   └── inspect_deb.py            # .deb paket yapısı doğrulayıcı
 │
-├── tests/                        # Comprehensive unit and integration testing suite
-├── mock_system/                  # Developer mode sandbox
-├── docs/                         # Architecture and API documentation
-├── run_dev.py                   # Developer runner (auto-venv + simulation)
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+├── tests/                        # Kapsamlı birim ve entegrasyon test takımları
+├── mock_system/                  # Geliştirici modu kum havuzu
+├── docs/                         # Mimari ve API belgeleri
+├── run_dev.py                   # Geliştirici çalıştırıcısı (oto-venv + simülasyon)
+├── requirements.txt              # Python bağımlılıkları
+└── README.md                     # Bu dosya
 ```
 
 ---
 
-## Running Tests
+## Testleri Çalıştırma
 
-### Self-Updater Tests
+### Kullanıcı Arayüzü (UI) Özellik Testleri
+```bash
+python3 tests/test_ui_features.py
+```
+
+### Kendi Kendini Güncelleme Testleri
 ```bash
 python3 tests/test_updater.py
 ```
 
-### Google Drive Download Tests
+### Google Drive İndirme Testleri
 ```bash
 python3 tests/test_drive.py
 ```
 
 ---
 
-## Architecture Overview
+## Mimariye Genel Bakış
 
-### Threading Model
+### İş Parçacığı (Threading) Modeli
 
-All network I/O and package operations run in background `threading.Thread` workers that communicate with the main UI thread exclusively via `GLib.idle_add` callbacks.
+Tüm ağ giriş/çıkışları ve paket işlemleri, özel olarak `GLib.idle_add` fonksiyonları (callbacks) aracılığıyla ana UI iş parçacığıyla iletişim kuran arka plan `threading.Thread` işçilerinde çalışır.
 
 ```
-[UI Thread (MainWindow)]
+[UI İş Parçacığı (MainWindow)]
         │
         ├── PackageQueryWorker (Thread) ──callbacks──► db_sync_status
         ├── DownloadWorker (Thread) ──callbacks──► progress_changed, finished, error
@@ -403,24 +407,24 @@ All network I/O and package operations run in background `threading.Thread` work
         └── AutoUpdateScheduler (Thread) ──callbacks──► update_toast_requested
 ```
 
-### Configuration Storage
+### Konfigürasyon Depolama
 
-Config is stored at `~/.config/raf/config.json`.
-The translations use the new flat-key custom engine, parsing nested keys into objects (e.g., `ui.install_button`).
+Ayarlar `~/.config/raf/config.json` konumunda depolanır.
+Çeviriler, iç içe geçmiş anahtarları ayrıştıran yeni düz anahtarlı özel motoru kullanır (örn. `ui.install_button`).
 
-### Book Database Format
+### Kitap Veritabanı Formatı
 
-`database/books.json` structure natively supports generic comment nodes to circumvent standard JSON parsing limitations.
+`database/books.json` yapısı, standart JSON ayrıştırma sınırlamalarını aşmak için doğal olarak genel yorum (comment) düğümlerini destekler.
 
 ```json
 {
-  "_comment": "Your custom text here",
+  "_comment": "Özel metniniz burada",
   "books": [
     {
-      "id": "unique-book-id",
-      "title": "Book Title",
-      "publisher": "Publisher Name",
-      "file_name": "package.deb",
+      "id": "essiz-kitap-id",
+      "title": "Kitap Adı",
+      "publisher": "Yayıncı Adı",
+      "file_name": "paket.deb",
       "file_type": "deb",
       "download_url": "https://..."
     }
@@ -430,11 +434,11 @@ The translations use the new flat-key custom engine, parsing nested keys into ob
 
 ---
 
-## License & Credits
+## Lisans ve Teşekkür
 
-This project is licensed under the **GPL-3.0** license. See [`debian/copyright`](debian/copyright) for the full declaration.
+Bu proje **GPL-3.0** lisansı altındadır. Tam beyan için [`debian/copyright`](debian/copyright) dosyasına bakınız.
 
-**Developer:** Kaan Ferid Altundaş — kaanferidaltundas@protonmail.com
+**Geliştirici:** Kaan Ferid Altundaş — kaanferidaltundas@protonmail.com
 
-**Credits:**
-- Book shelf icon by Nick Frost and Greg Lapin on [Icon-Icons.com](https://icon-icons.com/authors/237-nick-frost-and-greg-lapin)
+**Teşekkürler:**
+- [Icon-Icons.com](https://icon-icons.com/authors/237-nick-frost-and-greg-lapin) üzerinde Nick Frost ve Greg Lapin tarafından tasarlanan kitaplık simgesi
