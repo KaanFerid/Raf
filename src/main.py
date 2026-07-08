@@ -8,14 +8,12 @@ os.environ["GTK_CSD"] = "1"
 def main():
     args = sys.argv[1:]
 
-    startup_files = []
     gui_mode = False
 
     if args:
         if args[0] == "-c":
             args = args[1:]
         elif all(os.path.exists(a) for a in args):
-            startup_files = [os.path.abspath(a) for a in args]
             gui_mode = True
 
         if not gui_mode and args:
@@ -37,7 +35,7 @@ def main():
                 flags=Gio.ApplicationFlags.HANDLES_OPEN,
                 **kwargs
             )
-            self.startup_files = startup_files
+            self.startup_files = []
             self.connect("startup", self.on_startup)
             self.connect("activate", self.on_activate)
             self.connect("open", self.on_open)
@@ -115,9 +113,7 @@ def main():
             self.on_activate(app)
 
     app = RafApp()
-    # Adw.Application.run parses sys.argv automatically if we just pass None, or we can pass args
-    # Wait, passing args directly.
-    return app.run(None)
+    return app.run(sys.argv)
 
 
 if __name__ == "__main__":
