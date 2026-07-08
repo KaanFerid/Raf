@@ -14,7 +14,7 @@
 
 **Raf** is a modern desktop application for Pardus-based ETAP (smart board) systems that allows teachers and students to search, download, install, launch, and remove interactive book libraries with a single click. It features a polished Libadwaita-style interface with a global dark/light theme engine, a custom zero-dependency i18n translation system, native OS integration for drag & drop and "Open With" sideloading, a command-line interface, and an auto-update system.
 
-> **📢 For Publishers:** Want to add your digital libraries to the Raf ecosystem? Please see our [Support & Contact](SUPPORT.md) page to get in touch!
+> **📢 For Publishers:** Want to add your digital libraries to the Raf ecosystem? Please see our [Contributing](CONTRIBUTING.md) page to get in touch!
 
 ---
 

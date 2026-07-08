@@ -14,7 +14,7 @@
 
 **Raf**, öğretmenlerin ve öğrencilerin tek bir tıklamayla etkileşimli kitap kütüphanelerini aramasını, indirmesini, kurmasını, başlatmasını ve kaldırmasını sağlayan Pardus tabanlı ETAP (akıllı tahta) sistemleri için modern bir masaüstü uygulamasıdır. Global karanlık/aydınlık tema motoruna sahip şık bir Libadwaita tarzı arayüz, bağımlılık içermeyen özel bir i18n çeviri sistemi, sürükle-bırak ve "Birlikte Aç" kurulumları için yerel işletim sistemi entegrasyonu, komut satırı arayüzü ve otomatik güncelleme sistemi sunar.
 
-> **📢 Yayınevleri İçin:** Dijital kütüphanelerinizi Raf ekosistemine eklemek ister misiniz? İletişime geçmek için lütfen [Destek ve İletişim](SUPPORT.md) sayfamızı inceleyin!
+> **📢 Yayınevleri İçin:** Dijital kütüphanelerinizi Raf ekosistemine eklemek ister misiniz? İletişime geçmek için lütfen [Katkıda Bulunma](CONTRIBUTING.md) sayfamızı inceleyin!
 
 ---
 
