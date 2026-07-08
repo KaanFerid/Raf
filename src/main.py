@@ -30,7 +30,6 @@ def main():
     gi.require_version("Adw", "1")
     from gi.repository import Gtk, Adw, Gio, Gdk
 
-
     class RafApp(Adw.Application):
         def __init__(self, **kwargs):
             super().__init__(
@@ -104,6 +103,11 @@ def main():
             win = self.props.active_window
             if not win:
                 win = MainWindow(app=self, startup_files=self.startup_files)
+                self.startup_files = []
+            else:
+                if self.startup_files:
+                    win.handle_startup_files(self.startup_files)
+                    self.startup_files = []
             win.present()
 
         def on_open(self, app, files, n_files, hint):

@@ -79,6 +79,10 @@ class MainWindow(Gtk.ApplicationWindow):
         if self.startup_files:
             GLib.idle_add(lambda: self.process_local_files(self.startup_files))
 
+    def handle_startup_files(self, files):
+        if files:
+            GLib.idle_add(lambda: self.process_local_files(files))
+
     def init_ui(self):
         # Toast Overlay
         self.toast_overlay = Adw.ToastOverlay()
