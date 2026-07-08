@@ -7,12 +7,12 @@ If you are a publisher and would like your digital library applications (z-kitap
 Yayınevi iseniz ve z-kitap / dijital kütüphane uygulamalarınızın Raf ekosisteminde resmi olarak desteklenmesini ve yer almasını istiyorsanız, lütfen geliştirici ile iletişime geçin!
 
 **How to contact (Nasıl ulaşabilirsiniz):**
-- **Email:** `[Your Email Here]` (Lütfen e-posta adresinizi buraya yazın)
+- **Email:** `kaanferidaltundas@protonmail.com`
 - **GitHub:** Please open an [Issue](https://github.com/KaanFerid/Raf/issues) on this repository or reach out directly to the developer (@KaanFerid) via GitHub. 
 
 We are happy to collaborate and ensure your books run smoothly for students and teachers using Pardus.
 
-- **E-posta:** `[Your Email Here]` (Lütfen e-posta adresinizi buraya yazın)
+- **E-posta:** `kaanferidaltundas@protonmail.com`
 - **GitHub:** Bu depoda bir [Issue (Talep)](https://github.com/KaanFerid/Raf/issues) açabilir veya GitHub üzerinden geliştiriciye (@KaanFerid) doğrudan ulaşabilirsiniz. 
 
 Uygulamalarınızın Pardus kullanan öğrenci ve öğretmenler için sorunsuz çalışmasını sağlamak adına işbirliği yapmaktan mutluluk duyarız.
