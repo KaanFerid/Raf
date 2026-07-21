@@ -32,7 +32,7 @@ jobs:
           sed -i 's/__version__ = ".*"/__version__ = "${{ github.event.inputs.version_tag }}"/' src/core/version.py
         
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.10'
           
